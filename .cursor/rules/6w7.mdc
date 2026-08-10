@@ -1,0 +1,20 @@
+---
+description: 6w7（樂玩ㄑ）專案準則 — 代寫前必讀 AGENTS.md
+alwaysApply: true
+---
+
+# 6w7 專案規則
+
+開始任何實作、重構或建議前，先讀並遵守專案根目錄的 `AGENTS.md`。
+
+## 硬性約束（摘要）
+
+- 品牌：英文 **6w7**、中文 **樂玩ㄑ**、網域 **6w7.link**
+- 技術：Next.js（App Router）+ TypeScript + Tailwind + shadcn/ui + PostgreSQL（Neon）+ Prisma + Auth.js + Upstash Redis + R2 頭貼；正式託管 Vercel
+- 第一版只做匿名問答（可稱「匿密」）；AI 產圖／換臉僅占位，未明確要求勿實作
+- 業務邏輯放 service + `/api`（或 versioned `/api/v1`），方便日後 Expo App
+- 可參考 NGL「連結收匿名留言」概念，但禁止抄襲品牌、文案、視覺與互動細節；必須平台化與差異化
+- 帳戶安全：防 IDOR、限流、檢舉、最小蒐集、不把密鑰放前端
+- 對使用者溝通使用繁體中文
+
+細節、資料模型、API、分期路線圖以 `AGENTS.md` 為準；規格變更先改 `AGENTS.md` 再改程式。

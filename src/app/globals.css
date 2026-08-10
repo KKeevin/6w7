@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f3f6f8;
+  --surface: #e8eef2;
+  --ink: #14212b;
+  --muted: #5b6b78;
+  --line: #c9d5de;
+  --accent: #ff5a3c;
+  --accent-fg: #fff8f6;
+  --mint: #1aa68a;
+  --danger: #c43c3c;
+  --ring: #1aa68a;
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --header-h: 3.5rem;
+  --footer-h: 3rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+html {
+  /* 避免有無捲軸時整頁左右跳動 */
+  scrollbar-gutter: stable;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.bg-atmosphere {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 90% 60% at 10% -10%, rgba(26, 166, 138, 0.22), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(255, 90, 60, 0.18), transparent 50%),
+    linear-gradient(180deg, rgba(20, 33, 43, 0.03), transparent 40%),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 22px,
+      rgba(20, 33, 43, 0.025) 22px,
+      rgba(20, 33, 43, 0.025) 23px
+    );
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes toast-bar {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.animate-rise {
+  animation: rise-in 0.7s ease-out both;
+}
+
+.animate-rise-delay {
+  animation: rise-in 0.8s ease-out 0.12s both;
+}
+
+.animate-mark {
+  animation: soft-pulse 4s ease-in-out infinite;
+}
+
+/* 不位移、不縮放：只做柔光呼吸，避免按鈕一直跳 */
+@keyframes accepting-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(26, 166, 138, 0.15);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 0 14px 2px rgba(26, 166, 138, 0.45);
+    filter: brightness(1.06);
+  }
+}
+
+@keyframes closed-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(20, 33, 43, 0.04);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(255, 90, 60, 0.18);
+  }
+}
+
+.animate-accepting-hint {
+  animation: accepting-glow 2.4s ease-in-out infinite;
+}
+
+.animate-closed-hint {
+  animation: closed-glow 2.8s ease-in-out infinite;
+}
+
+@keyframes scroll-cue {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+.animate-scroll-cue {
+  display: inline-block;
+  animation: scroll-cue 1.2s ease-in-out infinite;
+}
+
+/* 收件匣：剛加入精選／封存 — 粗螢光筆逆時針框選一次 */
+@keyframes inbox-highlighter-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes inbox-highlighter-fade {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.inbox-just-added {
+  position: relative;
+  z-index: 1;
+}
+
+.inbox-just-added-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  /* 水平翻轉，讓描邊視覺為逆時針 */
+  transform: scaleX(-1);
+  animation: inbox-highlighter-fade 1.35s ease-out 1 forwards;
+}
+
+.inbox-just-added-ring rect {
+  fill: none;
+  stroke: #c6ff4a;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  filter: drop-shadow(0 0 4px rgba(198, 255, 74, 0.85));
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: inbox-highlighter-draw 1.05s ease-out 1 forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-accepting-hint,
+  .animate-closed-hint,
+  .animate-scroll-cue {
+    animation: none;
+  }
+
+  .inbox-just-added-ring {
+    transform: none;
+    animation: none;
+    opacity: 0;
+  }
+
+  .inbox-just-added-ring rect {
+    animation: none;
+  }
+}

@@ -1,0 +1,78 @@
+# —— dependencies ——
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# —— Next.js / build ——
+.next/
+out/
+build/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# —— env / secrets（只保留 .env.example）——
+.env
+.env.*
+!.env.example
+
+# —— 本機資料庫殘留（舊 SQLite；現已改 Postgres）——
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-wal
+prisma/*.db-shm
+prisma/dev.db*
+
+# —— 本機上傳（頭貼等；目錄本身用 .gitkeep 保留）——
+/uploads/
+public/uploads/*
+!public/uploads/.gitkeep
+
+# —— 日誌／除錯 ——
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+.eslintcache
+
+# —— 測試／覆蓋率 ——
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+
+# —— 系統／編輯器 ——
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.pem
+*.local
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# —— 託管／本機 AI／工具快取（勿進版控）——
+.vercel
+.claude/
+.windsurf/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
+
+# —— Prisma 產生檔（若有自訂輸出路徑）——
+src/generated/prisma/
+
+# —— 雜項 ——
+*.swp
+*.swo
+tmp/
+temp/
+.cache/

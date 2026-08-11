@@ -73,10 +73,11 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
               id="story-card-title"
               className="font-[family-name:var(--font-display)] text-xl font-bold"
             >
-              限動圖卡
+              限動回覆圖卡
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              預覽後下載 PNG，可直接傳到 Instagram 限動。版型為 6w7 原創。
+              手機按下方按鈕後，在系統分享選 Instagram →
+              限動即可編輯發佈。電腦會下載 PNG。版型為 6w7 原創。
             </p>
           </div>
           <button
@@ -134,7 +135,7 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
 
             <div className="mt-auto flex flex-wrap gap-2 pt-6">
               <Button type="button" onClick={() => void download()} disabled={busy}>
-                {busy ? "產生中…" : "儲存／分享圖卡"}
+                {busy ? "產生中…" : "分享到 IG 限動"}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
                 取消

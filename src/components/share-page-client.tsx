@@ -195,22 +195,22 @@ export function SharePageClient() {
 
   const steps = [
     {
-      title: "開一則新的限時動態",
-      body: "到 Instagram 新增限動，等等要把 6w7 短網址貼上去。",
+      title: "產生限動分享圖",
+      body: "回到本頁按「分享到 IG 限動」。手機會跳出系統分享選單；電腦則會下載 PNG。",
     },
     {
-      title: "加入「連結」貼紙",
-      body: "編輯畫面上方點貼紙，找到並選用「連結」。",
+      title: "選 Instagram → 限動",
+      body: "在系統分享選單裡選 Instagram，再選「限動／Story」，圖會直接進限動編輯畫面。若沒出現選項，可先「儲存圖像」再到 IG 開限動上傳。",
     },
     {
-      title: "貼上你的 6w7 網址",
+      title: "加上「連結」貼紙",
       body: profile
-        ? `貼上 ${profile.link.url.replace(/^https?:\/\//, "")}（可先用下方按鈕複製）。`
-        : "貼上你的專屬短網址。",
+        ? `編輯畫面點貼紙 →「連結」，貼上 ${profile.link.url.replace(/^https?:\/\//, "")}（可用下方按鈕先複製）。`
+        : "編輯畫面點貼紙 →「連結」，貼上你的 6w7 短網址。",
     },
     {
       title: "發佈，開始收訊息",
-      body: "把貼紙放到好點的位置後發佈；訪客點連結就能匿名留言到你的收件匣。",
+      body: "把連結貼紙放到好點的位置後發佈；訪客點連結就能匿名留言到你的收件匣。",
     },
   ];
 
@@ -456,7 +456,7 @@ export function SharePageClient() {
             你的專屬連結
           </h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            先複製，再貼到限動或任何地方。
+            複製短網址，或用分享圖一鍵丟到 IG 限動。
           </p>
         </header>
 
@@ -482,7 +482,7 @@ export function SharePageClient() {
               className="w-full"
               onClick={() => setStoryOpen(true)}
             >
-              下載限動分享圖
+              分享到 IG 限動
             </Button>
             <Button
               type="button"
@@ -490,7 +490,7 @@ export function SharePageClient() {
               className="w-full"
               onClick={openGuide}
             >
-              怎麼貼到 Instagram 限動？
+              怎麼發到 IG 限動？
             </Button>
           </div>
         </section>
@@ -560,7 +560,8 @@ export function SharePageClient() {
               訊息會進收件匣。
             </h1>
             <p className="mt-3 max-w-lg text-lg text-[var(--muted)]">
-              這頁管的是「別人怎麼找到你」——複製網址、貼到限動，或先微調公開頁文案。
+              這頁管的是「別人怎麼找到你」——複製網址、用分享圖丟到 IG
+              限動，或先微調公開頁文案。
             </p>
           </header>
 
@@ -621,7 +622,7 @@ export function SharePageClient() {
                 className="h-12 text-base"
                 onClick={() => setStoryOpen(true)}
               >
-                下載限動分享圖
+                分享到 IG 限動
               </Button>
               <Button
                 type="button"
@@ -629,7 +630,7 @@ export function SharePageClient() {
                 className="h-12 text-base"
                 onClick={openGuide}
               >
-                限動貼法教學
+                限動教學
               </Button>
             </div>
             <Link
@@ -646,15 +647,15 @@ export function SharePageClient() {
             <ol className="mt-3 space-y-2.5 text-base text-[var(--muted)]">
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">01</span>
-                複製上方短網址
+                按「分享到 IG 限動」→ 系統分享選 Instagram → 限動
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">02</span>
-                貼到 IG 限動連結貼紙、限動文字或私訊
+                在限動加上「連結」貼紙，貼上上方短網址
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">03</span>
-                到「收件匣」看匿名訊息
+                發佈後到「收件匣」看匿名訊息
               </li>
             </ol>
           </section>
@@ -705,7 +706,7 @@ export function SharePageClient() {
                     id="guide-title"
                     className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight"
                   >
-                    限動怎麼貼連結
+                    怎麼發到 IG 限動
                   </h3>
                 </div>
                 <button
@@ -771,18 +772,20 @@ export function SharePageClient() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setGuideOpen(false)}
+                  onClick={() => {
+                    void copyLink();
+                  }}
                 >
-                  稍後再說
+                  {copied ? "已複製網址" : "複製短網址"}
                 </Button>
                 <Button
                   type="button"
                   onClick={() => {
-                    void copyLink();
                     setGuideOpen(false);
+                    setStoryOpen(true);
                   }}
                 >
-                  {copied ? "已複製" : "複製短網址"}
+                  分享到 IG 限動
                 </Button>
               </div>
             </div>

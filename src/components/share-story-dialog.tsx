@@ -101,10 +101,11 @@ export function ShareStoryDialog({
               id="share-story-title"
               className="font-[family-name:var(--font-display)] text-xl font-bold"
             >
-              限動分享圖
+              分享到 IG 限動
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              手機可分享到照片／限動；電腦會直接下載 1080×1920 PNG。
+              手機：系統分享 → 選 Instagram → 限動，圖會直接進編輯。電腦：下載
+              PNG 後再上傳限動。發佈前記得加「連結」貼紙。
             </p>
           </div>
           <button
@@ -155,7 +156,7 @@ export function ShareStoryDialog({
             onClick={() => void download()}
             disabled={busy}
           >
-            {busy ? "產生中…" : "儲存／分享圖卡"}
+            {busy ? "產生中…" : "分享到 IG 限動"}
           </Button>
         </div>
       </div>

@@ -47,14 +47,13 @@ export async function POST(request: Request) {
 
     const form = await request.formData();
     const file = form.get("file");
-    if (!(file instanceof File) && !(file instanceof Blob)) {
+    if (!file || typeof file === "string") {
       throw new AppError("VALIDATION_ERROR", "請選擇圖片檔。", 400);
     }
     if (file.size > MAX_BYTES) {
       throw new AppError("VALIDATION_ERROR", "圖片請小於 5MB。", 400);
     }
-    const type = "type" in file ? String(file.type || "") : "";
-    if (type && !type.startsWith("image/")) {
+    if (file.type && !file.type.startsWith("image/")) {
       throw new AppError("VALIDATION_ERROR", "僅支援圖片格式。", 400);
     }
 

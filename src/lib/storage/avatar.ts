@@ -60,20 +60,52 @@ function requireS3Env() {
   };
 }
 
-function getR2Client() {
-  const { accessKeyId, secretAccessKey } = requireS3Env();
-  return new AwsClient({
+function accountIdFromEndpoint(endpoint: string) {
+  // https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+  const host = new URL(endpoint).hostname;
+  const id = host.split(".")[0];
+  if (!id) throw new Error("無法從 S3_ENDPOINT 解析 Cloudflare Account ID");
+  return id;
+}
+
+/** Cloudflare REST API（api.cloudflare.com）— 避開 Vercel→R2 S3 端點 SSL 問題 */
+async function saveAvatarViaCloudflareApi(userId: string, png: Buffer) {
+  const token = env("CLOUDFLARE_API_TOKEN");
+  if (!token) {
+    throw new Error("缺少 CLOUDFLARE_API_TOKEN（R2 建立權杖時的 cfat_ 值）");
+  }
+
+  const { bucket, endpoint } = requireS3Env();
+  const accountId = env("CLOUDFLARE_ACCOUNT_ID") || accountIdFromEndpoint(endpoint);
+  const key = avatarObjectKey(userId);
+  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/r2/buckets/${bucket}/objects/${key}`;
+
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "image/png",
+    },
+    body: new Uint8Array(png),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`R2 API 上傳失敗：HTTP ${res.status} ${body.slice(0, 300)}`);
+  }
+
+  return { publicPath: `${avatarPublicUrl(userId)}?v=${Date.now()}` };
+}
+
+/** S3 相容（本機可用；部分 Vercel 區對 *.r2.cloudflarestorage.com 會 SSL 失敗） */
+async function saveAvatarViaS3Fetch(userId: string, png: Buffer) {
+  const { bucket, endpoint, accessKeyId, secretAccessKey } = requireS3Env();
+  const client = new AwsClient({
     accessKeyId,
     secretAccessKey,
     service: "s3",
     region: env("S3_REGION") || "auto",
   });
-}
-
-/** 用 fetch + SigV4 上傳，避免 Vercel 上 AWS SDK Node HTTPS 對 R2 握手失敗 */
-async function saveAvatarS3(userId: string, png: Buffer) {
-  const { bucket, endpoint } = requireS3Env();
-  const client = getR2Client();
   const key = avatarObjectKey(userId);
   const url = `${endpoint}/${bucket}/${key}`;
 
@@ -88,10 +120,18 @@ async function saveAvatarS3(userId: string, png: Buffer) {
 
   if (!put.ok) {
     const body = await put.text().catch(() => "");
-    throw new Error(`R2 上傳失敗：HTTP ${put.status} ${body.slice(0, 200)}`);
+    throw new Error(`R2 S3 上傳失敗：HTTP ${put.status} ${body.slice(0, 200)}`);
   }
 
   return { publicPath: `${avatarPublicUrl(userId)}?v=${Date.now()}` };
+}
+
+async function saveAvatarS3(userId: string, png: Buffer) {
+  // 正式環境優先走 Cloudflare API，避免 Vercel→R2 S3 TLS 握手失敗
+  if (env("CLOUDFLARE_API_TOKEN")) {
+    return saveAvatarViaCloudflareApi(userId, png);
+  }
+  return saveAvatarViaS3Fetch(userId, png);
 }
 
 /**

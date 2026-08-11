@@ -30,6 +30,7 @@ export async function GET() {
     hasS3Key: Boolean(process.env.S3_ACCESS_KEY_ID),
     hasS3Secret: Boolean(process.env.S3_SECRET_ACCESS_KEY),
     hasS3Public: Boolean(process.env.S3_PUBLIC_BASE_URL),
+    hasCfToken: Boolean(process.env.CLOUDFLARE_API_TOKEN),
     sharp: sharpStatus,
   });
 }

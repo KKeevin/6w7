@@ -3,7 +3,6 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import sharp from "sharp";
 
 export type StorageDriver = "local" | "s3";
 
@@ -97,6 +96,7 @@ export async function saveProfileAvatar(
   userId: string,
   input: Buffer,
 ): Promise<{ publicPath: string }> {
+  const sharp = (await import("sharp")).default;
   const png = await sharp(input)
     .rotate()
     .resize(512, 512, { fit: "cover", position: "center" })

@@ -79,7 +79,7 @@ async function saveAvatarS3(userId: string, png: Buffer) {
 
   const put = await client.fetch(url, {
     method: "PUT",
-    body: png,
+    body: new Uint8Array(png),
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": "public, max-age=31536000, immutable",

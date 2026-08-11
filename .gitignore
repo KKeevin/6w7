@@ -20,6 +20,8 @@ dist/
 .env
 .env.*
 !.env.example
+Neon.txt
+*.secrets.txt
 
 # —— 本機資料庫殘留（舊 SQLite；現已改 Postgres）——
 prisma/*.db

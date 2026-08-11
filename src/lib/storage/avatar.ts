@@ -78,7 +78,8 @@ async function saveAvatarViaCloudflareApi(userId: string, png: Buffer) {
   const { bucket, endpoint } = requireS3Env();
   const accountId = env("CLOUDFLARE_ACCOUNT_ID") || accountIdFromEndpoint(endpoint);
   const key = avatarObjectKey(userId);
-  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/r2/buckets/${bucket}/objects/${key}`;
+  const keyPath = key.split("/").map(encodeURIComponent).join("/");
+  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/r2/buckets/${bucket}/objects/${keyPath}`;
 
   const res = await fetch(url, {
     method: "PUT",
@@ -91,6 +92,11 @@ async function saveAvatarViaCloudflareApi(userId: string, png: Buffer) {
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
+    if (res.status === 403) {
+      throw new Error(
+        "R2 API 認證失敗：請改用「系統管理員讀取和寫入」權杖的 cfat_ 填入 CLOUDFLARE_API_TOKEN（物件讀寫權杖無法呼叫 Cloudflare API）",
+      );
+    }
     throw new Error(`R2 API 上傳失敗：HTTP ${res.status} ${body.slice(0, 300)}`);
   }
 

@@ -21,9 +21,15 @@ export function avatarPublicPath(userId: string) {
 }
 
 function parseHttpOrigin(raw: string, label: string) {
-  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  let value = raw.trim();
+  // 修正誤填成 httpsxxx.com（少了 ://）
+  value = value.replace(/^https(?!:\/\/)/i, "https://");
+  value = value.replace(/^http(?!:\/\/)/i, "http://");
+  if (!/^https?:\/\//i.test(value)) {
+    value = `https://${value}`;
+  }
   try {
-    return new URL(withProtocol).origin;
+    return new URL(value).origin;
   } catch {
     throw new Error(`${label} 不是合法網址：${raw}`);
   }

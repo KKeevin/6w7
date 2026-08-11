@@ -21,12 +21,17 @@ export function avatarPublicPath(userId: string) {
 }
 
 function parseHttpOrigin(raw: string, label: string) {
-  let value = raw.trim();
-  // 修正誤填成 httpsxxx.com（少了 ://）
-  value = value.replace(/^https(?!:\/\/)/i, "https://");
-  value = value.replace(/^http(?!:\/\/)/i, "http://");
+  let value = raw.trim().replace(/\/$/, "");
+  // 僅在缺少通訊協定時補上；勿動已是 https:// 的正確值
   if (!/^https?:\/\//i.test(value)) {
-    value = `https://${value}`;
+    // 相容誤填 httpspub-xxx（少了 ://）
+    if (/^https[^:/]/i.test(value)) {
+      value = `https://${value.slice(5)}`;
+    } else if (/^http[^:/]/i.test(value)) {
+      value = `http://${value.slice(4)}`;
+    } else {
+      value = `https://${value}`;
+    }
   }
   try {
     return new URL(value).origin;

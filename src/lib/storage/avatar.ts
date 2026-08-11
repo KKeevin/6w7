@@ -1,8 +1,4 @@
-import {
-  DeleteObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { AwsClient } from "aws4fetch";
 
 export type StorageDriver = "local" | "s3";
 
@@ -64,45 +60,35 @@ function requireS3Env() {
   };
 }
 
-let s3Client: S3Client | undefined;
-
-function getS3Client() {
-  if (s3Client) return s3Client;
-  const { endpoint, accessKeyId, secretAccessKey } = requireS3Env();
-  s3Client = new S3Client({
+function getR2Client() {
+  const { accessKeyId, secretAccessKey } = requireS3Env();
+  return new AwsClient({
+    accessKeyId,
+    secretAccessKey,
+    service: "s3",
     region: env("S3_REGION") || "auto",
-    endpoint,
-    credentials: { accessKeyId, secretAccessKey },
-    // R2 建議 path-style；並關閉預設校驗和
-    forcePathStyle: true,
-    requestChecksumCalculation: "WHEN_REQUIRED",
-    responseChecksumValidation: "WHEN_REQUIRED",
   });
-  return s3Client;
 }
 
+/** 用 fetch + SigV4 上傳，避免 Vercel 上 AWS SDK Node HTTPS 對 R2 握手失敗 */
 async function saveAvatarS3(userId: string, png: Buffer) {
-  const { bucket } = requireS3Env();
-  const client = getS3Client();
+  const { bucket, endpoint } = requireS3Env();
+  const client = getR2Client();
   const key = avatarObjectKey(userId);
+  const url = `${endpoint}/${bucket}/${key}`;
 
-  try {
-    await client
-      .send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
-      .catch(() => undefined);
+  const put = await client.fetch(url, {
+    method: "PUT",
+    body: png,
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
 
-    await client.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: png,
-        ContentType: "image/png",
-        CacheControl: "public, max-age=31536000, immutable",
-      }),
-    );
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "unknown";
-    throw new Error(`R2 上傳失敗：${msg}`);
+  if (!put.ok) {
+    const body = await put.text().catch(() => "");
+    throw new Error(`R2 上傳失敗：HTTP ${put.status} ${body.slice(0, 200)}`);
   }
 
   return { publicPath: `${avatarPublicUrl(userId)}?v=${Date.now()}` };
@@ -127,7 +113,6 @@ export async function saveProfileAvatar(
     return saveAvatarS3(userId, png);
   }
 
-  // 動態載入，避免正式 S3 建置追蹤整個專案檔案系統
   const { saveAvatarLocal } = await import("./avatar-local");
   return saveAvatarLocal(userId, png);
 }

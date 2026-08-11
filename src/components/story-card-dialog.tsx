@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StoryCard, STORY_CARD_SIZE } from "@/components/story-card";
+import { saveImageHint, saveOrSharePng } from "@/lib/save-image";
 
 type Props = {
   open: boolean;
@@ -25,6 +26,7 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
 
   if (!open) return null;
 
@@ -32,8 +34,8 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
     if (!cardRef.current) return;
     setBusy(true);
     setError(null);
+    setHint(null);
     try {
-      // 等一幀讓文字排版穩定
       await new Promise((r) => requestAnimationFrame(() => r(null)));
       const dataUrl = await toPng(cardRef.current, {
         width: STORY_CARD_SIZE.width,
@@ -41,11 +43,15 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
         pixelRatio: 1,
         cacheBust: true,
       });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `6w7-story-${message.id.slice(-6)}.png`;
-      a.click();
+      const result = await saveOrSharePng(
+        dataUrl,
+        `6w7-story-${message.id.slice(-6)}.png`,
+      );
+      setHint(saveImageHint(result));
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
       console.error(err);
       setError("圖卡產生失敗，請再試一次。");
     } finally {
@@ -145,10 +151,13 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
             {error && (
               <p className="mt-3 text-sm text-[var(--danger)]">{error}</p>
             )}
+            {hint && !error && (
+              <p className="mt-3 text-sm text-[var(--muted)]">{hint}</p>
+            )}
 
             <div className="mt-auto flex flex-wrap gap-2 pt-6">
               <Button type="button" onClick={() => void download()} disabled={busy}>
-                {busy ? "產生中…" : "下載限動圖"}
+                {busy ? "產生中…" : "儲存／分享圖卡"}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
                 取消

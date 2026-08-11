@@ -7,6 +7,7 @@ import {
   ShareStoryCard,
   SHARE_STORY_SIZE,
 } from "@/components/share-story-card";
+import { saveImageHint, saveOrSharePng } from "@/lib/save-image";
 
 type Props = {
   open: boolean;
@@ -27,7 +28,6 @@ function absoluteUrl(url: string) {
   return `${window.location.origin}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
-/** 轉成同源 URL／data URL，讓 html-to-image 不會被 R2 CORS 擋 */
 async function resolveExportImage(
   imageUrl: string | null | undefined,
 ): Promise<string | null> {
@@ -66,12 +66,14 @@ export function ShareStoryDialog({
   const cardRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
   const [exportImage, setExportImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
       setExportImage(null);
       setError(null);
+      setHint(null);
       return;
     }
     let cancelled = false;
@@ -86,20 +88,17 @@ export function ShareStoryDialog({
 
   if (!open) return null;
 
-  const previewSrc = imageUrl
-    ? absoluteUrl(imageUrl)
-    : null;
+  const previewSrc = imageUrl ? absoluteUrl(imageUrl) : null;
 
   async function download() {
     if (!cardRef.current) return;
     setBusy(true);
     setError(null);
+    setHint(null);
     try {
-      let readyImage = exportImage;
-      if (imageUrl && !readyImage) {
-        readyImage = await resolveExportImage(imageUrl);
-        setExportImage(readyImage);
-        // 等 React 把 data URL 畫進離屏節點
+      if (imageUrl && !exportImage) {
+        const data = await resolveExportImage(imageUrl);
+        setExportImage(data);
         await new Promise((r) => setTimeout(r, 120));
       }
       await new Promise((r) => requestAnimationFrame(() => r(null)));
@@ -126,10 +125,12 @@ export function ShareStoryDialog({
         pixelRatio: 1,
         cacheBust: true,
       });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `6w7-share-${username}.png`;
-      a.click();
+
+      const result = await saveOrSharePng(
+        dataUrl,
+        `6w7-share-${username}.png`,
+      );
+      setHint(saveImageHint(result));
 
       try {
         await navigator.clipboard.writeText(
@@ -137,9 +138,12 @@ export function ShareStoryDialog({
         );
         onCopiedLink?.();
       } catch {
-        /* 複製失敗不阻擋下載 */
+        /* ignore */
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
       console.error(err);
       setError("圖卡產生失敗，請再試一次。");
     } finally {
@@ -167,7 +171,7 @@ export function ShareStoryDialog({
               限動分享圖
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              下載 1080×1920 PNG，插入限動後再貼上短網址連結貼紙即可。
+              手機可分享到照片／限動；電腦會直接下載 1080×1920 PNG。
             </p>
           </div>
           <button
@@ -202,7 +206,6 @@ export function ShareStoryDialog({
           </div>
         </div>
 
-        {/* 離屏完整尺寸，供匯出（不受預覽 scale／CORS 影響） */}
         <div
           aria-hidden
           style={{
@@ -226,6 +229,9 @@ export function ShareStoryDialog({
         {error && (
           <p className="mt-3 text-center text-sm text-[var(--danger)]">{error}</p>
         )}
+        {hint && !error && (
+          <p className="mt-3 text-center text-sm text-[var(--muted)]">{hint}</p>
+        )}
 
         <div className="mt-5 grid grid-cols-2 gap-2">
           <Button type="button" variant="outline" onClick={onClose}>
@@ -236,7 +242,7 @@ export function ShareStoryDialog({
             onClick={() => void download()}
             disabled={busy}
           >
-            {busy ? "產生中…" : "下載並複製網址"}
+            {busy ? "產生中…" : "儲存／分享圖卡"}
           </Button>
         </div>
       </div>

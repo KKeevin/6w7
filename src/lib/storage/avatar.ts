@@ -24,12 +24,21 @@ export function avatarPublicPath(userId: string) {
   return `/uploads/${userId}/profile.png`;
 }
 
+function parseHttpOrigin(raw: string, label: string) {
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  try {
+    return new URL(withProtocol).origin;
+  } catch {
+    throw new Error(`${label} 不是合法網址：${raw}`);
+  }
+}
+
 function s3PublicBaseUrl() {
-  const base = env("S3_PUBLIC_BASE_URL")?.replace(/\/$/, "");
-  if (!base) {
+  const raw = env("S3_PUBLIC_BASE_URL");
+  if (!raw) {
     throw new Error("S3_PUBLIC_BASE_URL 未設定（R2／S3 公開讀取網址）");
   }
-  return base;
+  return parseHttpOrigin(raw, "S3_PUBLIC_BASE_URL");
 }
 
 export function avatarPublicUrl(userId: string) {
@@ -38,15 +47,21 @@ export function avatarPublicUrl(userId: string) {
 
 function requireS3Env() {
   const bucket = env("S3_BUCKET");
-  const endpoint = env("S3_ENDPOINT");
+  const rawEndpoint = env("S3_ENDPOINT");
   const accessKeyId = env("S3_ACCESS_KEY_ID");
   const secretAccessKey = env("S3_SECRET_ACCESS_KEY");
-  if (!bucket || !endpoint || !accessKeyId || !secretAccessKey) {
+  if (!bucket || !rawEndpoint || !accessKeyId || !secretAccessKey) {
     throw new Error(
       "S3／R2 環境變數不完整（需 S3_BUCKET、S3_ENDPOINT、S3_ACCESS_KEY_ID、S3_SECRET_ACCESS_KEY）",
     );
   }
-  return { bucket, endpoint, accessKeyId, secretAccessKey };
+
+  return {
+    bucket,
+    endpoint: parseHttpOrigin(rawEndpoint, "S3_ENDPOINT"),
+    accessKeyId,
+    secretAccessKey,
+  };
 }
 
 let s3Client: S3Client | undefined;
@@ -58,8 +73,8 @@ function getS3Client() {
     region: env("S3_REGION") || "auto",
     endpoint,
     credentials: { accessKeyId, secretAccessKey },
+    // R2 建議 path-style；並關閉預設校驗和
     forcePathStyle: true,
-    // R2 與較新 AWS SDK 預設校驗和不兼容
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
   });
@@ -71,19 +86,24 @@ async function saveAvatarS3(userId: string, png: Buffer) {
   const client = getS3Client();
   const key = avatarObjectKey(userId);
 
-  await client
-    .send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
-    .catch(() => undefined);
+  try {
+    await client
+      .send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
+      .catch(() => undefined);
 
-  await client.send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: png,
-      ContentType: "image/png",
-      CacheControl: "public, max-age=31536000, immutable",
-    }),
-  );
+    await client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: png,
+        ContentType: "image/png",
+        CacheControl: "public, max-age=31536000, immutable",
+      }),
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "unknown";
+    throw new Error(`R2 上傳失敗：${msg}`);
+  }
 
   return { publicPath: `${avatarPublicUrl(userId)}?v=${Date.now()}` };
 }

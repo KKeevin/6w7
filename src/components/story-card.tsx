@@ -19,6 +19,8 @@ export type StoryCardProps = {
   topic?: string | null;
   linkTitle?: string;
   shareHost?: string;
+  /** 匯出用 logo data URL */
+  logoSrc?: string | null;
 };
 
 /** IG 限動尺寸圖卡（6w7 自有版型，非 NGL 複製） */
@@ -28,7 +30,9 @@ export function StoryCard({
   topic,
   linkTitle,
   shareHost = "6w7.link",
+  logoSrc,
 }: StoryCardProps) {
+  const resolvedLogo = logoSrc || logoUrl();
   return (
     <div
       style={{
@@ -85,11 +89,14 @@ export function StoryCard({
         <div style={{ flexShrink: 0 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={logoUrl()}
+            src={resolvedLogo}
             alt={BRAND.en}
             width={220}
             height={90}
             style={{ height: 56, width: "auto", objectFit: "contain" }}
+            {...(resolvedLogo.startsWith("data:")
+              ? {}
+              : { crossOrigin: "anonymous" as const })}
           />
         </div>
 
@@ -235,7 +242,7 @@ export function StoryCard({
           <div style={{ textAlign: "center" as const }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={logoUrl()}
+              src={resolvedLogo}
               alt={BRAND.en}
               width={280}
               height={120}
@@ -245,6 +252,9 @@ export function StoryCard({
                 objectFit: "contain",
                 margin: "0 auto",
               }}
+              {...(resolvedLogo.startsWith("data:")
+                ? {}
+                : { crossOrigin: "anonymous" as const })}
             />
             <div
               style={{

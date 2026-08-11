@@ -13,6 +13,61 @@ export function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([bytes], { type: mime });
 }
 
+/** 把圖片 URL（同源或可代理）轉成 data URL，供 html-to-image 在手機上穩定匯出 */
+export async function fetchAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const abs =
+      url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")
+        ? url
+        : `${window.location.origin}${url.startsWith("/") ? "" : "/"}${url}`;
+
+    if (abs.startsWith("data:")) return abs;
+
+    const sameOrigin =
+      abs.startsWith(window.location.origin) || abs.startsWith("/");
+    const fetchUrl = sameOrigin
+      ? abs
+      : `/api/v1/media/proxy?url=${encodeURIComponent(abs)}`;
+
+    const res = await fetch(fetchUrl, { cache: "force-cache" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    if (!blob.type.startsWith("image/") && blob.size === 0) return null;
+
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("read failed"));
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function waitForImages(root: HTMLElement) {
+  const imgs = Array.from(root.querySelectorAll("img"));
+  await Promise.all(
+    imgs.map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          const done = () => resolve();
+          if (img.complete && img.naturalWidth > 0) {
+            done();
+            return;
+          }
+          img.onload = done;
+          img.onerror = done;
+          // 保險：逾時也不卡住
+          setTimeout(done, 2500);
+        }),
+    ),
+  );
+  // 再等一幀讓瀏覽器完成繪製
+  await new Promise((r) => requestAnimationFrame(() => r(null)));
+  await new Promise((r) => setTimeout(r, 50));
+}
+
 function isIos() {
   if (typeof navigator === "undefined") return false;
   return /iPad|iPhone|iPod/.test(navigator.userAgent) ||

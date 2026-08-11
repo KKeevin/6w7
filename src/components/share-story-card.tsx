@@ -15,9 +15,11 @@ function logoUrl() {
 export type ShareStoryCardProps = {
   username: string;
   prompt: string;
-  /** 頭貼絕對／相對 URL；無則顯示字首 */
+  /** 頭貼絕對／相對／data URL；無則顯示字首 */
   imageUrl?: string | null;
   displayName?: string | null;
+  /** 匯出用：預先轉好的 logo data URL，手機較穩 */
+  logoSrc?: string | null;
 };
 
 /** 分享頁限動底圖（邀請留言用，與收件匣回覆圖卡版型不同） */
@@ -26,8 +28,10 @@ export function ShareStoryCard({
   prompt,
   imageUrl,
   displayName,
+  logoSrc,
 }: ShareStoryCardProps) {
   const initial = (displayName || username).slice(0, 1).toUpperCase();
+  const resolvedLogo = logoSrc || logoUrl();
 
   return (
     <div
@@ -86,11 +90,14 @@ export function ShareStoryCard({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={logoUrl()}
+            src={resolvedLogo}
             alt={BRAND.en}
             width={200}
             height={80}
             style={{ height: 52, width: "auto", objectFit: "contain" }}
+            {...(resolvedLogo.startsWith("data:")
+              ? {}
+              : { crossOrigin: "anonymous" as const })}
           />
           <span
             style={{

@@ -7,7 +7,13 @@ import {
   ShareStoryCard,
   SHARE_STORY_SIZE,
 } from "@/components/share-story-card";
-import { saveImageHint, saveOrSharePng } from "@/lib/save-image";
+import { BRAND } from "@/shared/tools";
+import {
+  fetchAsDataUrl,
+  saveImageHint,
+  saveOrSharePng,
+  waitForImages,
+} from "@/lib/save-image";
 
 type Props = {
   open: boolean;
@@ -28,29 +34,8 @@ function absoluteUrl(url: string) {
   return `${window.location.origin}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
-async function resolveExportImage(
-  imageUrl: string | null | undefined,
-): Promise<string | null> {
-  if (!imageUrl) return null;
-  const abs = absoluteUrl(imageUrl);
-  try {
-    const sameOrigin =
-      abs.startsWith(window.location.origin) || abs.startsWith("/");
-    const fetchUrl = sameOrigin
-      ? abs
-      : `/api/v1/media/proxy?url=${encodeURIComponent(abs)}`;
-    const res = await fetch(fetchUrl);
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    return await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(new Error("read failed"));
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
+function brandLogoUrl() {
+  return `${window.location.origin}${BRAND.logoSrc}?v=${BRAND.logoVersion}`;
 }
 
 export function ShareStoryDialog({
@@ -67,20 +52,33 @@ export function ShareStoryDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
-  const [exportImage, setExportImage] = useState<string | null>(null);
+  const [exportAvatar, setExportAvatar] = useState<string | null>(null);
+  const [exportLogo, setExportLogo] = useState<string | null>(null);
+  const [assetsReady, setAssetsReady] = useState(false);
 
   useEffect(() => {
     if (!open) {
-      setExportImage(null);
+      setExportAvatar(null);
+      setExportLogo(null);
+      setAssetsReady(false);
       setError(null);
       setHint(null);
       return;
     }
+
     let cancelled = false;
     void (async () => {
-      const data = await resolveExportImage(imageUrl);
-      if (!cancelled) setExportImage(data);
+      setAssetsReady(false);
+      const [logo, avatar] = await Promise.all([
+        fetchAsDataUrl(brandLogoUrl()),
+        imageUrl ? fetchAsDataUrl(absoluteUrl(imageUrl)) : Promise.resolve(null),
+      ]);
+      if (cancelled) return;
+      setExportLogo(logo);
+      setExportAvatar(avatar);
+      setAssetsReady(true);
     })();
+
     return () => {
       cancelled = true;
     };
@@ -96,34 +94,35 @@ export function ShareStoryDialog({
     setError(null);
     setHint(null);
     try {
-      if (imageUrl && !exportImage) {
-        const data = await resolveExportImage(imageUrl);
-        setExportImage(data);
-        await new Promise((r) => setTimeout(r, 120));
+      // 資產未就緒就再抓一次
+      let logo = exportLogo;
+      let avatar = exportAvatar;
+      if (!assetsReady || !logo) {
+        logo = await fetchAsDataUrl(brandLogoUrl());
+        avatar = imageUrl
+          ? await fetchAsDataUrl(absoluteUrl(imageUrl))
+          : null;
+        setExportLogo(logo);
+        setExportAvatar(avatar);
+        setAssetsReady(true);
+        await new Promise((r) => setTimeout(r, 160));
       }
+
       await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await waitForImages(cardRef.current);
 
-      const root = cardRef.current;
-      const imgs = Array.from(root.querySelectorAll("img"));
-      await Promise.all(
-        imgs.map(
-          (img) =>
-            new Promise<void>((resolve) => {
-              if (img.complete) {
-                resolve();
-                return;
-              }
-              img.onload = () => resolve();
-              img.onerror = () => resolve();
-            }),
-        ),
-      );
-
-      const dataUrl = await toPng(root, {
+      const dataUrl = await toPng(cardRef.current, {
         width: SHARE_STORY_SIZE.width,
         height: SHARE_STORY_SIZE.height,
         pixelRatio: 1,
         cacheBust: true,
+        // 手機上較穩：不依賴外部字型檔
+        skipFonts: true,
+        style: {
+          // 確保匯出時節點可視尺寸正確
+          transform: "none",
+          opacity: "1",
+        },
       });
 
       const result = await saveOrSharePng(
@@ -206,22 +205,31 @@ export function ShareStoryDialog({
           </div>
         </div>
 
+        {/*
+          匯出節點必須在可視繪製流程內（opacity 極低即可）。
+          iOS 對 left:-9999 / opacity:0 常不畫出 <img>。
+        */}
         <div
           aria-hidden
           style={{
             position: "fixed",
-            left: -1400,
+            left: 0,
             top: 0,
+            width: SHARE_STORY_SIZE.width,
+            height: SHARE_STORY_SIZE.height,
+            opacity: 0.01,
             pointerEvents: "none",
-            opacity: 0,
+            zIndex: -1,
+            overflow: "hidden",
           }}
         >
           <div ref={cardRef}>
             <ShareStoryCard
               username={username}
               prompt={prompt}
-              imageUrl={exportImage || previewSrc}
+              imageUrl={exportAvatar || previewSrc}
               displayName={displayName}
+              logoSrc={exportLogo}
             />
           </div>
         </div>

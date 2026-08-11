@@ -9,6 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // migrate 請用 Neon Direct（無 -pooler）；App 執行期用 DATABASE_URL（pooled）
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });

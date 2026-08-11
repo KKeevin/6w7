@@ -99,14 +99,32 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
                 transformOrigin: "top left",
               }}
             >
-              <div ref={cardRef}>
-                <StoryCard
-                  body={message.body}
-                  reply={reply}
-                  topic={message.topic}
-                  linkTitle={message.link.title}
-                />
-              </div>
+              <StoryCard
+                body={message.body}
+                reply={reply}
+                topic={message.topic}
+                linkTitle={message.link.title}
+              />
+            </div>
+          </div>
+
+          <div
+            aria-hidden
+            style={{
+              position: "fixed",
+              left: -1400,
+              top: 0,
+              pointerEvents: "none",
+              opacity: 0,
+            }}
+          >
+            <div ref={cardRef}>
+              <StoryCard
+                body={message.body}
+                reply={reply}
+                topic={message.topic}
+                linkTitle={message.link.title}
+              />
             </div>
           </div>
 

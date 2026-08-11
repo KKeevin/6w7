@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,38 @@ type Props = {
 
 const PREVIEW_SCALE = 0.22;
 
+function absoluteUrl(url: string) {
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (typeof window === "undefined") return url;
+  return `${window.location.origin}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+/** 轉成同源 URL／data URL，讓 html-to-image 不會被 R2 CORS 擋 */
+async function resolveExportImage(
+  imageUrl: string | null | undefined,
+): Promise<string | null> {
+  if (!imageUrl) return null;
+  const abs = absoluteUrl(imageUrl);
+  try {
+    const sameOrigin =
+      abs.startsWith(window.location.origin) || abs.startsWith("/");
+    const fetchUrl = sameOrigin
+      ? abs
+      : `/api/v1/media/proxy?url=${encodeURIComponent(abs)}`;
+    const res = await fetch(fetchUrl);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("read failed"));
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export function ShareStoryDialog({
   open,
   onClose,
@@ -34,18 +66,61 @@ export function ShareStoryDialog({
   const cardRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportImage, setExportImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setExportImage(null);
+      setError(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const data = await resolveExportImage(imageUrl);
+      if (!cancelled) setExportImage(data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, imageUrl]);
 
   if (!open) return null;
+
+  const previewSrc = imageUrl
+    ? absoluteUrl(imageUrl)
+    : null;
 
   async function download() {
     if (!cardRef.current) return;
     setBusy(true);
     setError(null);
     try {
+      let readyImage = exportImage;
+      if (imageUrl && !readyImage) {
+        readyImage = await resolveExportImage(imageUrl);
+        setExportImage(readyImage);
+        // 等 React 把 data URL 畫進離屏節點
+        await new Promise((r) => setTimeout(r, 120));
+      }
       await new Promise((r) => requestAnimationFrame(() => r(null)));
-      // 多等一點讓頭貼載入
-      await new Promise((r) => setTimeout(r, 120));
-      const dataUrl = await toPng(cardRef.current, {
+
+      const root = cardRef.current;
+      const imgs = Array.from(root.querySelectorAll("img"));
+      await Promise.all(
+        imgs.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) {
+                resolve();
+                return;
+              }
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            }),
+        ),
+      );
+
+      const dataUrl = await toPng(root, {
         width: SHARE_STORY_SIZE.width,
         height: SHARE_STORY_SIZE.height,
         pixelRatio: 1,
@@ -118,20 +193,33 @@ export function ShareStoryDialog({
               transformOrigin: "top left",
             }}
           >
-            <div ref={cardRef}>
-              <ShareStoryCard
-                username={username}
-                prompt={prompt}
-                imageUrl={
-                  imageUrl
-                    ? imageUrl.startsWith("http")
-                      ? imageUrl
-                      : `${typeof window !== "undefined" ? window.location.origin : ""}${imageUrl}`
-                    : null
-                }
-                displayName={displayName}
-              />
-            </div>
+            <ShareStoryCard
+              username={username}
+              prompt={prompt}
+              imageUrl={previewSrc}
+              displayName={displayName}
+            />
+          </div>
+        </div>
+
+        {/* 離屏完整尺寸，供匯出（不受預覽 scale／CORS 影響） */}
+        <div
+          aria-hidden
+          style={{
+            position: "fixed",
+            left: -1400,
+            top: 0,
+            pointerEvents: "none",
+            opacity: 0,
+          }}
+        >
+          <div ref={cardRef}>
+            <ShareStoryCard
+              username={username}
+              prompt={prompt}
+              imageUrl={exportImage || previewSrc}
+              displayName={displayName}
+            />
           </div>
         </div>
 

@@ -139,7 +139,9 @@ export function ShareStoryCard({
                 width={220}
                 height={220}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                crossOrigin="anonymous"
+                {...(imageUrl.startsWith("data:")
+                  ? {}
+                  : { crossOrigin: "anonymous" as const })}
               />
             ) : (
               <span style={{ fontSize: 96, fontWeight: 800, color: "#fff" }}>

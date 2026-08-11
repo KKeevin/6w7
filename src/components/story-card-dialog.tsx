@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { toPng } from "html-to-image";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StoryCard, STORY_CARD_SIZE } from "@/components/story-card";
-import { BRAND } from "@/shared/tools";
-import {
-  fetchAsDataUrl,
-  saveImageHint,
-  saveOrSharePng,
-  waitForImages,
-} from "@/lib/save-image";
+import { renderInboxStoryPng } from "@/lib/render-story-canvas";
+import { saveImageHint, saveOrSharePng } from "@/lib/save-image";
 
 type Props = {
   open: boolean;
@@ -27,62 +21,24 @@ type Props = {
 
 const PREVIEW_SCALE = 0.28;
 
-function brandLogoUrl() {
-  return `${window.location.origin}${BRAND.logoSrc}?v=${BRAND.logoVersion}`;
-}
-
 export function StoryCardDialog({ open, onClose, message }: Props) {
-  const cardRef = useRef<HTMLDivElement>(null);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
-  const [exportLogo, setExportLogo] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) {
-      setExportLogo(null);
-      setError(null);
-      setHint(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const logo = await fetchAsDataUrl(brandLogoUrl());
-      if (!cancelled) setExportLogo(logo);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
 
   if (!open) return null;
 
   async function download() {
-    if (!cardRef.current) return;
     setBusy(true);
     setError(null);
     setHint(null);
     try {
-      let logo = exportLogo;
-      if (!logo) {
-        logo = await fetchAsDataUrl(brandLogoUrl());
-        setExportLogo(logo);
-        await new Promise((r) => setTimeout(r, 160));
-      }
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await waitForImages(cardRef.current);
-
-      const dataUrl = await toPng(cardRef.current, {
-        width: STORY_CARD_SIZE.width,
-        height: STORY_CARD_SIZE.height,
-        pixelRatio: 1,
-        cacheBust: true,
-        skipFonts: true,
-        style: {
-          transform: "none",
-          opacity: "1",
-        },
+      const dataUrl = await renderInboxStoryPng({
+        body: message.body,
+        reply,
+        topic: message.topic,
+        linkTitle: message.link.title,
       });
       const result = await saveOrSharePng(
         dataUrl,
@@ -151,31 +107,6 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
                 reply={reply}
                 topic={message.topic}
                 linkTitle={message.link.title}
-              />
-            </div>
-          </div>
-
-          <div
-            aria-hidden
-            style={{
-              position: "fixed",
-              left: 0,
-              top: 0,
-              width: STORY_CARD_SIZE.width,
-              height: STORY_CARD_SIZE.height,
-              opacity: 0.01,
-              pointerEvents: "none",
-              zIndex: -1,
-              overflow: "hidden",
-            }}
-          >
-            <div ref={cardRef}>
-              <StoryCard
-                body={message.body}
-                reply={reply}
-                topic={message.topic}
-                linkTitle={message.link.title}
-                logoSrc={exportLogo}
               />
             </div>
           </div>

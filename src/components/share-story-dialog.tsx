@@ -1,19 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { toPng } from "html-to-image";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ShareStoryCard,
   SHARE_STORY_SIZE,
 } from "@/components/share-story-card";
-import { BRAND } from "@/shared/tools";
-import {
-  fetchAsDataUrl,
-  saveImageHint,
-  saveOrSharePng,
-  waitForImages,
-} from "@/lib/save-image";
+import { renderShareStoryPng } from "@/lib/render-story-canvas";
+import { saveImageHint, saveOrSharePng } from "@/lib/save-image";
 
 type Props = {
   open: boolean;
@@ -34,10 +28,6 @@ function absoluteUrl(url: string) {
   return `${window.location.origin}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
-function brandLogoUrl() {
-  return `${window.location.origin}${BRAND.logoSrc}?v=${BRAND.logoVersion}`;
-}
-
 export function ShareStoryDialog({
   open,
   onClose,
@@ -48,81 +38,25 @@ export function ShareStoryDialog({
   shortUrl,
   onCopiedLink,
 }: Props) {
-  const cardRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
-  const [exportAvatar, setExportAvatar] = useState<string | null>(null);
-  const [exportLogo, setExportLogo] = useState<string | null>(null);
-  const [assetsReady, setAssetsReady] = useState(false);
-
-  useEffect(() => {
-    if (!open) {
-      setExportAvatar(null);
-      setExportLogo(null);
-      setAssetsReady(false);
-      setError(null);
-      setHint(null);
-      return;
-    }
-
-    let cancelled = false;
-    void (async () => {
-      setAssetsReady(false);
-      const [logo, avatar] = await Promise.all([
-        fetchAsDataUrl(brandLogoUrl()),
-        imageUrl ? fetchAsDataUrl(absoluteUrl(imageUrl)) : Promise.resolve(null),
-      ]);
-      if (cancelled) return;
-      setExportLogo(logo);
-      setExportAvatar(avatar);
-      setAssetsReady(true);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, imageUrl]);
 
   if (!open) return null;
 
   const previewSrc = imageUrl ? absoluteUrl(imageUrl) : null;
 
   async function download() {
-    if (!cardRef.current) return;
     setBusy(true);
     setError(null);
     setHint(null);
     try {
-      // 資產未就緒就再抓一次
-      let logo = exportLogo;
-      let avatar = exportAvatar;
-      if (!assetsReady || !logo) {
-        logo = await fetchAsDataUrl(brandLogoUrl());
-        avatar = imageUrl
-          ? await fetchAsDataUrl(absoluteUrl(imageUrl))
-          : null;
-        setExportLogo(logo);
-        setExportAvatar(avatar);
-        setAssetsReady(true);
-        await new Promise((r) => setTimeout(r, 160));
-      }
-
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await waitForImages(cardRef.current);
-
-      const dataUrl = await toPng(cardRef.current, {
-        width: SHARE_STORY_SIZE.width,
-        height: SHARE_STORY_SIZE.height,
-        pixelRatio: 1,
-        cacheBust: true,
-        // 手機上較穩：不依賴外部字型檔
-        skipFonts: true,
-        style: {
-          // 確保匯出時節點可視尺寸正確
-          transform: "none",
-          opacity: "1",
-        },
+      // Canvas 繪製：避開 iOS html-to-image 不畫 <img> 的問題
+      const dataUrl = await renderShareStoryPng({
+        username,
+        prompt,
+        imageUrl: previewSrc,
+        displayName,
       });
 
       const result = await saveOrSharePng(
@@ -201,35 +135,6 @@ export function ShareStoryDialog({
               prompt={prompt}
               imageUrl={previewSrc}
               displayName={displayName}
-            />
-          </div>
-        </div>
-
-        {/*
-          匯出節點必須在可視繪製流程內（opacity 極低即可）。
-          iOS 對 left:-9999 / opacity:0 常不畫出 <img>。
-        */}
-        <div
-          aria-hidden
-          style={{
-            position: "fixed",
-            left: 0,
-            top: 0,
-            width: SHARE_STORY_SIZE.width,
-            height: SHARE_STORY_SIZE.height,
-            opacity: 0.01,
-            pointerEvents: "none",
-            zIndex: -1,
-            overflow: "hidden",
-          }}
-        >
-          <div ref={cardRef}>
-            <ShareStoryCard
-              username={username}
-              prompt={prompt}
-              imageUrl={exportAvatar || previewSrc}
-              displayName={displayName}
-              logoSrc={exportLogo}
             />
           </div>
         </div>

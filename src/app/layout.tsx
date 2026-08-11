@@ -8,12 +8,16 @@ const display = Syne({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["600", "700", "800"],
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const body = Figtree({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 export const metadata: Metadata = {

@@ -1,5 +1,3 @@
-import fs from "fs/promises";
-import path from "path";
 import {
   DeleteObjectCommand,
   PutObjectCommand,
@@ -12,14 +10,6 @@ export type StorageDriver = "local" | "s3";
 function getDriver(): StorageDriver {
   const d = process.env.STORAGE_DRIVER || "local";
   return d === "s3" ? "s3" : "local";
-}
-
-function localRoot() {
-  // 本機預設寫入 public/uploads，可被靜態提供；正式環境改 S3/R2
-  return (
-    process.env.UPLOAD_ROOT ||
-    path.join(process.cwd(), "public", "uploads")
-  );
 }
 
 /** 正式環境 S3/R2 key：avatars/{userId}/profile.png */
@@ -70,33 +60,11 @@ function getS3Client() {
   return s3Client;
 }
 
-async function ensureUserDir(userId: string) {
-  const dir = path.join(localRoot(), userId);
-  await fs.mkdir(dir, { recursive: true });
-  return dir;
-}
-
-/** 刪除該會員目錄下所有舊頭貼檔（profile.*） */
-async function clearOldAvatarsLocal(userId: string) {
-  const dir = path.join(localRoot(), userId);
-  try {
-    const files = await fs.readdir(dir);
-    await Promise.all(
-      files
-        .filter((f) => /^profile\./i.test(f))
-        .map((f) => fs.unlink(path.join(dir, f)).catch(() => undefined)),
-    );
-  } catch {
-    // 目錄尚不存在
-  }
-}
-
 async function saveAvatarS3(userId: string, png: Buffer) {
   const { bucket } = requireS3Env();
   const client = getS3Client();
   const key = avatarObjectKey(userId);
 
-  // 覆蓋同 key；先刪再寫，避免留下舊 content-type／殘檔
   await client
     .send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
     .catch(() => undefined);
@@ -112,14 +80,6 @@ async function saveAvatarS3(userId: string, png: Buffer) {
   );
 
   return { publicPath: `${avatarPublicUrl(userId)}?v=${Date.now()}` };
-}
-
-async function saveAvatarLocal(userId: string, png: Buffer) {
-  await ensureUserDir(userId);
-  await clearOldAvatarsLocal(userId);
-  const filePath = path.join(localRoot(), userId, "profile.png");
-  await fs.writeFile(filePath, png);
-  return { publicPath: `${avatarPublicPath(userId)}?v=${Date.now()}` };
 }
 
 /**
@@ -140,16 +100,14 @@ export async function saveProfileAvatar(
     return saveAvatarS3(userId, png);
   }
 
+  // 動態載入，避免正式 S3 建置追蹤整個專案檔案系統
+  const { saveAvatarLocal } = await import("./avatar-local");
   return saveAvatarLocal(userId, png);
 }
 
 export async function readLocalAvatar(
   userId: string,
 ): Promise<Buffer | null> {
-  const filePath = path.join(localRoot(), userId, "profile.png");
-  try {
-    return await fs.readFile(filePath);
-  } catch {
-    return null;
-  }
+  const { readLocalAvatarFile } = await import("./avatar-local");
+  return readLocalAvatarFile(userId);
 }

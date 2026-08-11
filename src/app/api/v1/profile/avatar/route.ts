@@ -32,7 +32,15 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const { publicPath } = await saveProfileAvatar(userId, buffer);
+    let publicPath: string;
+    try {
+      ({ publicPath } = await saveProfileAvatar(userId, buffer));
+    } catch (storageError) {
+      console.error("avatar storage failed", storageError);
+      const detail =
+        storageError instanceof Error ? storageError.message : "unknown";
+      throw new AppError("INTERNAL", `頭貼上傳失敗：${detail}`, 500);
+    }
     const user = await setUserImage(userId, publicPath.split("?")[0]!);
     return jsonOk({
       user: { ...user, image: publicPath },

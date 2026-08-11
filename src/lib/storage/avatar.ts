@@ -7,8 +7,12 @@ import sharp from "sharp";
 
 export type StorageDriver = "local" | "s3";
 
+function env(name: string) {
+  return process.env[name]?.trim().replace(/^["']|["']$/g, "") || undefined;
+}
+
 function getDriver(): StorageDriver {
-  const d = process.env.STORAGE_DRIVER || "local";
+  const d = env("STORAGE_DRIVER") || "local";
   return d === "s3" ? "s3" : "local";
 }
 
@@ -22,7 +26,7 @@ export function avatarPublicPath(userId: string) {
 }
 
 function s3PublicBaseUrl() {
-  const base = process.env.S3_PUBLIC_BASE_URL?.replace(/\/$/, "");
+  const base = env("S3_PUBLIC_BASE_URL")?.replace(/\/$/, "");
   if (!base) {
     throw new Error("S3_PUBLIC_BASE_URL 未設定（R2／S3 公開讀取網址）");
   }
@@ -34,10 +38,10 @@ export function avatarPublicUrl(userId: string) {
 }
 
 function requireS3Env() {
-  const bucket = process.env.S3_BUCKET;
-  const endpoint = process.env.S3_ENDPOINT;
-  const accessKeyId = process.env.S3_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
+  const bucket = env("S3_BUCKET");
+  const endpoint = env("S3_ENDPOINT");
+  const accessKeyId = env("S3_ACCESS_KEY_ID");
+  const secretAccessKey = env("S3_SECRET_ACCESS_KEY");
   if (!bucket || !endpoint || !accessKeyId || !secretAccessKey) {
     throw new Error(
       "S3／R2 環境變數不完整（需 S3_BUCKET、S3_ENDPOINT、S3_ACCESS_KEY_ID、S3_SECRET_ACCESS_KEY）",
@@ -52,10 +56,13 @@ function getS3Client() {
   if (s3Client) return s3Client;
   const { endpoint, accessKeyId, secretAccessKey } = requireS3Env();
   s3Client = new S3Client({
-    region: process.env.S3_REGION || "auto",
+    region: env("S3_REGION") || "auto",
     endpoint,
     credentials: { accessKeyId, secretAccessKey },
     forcePathStyle: true,
+    // R2 與較新 AWS SDK 預設校驗和不兼容
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   });
   return s3Client;
 }
@@ -93,7 +100,7 @@ export async function saveProfileAvatar(
   const png = await sharp(input)
     .rotate()
     .resize(512, 512, { fit: "cover", position: "center" })
-    .png({ quality: 90 })
+    .png({ compressionLevel: 8 })
     .toBuffer();
 
   if (getDriver() === "s3") {

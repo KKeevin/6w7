@@ -5,7 +5,11 @@
 
 **網域：** https://6w7.link  
 **資料庫：** PostgreSQL（本機可用 Neon 開發分支或 Docker）  
-**正式環境：** Vercel + Neon + Upstash Redis + Cloudflare R2
+**正式環境：** Vercel + Neon + Upstash Redis + Cloudflare R2  
+
+**基礎設施步驟／資源清單（Neon、Upstash、R2、Vercel、GitHub、金鑰放哪）：**  
+→ 請看 [`docs/INFRA-SETUP.md`](./docs/INFRA-SETUP.md)  
+（真實密鑰請填本機 `docs/SECRETS.local.md`，範本：[`docs/SECRETS.local.example.md`](./docs/SECRETS.local.example.md)，勿提交 Git）
 
 ---
 
@@ -113,6 +117,9 @@ npm run db:generate  # 重產 Prisma Client（postinstall 通常已跑）
 
 ## 正式部署（Vercel 棧）
 
+> **完整操作紀錄與踩坑：** [`docs/INFRA-SETUP.md`](./docs/INFRA-SETUP.md)  
+> 下列為精簡版；細節、資源名稱、金鑰對照以該檔為準。
+
 目標架構：
 
 ```
@@ -127,6 +134,7 @@ DNS：6w7.link → Vercel
 1. 至 [neon.tech](https://neon.tech) 建立專案（可另開 `dev` branch 給本機）。
 2. 複製 **pooled** connection string（含 `sslmode=require`）。
 3. 本機 `.env` 與 Vercel Production 皆設 `DATABASE_URL`。
+4. Schema 變更後在本機跑 `npm run db:deploy`（**不要**依賴 Vercel build 跑 migrate）。
 
 ### 2. Upstash Redis
 
@@ -138,8 +146,8 @@ DNS：6w7.link → Vercel
 ### 3. Cloudflare R2（頭貼）
 
 1. Cloudflare → R2 → 建立 bucket（例：`6w7-avatars`）。
-2. 建立 API Token（Object Read & Write）。
-3. 開啟公開讀取：自訂網域（建議 `cdn.6w7.link`）或 r2.dev 公開網址。
+2. 建立 S3 API Key；正式另建議 **Account API Token（`cfat_`）** 給 `CLOUDFLARE_API_TOKEN`。
+3. 開啟公開讀取：r2.dev 或自訂網域（建議之後 `cdn.6w7.link`）。
 4. Vercel／正式 env：
 
 ```env
@@ -149,7 +157,9 @@ S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
 S3_ACCESS_KEY_ID=...
 S3_SECRET_ACCESS_KEY=...
 S3_REGION=auto
-S3_PUBLIC_BASE_URL=https://cdn.6w7.link
+S3_PUBLIC_BASE_URL=https://pub-xxxx.r2.dev
+CLOUDFLARE_API_TOKEN=...
+CLOUDFLARE_ACCOUNT_ID=...
 ```
 
 物件 key：`avatars/{userId}/profile.png`。本機可維持 `STORAGE_DRIVER=local`。
@@ -168,19 +178,21 @@ AUTH_URL=https://6w7.link
 NEXT_PUBLIC_SITE_URL=https://6w7.link
 ```
 
+（尚未綁網域前可用 `https://6w7.vercel.app`。）
+
 ### 5. Vercel 專案
 
 1. 推送 repo 至 GitHub → [vercel.com](https://vercel.com) Import。
 2. Framework：Next.js；Node **≥ 20**。
-3. Build Command 預設會跑 `npm run build`（內含 `prisma migrate deploy && next build`）。
+3. Build：`npm run build`（`prisma generate && next build`）。
 4. 於 Project → Settings → Environment Variables 填入正式變數（Production）。
-5. Deploy；確認 build log 中 migrate 成功。
+5. Deploy。
 
 ### 6. 網域 `6w7.link`
 
 1. Vercel Project → Domains → 新增 `6w7.link`（與可選 `www`）。
 2. 於網域註冊商依 Vercel 指示設定 A／CNAME。
-3. 等待 SSL 簽發完成後再對外分享連結。
+3. 等待 SSL 簽發；更新 `AUTH_URL`／`NEXT_PUBLIC_SITE_URL` 後 Redeploy。
 
 ### 7. 上線煙測清單
 
@@ -200,12 +212,14 @@ NEXT_PUBLIC_SITE_URL=https://6w7.link
 |------|------|
 | `DATABASE_URL` | Neon Postgres |
 | `AUTH_SECRET` | Auth.js 密鑰 |
-| `AUTH_URL` | `https://6w7.link` |
-| `NEXT_PUBLIC_SITE_URL` | `https://6w7.link` |
+| `AUTH_URL` | 正式站台 URL |
+| `NEXT_PUBLIC_SITE_URL` | 正式站台 URL |
 | `FINGERPRINT_SALT` | 指紋雜湊鹽 |
 | `UPSTASH_REDIS_REST_URL` / `TOKEN` | 限流 |
 | `STORAGE_DRIVER` | 正式=`s3` |
-| `S3_BUCKET` / `ENDPOINT` / keys / `S3_PUBLIC_BASE_URL` | R2 |
+| `S3_*`／`CLOUDFLARE_*` | R2 頭貼 |
+
+完整對照與踩坑見 [`docs/INFRA-SETUP.md`](./docs/INFRA-SETUP.md)。
 
 ---
 

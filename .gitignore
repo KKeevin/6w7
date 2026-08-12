@@ -21,6 +21,7 @@ dist/
 .env.*
 !.env.example
 Neon.txt
+docs/SECRETS.local.md
 *.secrets.txt
 
 # —— 本機資料庫殘留（舊 SQLite；現已改 Postgres）——

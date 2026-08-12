@@ -256,11 +256,12 @@ export async function renderShareStoryPng(
   ctx.fillText(cta, avatarCx, ctaY + ctaH / 2);
   ctx.textBaseline = "alphabetic";
 
-  // 連結貼紙虛線框
+  // 連結貼紙虛線框（略矮、略往上，底下留給品牌腳）
   const boxW = 520;
-  const boxH = 200;
+  const boxH = 132;
   const boxX = (W - boxW) / 2;
-  const boxY = H - 80 - 64 - 20 - boxH;
+  // 比舊版再往上：加大與底部品牌的間距
+  const boxY = H - 80 - 220 - boxH;
   ctx.setLineDash([14, 12]);
   ctx.strokeStyle = "rgba(255,248,246,0.35)";
   ctx.lineWidth = 3;

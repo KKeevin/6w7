@@ -193,18 +193,21 @@ export function ShareStoryCard({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 20,
+            gap: 28,
+            // 整塊略往上，底下多留一點給品牌腳
+            marginBottom: 28,
           }}
         >
           <div
             style={{
               width: 520,
               maxWidth: "100%",
-              minHeight: 200,
+              minHeight: 132,
+              height: 132,
               borderRadius: 24,
               border: "3px dashed rgba(255,248,246,0.35)",
               backgroundColor: "rgba(255,248,246,0.06)",
-              padding: "44px 28px",
+              padding: "20px 28px",
               textAlign: "center" as const,
               display: "flex",
               flexDirection: "column",

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { BrandLogo } from "@/components/brand-logo";
-import { LoginForm } from "@/components/login-form";
+import { HomeAuthPanel } from "@/components/home-auth-panel";
 import { BRAND } from "@/shared/tools";
 
 export const metadata: Metadata = {
@@ -44,39 +43,11 @@ export default async function HomePage() {
       {/* 右側登入／註冊 */}
       <section className="flex flex-1 items-start justify-center px-4 pt-4 pb-8 sm:px-8 sm:pt-5 lg:w-[44%] lg:flex-none lg:items-center lg:bg-white lg:px-10 lg:py-6 lg:shadow-[-12px_0_32px_rgba(20,33,43,0.04)]">
         <div className="w-full max-w-[380px] rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm sm:p-7 lg:border-0 lg:p-0 lg:shadow-none">
-          <h2 className="text-xl font-bold text-[var(--ink)]">
-            開始使用 {BRAND.en}
-          </h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            用 IG 帳號註冊，馬上拿到專屬連結。
-          </p>
-          <div className="mt-5">
-            <Suspense
-              fallback={
-                <p className="text-sm text-[var(--muted)]">載入中…</p>
-              }
-            >
-              <LoginForm
-                defaultMode="register"
-                redirectTo="/dashboard"
-                compact
-              />
-            </Suspense>
-          </div>
-          <p className="mt-5 text-center text-[11px] leading-relaxed text-[var(--muted)]">
-            繼續即表示你同意{" "}
-            <Link href="/legal/terms" className="underline hover:text-[var(--ink)]">
-              服務條款
-            </Link>{" "}
-            與{" "}
-            <Link
-              href="/legal/privacy"
-              className="underline hover:text-[var(--ink)]"
-            >
-              隱私權政策
-            </Link>
-            。
-          </p>
+          <Suspense
+            fallback={<p className="text-sm text-[var(--muted)]">載入中…</p>}
+          >
+            <HomeAuthPanel />
+          </Suspense>
         </div>
       </section>
     </main>

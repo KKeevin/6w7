@@ -42,9 +42,7 @@ export default async function SettingsPage() {
   const fullUrl = profile.link.url.startsWith("http")
     ? profile.link.url
     : `https://${shortUrl}`;
-  const imageSrc = profile.user.image
-    ? `${profile.user.image}${profile.user.image.includes("?") ? "" : `?v=${profile.user.id}`}`
-    : null;
+  const imageSrc = profile.user.image || null;
   const accepting = profile.link.acceptingMessages;
 
   return (

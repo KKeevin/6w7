@@ -68,10 +68,9 @@ export async function POST(request: Request) {
         storageError instanceof Error ? storageError.message : "unknown";
       throw new AppError("INTERNAL", `頭貼上傳失敗：${detail}`, 500);
     }
-    const user = await setUserImage(userId, publicPath.split("?")[0]!);
-    return jsonOk({
-      user: { ...user, image: publicPath },
-    });
+    // 必須保留 ?v=時間戳 寫入 DB，否則各裝置會共用無版本 URL 而卡在舊快取
+    const user = await setUserImage(userId, publicPath);
+    return jsonOk({ user });
   } catch (error) {
     return jsonError(error);
   }

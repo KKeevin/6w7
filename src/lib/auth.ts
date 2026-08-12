@@ -68,11 +68,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.sub && !token.username) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { username: true, image: true, name: true },
+          select: { username: true, image: true, name: true, updatedAt: true },
         });
         if (dbUser) {
           token.username = dbUser.username;
-          token.picture = dbUser.image;
+          const { avatarDisplayUrl } = await import("@/shared/avatar-url");
+          token.picture = avatarDisplayUrl(dbUser.image, dbUser.updatedAt);
           token.name = dbUser.name;
         }
       }

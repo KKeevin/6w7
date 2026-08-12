@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { asTopicList } from "@/lib/topics";
 import { AppError } from "@/shared/errors";
+import { avatarDisplayUrl } from "@/shared/avatar-url";
 import { askLinkUrl } from "@/lib/utils";
 import type { z } from "zod";
 import type {
@@ -46,6 +47,7 @@ export async function registerUser(input: z.infer<typeof registerSchema>) {
       username: true,
       name: true,
       image: true,
+      updatedAt: true,
       askLink: true,
     },
   });
@@ -55,7 +57,7 @@ export async function registerUser(input: z.infer<typeof registerSchema>) {
       id: user.id,
       username: user.username,
       name: user.name,
-      image: user.image,
+      image: avatarDisplayUrl(user.image, user.updatedAt),
     },
     link: user.askLink ? serializeLink(user.askLink) : null,
   };
@@ -74,7 +76,7 @@ export async function getProfileForOwner(userId: string) {
       id: user.id,
       username: user.username,
       name: user.name,
-      image: user.image,
+      image: avatarDisplayUrl(user.image, user.updatedAt),
     },
     link: serializeLink(user.askLink),
   };
@@ -104,18 +106,31 @@ export async function updateProfile(
 }
 
 export async function setUserImage(userId: string, imagePath: string) {
-  return prisma.user.update({
+  const user = await prisma.user.update({
     where: { id: userId },
     data: { image: imagePath },
-    select: { id: true, username: true, image: true },
+    select: { id: true, username: true, image: true, updatedAt: true },
   });
+  return {
+    id: user.id,
+    username: user.username,
+    image: avatarDisplayUrl(user.image, user.updatedAt),
+  };
 }
 
 export async function getPublicAskLink(slug: string) {
   const link = await prisma.askLink.findUnique({
     where: { slug: slug.toLowerCase() },
     include: {
-      user: { select: { name: true, image: true, username: true, status: true } },
+      user: {
+        select: {
+          name: true,
+          image: true,
+          username: true,
+          status: true,
+          updatedAt: true,
+        },
+      },
     },
   });
   if (!link || !link.isActive || link.user.status !== "active") {
@@ -128,7 +143,7 @@ export async function getPublicAskLink(slug: string) {
     acceptingMessages: link.acceptingMessages,
     requireTopic: link.requireTopic,
     topics: asTopicList(link.topics),
-    image: link.user.image,
+    image: avatarDisplayUrl(link.user.image, link.user.updatedAt),
     displayName: link.user.name || link.user.username,
   };
 }

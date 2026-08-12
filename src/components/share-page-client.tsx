@@ -230,9 +230,7 @@ export function SharePageClient() {
     );
   }
 
-  const imageSrc = profile.user.image
-    ? `${profile.user.image}${profile.user.image.includes("?") ? "" : `?v=${profile.user.id}`}`
-    : null;
+  const imageSrc = profile.user.image || null;
   const shortUrl = profile.link.url.replace(/^https?:\/\//, "");
   const accepting = profile.link.acceptingMessages;
 

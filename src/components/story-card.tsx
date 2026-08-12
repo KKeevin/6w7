@@ -94,9 +94,6 @@ export function StoryCard({
             width={220}
             height={90}
             style={{ height: 56, width: "auto", objectFit: "contain" }}
-            {...(resolvedLogo.startsWith("data:")
-              ? {}
-              : { crossOrigin: "anonymous" as const })}
           />
         </div>
 
@@ -252,9 +249,6 @@ export function StoryCard({
                 objectFit: "contain",
                 margin: "0 auto",
               }}
-              {...(resolvedLogo.startsWith("data:")
-                ? {}
-                : { crossOrigin: "anonymous" as const })}
             />
             <div
               style={{

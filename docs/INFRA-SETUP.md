@@ -179,6 +179,14 @@ CLOUDFLARE_ACCOUNT_ID=<ACCOUNT_ID>
 - `S3_PUBLIC_BASE_URL` 必須是 **`https://…` 開頭、不要尾隨 `/`**  
 - 物件 key：`avatars/{userId}/profile.png`  
 - 顯示時會加 `?v=時間戳／updatedAt` 破快取（同一檔名覆蓋時瀏覽器才不會卡舊圖）  
+- **建議自訂網域**（較好看）：`https://cdn.6w7.link`  
+  1. Cloudflare → **R2** → bucket `6w7-avatars` → **Settings** → **Custom Domains** → Connect Domain  
+  2. 填 `cdn.6w7.link`（網域已在同一 Cloudflare 帳號時會自動加 CNAME）  
+  3. 等 Status 變 Active／SSL 就緒  
+  4. Vercel／本機把 `S3_PUBLIC_BASE_URL` 改成 `https://cdn.6w7.link`（勿尾隨 `/`）  
+  5. Redeploy；程式會把舊的 `*.r2.dev/avatars/…` 顯示時改寫到新網域  
+
+舊的 `https://pub-xxxx.r2.dev` 可暫時保留當備用，新上傳會用新網域。
 
 ### 本機開發
 

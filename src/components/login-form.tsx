@@ -1,39 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  markDeviceHasAccount,
+  resolveAuthMode,
+} from "@/lib/device-auth-hint";
+
+type AuthMode = "login" | "register";
 
 type Props = {
-  defaultMode?: "login" | "register";
+  /** 無法從本機紀錄判斷時的後備（新裝置多半 register） */
+  defaultMode?: AuthMode;
   redirectTo?: string;
   /** 落地頁一屏排版用，縮小間距 */
   compact?: boolean;
+  onModeChange?: (mode: AuthMode) => void;
 };
 
 export function LoginForm({
-  defaultMode = "login",
+  defaultMode = "register",
   redirectTo,
   compact = false,
+  onModeChange,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const modeParam = searchParams.get("mode");
   const next = redirectTo || searchParams.get("next") || "/dashboard";
 
-  const initialMode: "login" | "register" =
-    modeParam === "register" || modeParam === "login"
+  // 首屏先用 URL／後備，mount 後再依 localStorage 調整（避免 hydration 不一致）
+  const [mode, setMode] = useState<AuthMode>(() =>
+    modeParam === "login" || modeParam === "register"
       ? modeParam
-      : defaultMode;
-
-  const [mode, setMode] = useState<"login" | "register">(initialMode);
+      : defaultMode,
+  );
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const resolved = resolveAuthMode({ modeParam, defaultMode });
+    setMode(resolved);
+    onModeChange?.(resolved);
+    // 僅在進入頁面／URL mode 改變時解析一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 刻意不依 onModeChange
+  }, [modeParam, defaultMode]);
+
+  function switchMode(nextMode: AuthMode) {
+    setMode(nextMode);
+    setError(null);
+    onModeChange?.(nextMode);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +87,7 @@ export function LoginForm({
             : "註冊成功但登入失敗，請再試一次",
         );
       }
+      markDeviceHasAccount();
       router.push(next);
       router.refresh();
     } catch (err) {
@@ -92,7 +116,7 @@ export function LoginForm({
             maxLength={30}
           />
         </div>
-        {!compact && (
+        {!compact && mode === "register" && (
           <p className="mt-1 text-xs text-[var(--muted)]">
             專屬連結會是 6w7.link/{username || "your.ig.id"}
           </p>
@@ -121,10 +145,7 @@ export function LoginForm({
       <button
         type="button"
         className="w-full text-center text-sm text-[var(--muted)] hover:text-[var(--ink)]"
-        onClick={() => {
-          setMode(mode === "login" ? "register" : "login");
-          setError(null);
-        }}
+        onClick={() => switchMode(mode === "login" ? "register" : "login")}
       >
         {mode === "login" ? "還沒有帳號？註冊" : "已有帳號？登入"}
       </button>

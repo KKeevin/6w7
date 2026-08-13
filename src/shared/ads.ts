@@ -12,6 +12,12 @@ export const ADS = {
   slotMobile: process.env.NEXT_PUBLIC_ADSENSE_SLOT_MOBILE?.trim() || "",
 } as const;
 
+/** 有發布商 ID 即可載入驗證／廣告腳本（不必等版位 slot） */
+export function adsClientReady() {
+  return Boolean(ADS.client);
+}
+
+/** 開關開啟且有 client：顯示版位（有 slot 才播真廣告） */
 export function adsReady() {
   return Boolean(ADS.enabled && ADS.client);
 }

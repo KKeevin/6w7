@@ -98,7 +98,7 @@
 |------|--------|
 | AI 產圖／換臉 | 外部 API（Replicate／自架 GPU）、佇列（Inngest／BullMQ）、物件儲存（S3／R2） |
 | 即時通知 | Web Push、Expo Push、可選 SSE／WebSocket |
-| 分析 | Privacy-friendly analytics（避免亂塞一堆追蹤） |
+| 分析 | **Vercel Analytics**（`@vercel/analytics`，根 layout；隱私友善、勿再亂塞追蹤） |
 | 廣告收益 | 公開頁可選 Google AdSense（左右欄＋行動下方）；見 `NEXT_PUBLIC_ADS_*` |
 | 郵件／通知 | Resend 等 |
 | 監控 | Sentry |

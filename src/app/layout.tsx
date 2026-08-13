@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Figtree, Syne } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AdSenseScript } from "@/components/ads/adsense-script";
 import { BRAND } from "@/shared/tools";
 import "./globals.css";
@@ -58,6 +59,7 @@ export default function RootLayout({
         <AdSenseScript />
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

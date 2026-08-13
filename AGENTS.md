@@ -101,7 +101,7 @@
 | 分析 | **Vercel Analytics**（`@vercel/analytics`，根 layout；隱私友善、勿再亂塞追蹤） |
 | 廣告收益 | 公開頁可選 Google AdSense（左右欄＋行動下方）；見 `NEXT_PUBLIC_ADS_*` |
 | 郵件／通知 | Resend 等 |
-| 監控 | Sentry |
+| 監控 | **Vercel Speed Insights**（`@vercel/speed-insights`，根 layout）；Sentry 可之後再加 |
 | Monorepo | pnpm workspace：`apps/web`、`apps/mobile`、`packages/*` |
 | 獨立 API | 當流量或 AI worker 變重時，再拆 Node／Python worker |
 

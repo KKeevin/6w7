@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getViewer } from "@/lib/viewer";
 import { BrandLogo } from "@/components/brand-logo";
 import { LoginPageClient } from "@/components/login-page-client";
 
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage() {
-  const session = await auth();
-  if (session?.user) {
+  const viewer = await getViewer();
+  if (viewer.kind === "user") {
     redirect("/dashboard");
   }
 

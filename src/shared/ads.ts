@@ -6,7 +6,7 @@ export const ADS = {
   enabled: process.env.NEXT_PUBLIC_ADS_ENABLED === "true",
   /** ca-pub-xxxxxxxx */
   client: process.env.NEXT_PUBLIC_ADSENSE_CLIENT?.trim() || "",
-  /** 桌機左右直式／長方形 */
+  /** 桌機右側直式（上、下各一格） */
   slotSide: process.env.NEXT_PUBLIC_ADSENSE_SLOT_SIDE?.trim() || "",
   /** 行動／窄螢幕（內容下方） */
   slotMobile: process.env.NEXT_PUBLIC_ADSENSE_SLOT_MOBILE?.trim() || "",

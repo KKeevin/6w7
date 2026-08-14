@@ -23,6 +23,10 @@ function serializeLink<T extends { topics: unknown; slug: string }>(link: T) {
 
 export async function registerUser(input: z.infer<typeof registerSchema>) {
   const username = input.username;
+  const { DEMO_PROFILE } = await import("@/shared/demo-account");
+  if (username === DEMO_PROFILE.username) {
+    throw new AppError("CONFLICT", "這個 IG 帳號已被註冊。", 409);
+  }
   const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) {
     throw new AppError("CONFLICT", "這個 IG 帳號已被註冊。", 409);

@@ -37,6 +37,8 @@ model User {
   passwordHash  String?
   status        UserStatus @default(active)
   role          UserRole   @default(user)
+  /// 公開示範帳號（真實 User，可登入／登出；全站可辨識）
+  isDemo        Boolean    @default(false)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 

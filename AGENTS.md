@@ -3,7 +3,7 @@
 > **給之後所有 AI／開發者：** 開專案、寫功能、重構、加工具前，**必須先讀完本檔並遵守**。  
 > 本檔是單一真相來源（source of truth）。若實作與本檔衝突，以本檔為準；若要改規格，先更新本檔再改程式。
 
-**最後更新：** 2026-08-11（正式部署：Postgres／R2／Vercel）  
+**最後更新：** 2026-08-14（公開示範帳號／AdSense 內容頁）  
 **網域：** https://6w7.link  
 **品牌英文：** 6w7  
 **品牌中文：** 樂玩ㄑ  
@@ -99,7 +99,7 @@
 | AI 產圖／換臉 | 外部 API（Replicate／自架 GPU）、佇列（Inngest／BullMQ）、物件儲存（S3／R2） |
 | 即時通知 | Web Push、Expo Push、可選 SSE／WebSocket |
 | 分析 | **Vercel Analytics**（`@vercel/analytics`，根 layout；隱私友善、勿再亂塞追蹤） |
-| 廣告收益 | 公開頁可選 Google AdSense（左右欄＋行動下方）；見 `NEXT_PUBLIC_ADS_*` |
+| 廣告收益 | 僅有原創說明的頁可放 AdSense：`/about`、`/legal/privacy`、`/legal/terms`、帶說明的 `/{slug}`、示範帳號與正式登入後的 dashboard／inbox。**禁止**登入／註冊／settings／404。見 `NEXT_PUBLIC_ADS_*`；AdSense 後台須關閉自動廣告 |
 | 郵件／通知 | Resend 等 |
 | 監控 | **Vercel Speed Insights**（`@vercel/speed-insights`，根 layout）；Sentry 可之後再加 |
 | Monorepo | pnpm workspace：`apps/web`、`apps/mobile`、`packages/*` |
@@ -147,6 +147,7 @@ AI 搭骨架時請朝此結構靠攏（可微調，但意圖不變）：
 | `/settings` | 帳號與安全 | 建議 |
 | `/tools/face` 等 | AI 換臉等 | **未上線前不出現在 UI**；僅程式內占位可保留 |
 | `/legal/privacy` `/legal/terms` | 隱私權／條款 | 必做（可先簡版） |
+| `/demo` | 進入後以真實 User `@lewanq`（`isDemo`）登入，走正式 `/dashboard` `/inbox` `/settings` `/lewanq`；可登出 | 示範帳號 |
 
 短連結對外以 **`https://6w7.link/...`** 為準。
 

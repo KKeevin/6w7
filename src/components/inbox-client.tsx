@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { StoryCardDialog } from "@/components/story-card-dialog";
 import { useNotifications } from "@/components/notifications/notification-provider";
 
-type Message = {
+export type InboxMessage = {
   id: string;
   body: string;
   topic: string | null;
@@ -17,13 +18,20 @@ type Message = {
   link: { id: string; slug: string; title: string };
 };
 
+type Message = InboxMessage;
+
 type Filter = "all" | "unread" | "featured" | "archived";
 
-export function InboxClient() {
+export function InboxClient({
+  demoMessages,
+}: {
+  demoMessages?: InboxMessage[];
+}) {
+  const demo = Boolean(demoMessages?.length);
   const { refresh: refreshNotifications } = useNotifications();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(demoMessages ?? []);
   const [filter, setFilter] = useState<Filter>("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!demo);
   const [error, setError] = useState<string | null>(null);
   const [storyMessage, setStoryMessage] = useState<Message | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -32,6 +40,20 @@ export function InboxClient() {
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
   async function load(nextFilter = filter, opts?: { quiet?: boolean }) {
+    if (demo) {
+      const source = demoMessages ?? [];
+      const next =
+        nextFilter === "unread"
+          ? source.filter((m) => !m.isRead && !m.isArchived)
+          : nextFilter === "featured"
+            ? source.filter((m) => m.isFeatured)
+            : nextFilter === "archived"
+              ? source.filter((m) => m.isArchived)
+              : source.filter((m) => !m.isArchived);
+      setMessages(next);
+      setLoading(false);
+      return;
+    }
     if (!opts?.quiet) setLoading(true);
     setError(null);
     try {
@@ -67,6 +89,7 @@ export function InboxClient() {
   }, [loading, highlightId, messages]);
 
   async function patch(id: string, body: Record<string, unknown>) {
+    if (demo) return false;
     const res = await fetch(`/api/v1/messages/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -93,7 +116,7 @@ export function InboxClient() {
 
   async function openMessage(m: Message) {
     setSelectedId(m.id);
-    if (m.isRead || openingId === m.id) return;
+    if (demo || m.isRead || openingId === m.id) return;
     setOpeningId(m.id);
     try {
       await patch(m.id, { isRead: true });
@@ -125,6 +148,7 @@ export function InboxClient() {
   }
 
   async function remove(id: string) {
+    if (demo) return;
     const res = await fetch(`/api/v1/messages/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
@@ -137,6 +161,7 @@ export function InboxClient() {
   }
 
   async function report(id: string) {
+    if (demo) return;
     const reason = window.prompt("請簡述檢舉原因");
     if (!reason) return;
     const res = await fetch(`/api/v1/messages/${id}/report`, {
@@ -246,8 +271,12 @@ export function InboxClient() {
                   />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-start justify-between gap-3">
-                      {m.isRead ? (
-                        <span className="line-clamp-2 text-[15px] font-medium leading-snug text-[var(--ink)]">
+                      {demo || m.isRead ? (
+                        <span
+                          className={`text-[15px] font-medium leading-snug text-[var(--ink)] ${
+                            demo ? "" : "line-clamp-2"
+                          }`}
+                        >
                           {m.body}
                         </span>
                       ) : (
@@ -345,6 +374,16 @@ export function InboxClient() {
             <p className="mt-5 whitespace-pre-wrap text-lg font-medium leading-relaxed text-[var(--ink)]">
               {selected.body}
             </p>
+            {demo ? (
+              <p className="mt-3 text-sm">
+                <Link
+                  href={`/inbox/${selected.id}`}
+                  className="font-semibold text-[var(--mint)] hover:underline"
+                >
+                  開獨立頁（給搜尋引擎索引）→
+                </Link>
+              </p>
+            ) : null}
 
             <div className="mt-6 flex flex-wrap gap-2 border-t border-[var(--line)] pt-4">
               <Button
@@ -354,6 +393,8 @@ export function InboxClient() {
               >
                 限動圖卡
               </Button>
+              {demo ? null : (
+                <>
               <Button
                 size="sm"
                 variant="outline"
@@ -382,6 +423,8 @@ export function InboxClient() {
               >
                 刪除
               </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

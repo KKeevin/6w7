@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth, signOut } from "@/lib/auth";
-import { AdRailLayout } from "@/components/ads/ad-rail-layout";
+import { signOut } from "@/lib/auth";
+import { getViewer } from "@/lib/viewer";
 import { Button } from "@/components/ui/button";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { getProfileForOwner } from "@/services/ask-link.service";
@@ -31,12 +31,12 @@ function UserIcon({ className }: { className?: string }) {
 }
 
 export default async function SettingsPage() {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const viewer = await getViewer();
+  if (viewer.kind === "guest") {
     redirect("/login?next=/settings");
   }
 
-  const profile = await getProfileForOwner(session.user.id);
+  const profile = await getProfileForOwner(viewer.user.id);
   const username = profile.user.username;
   const shortUrl = profile.link.url.replace(/^https?:\/\//, "");
   const fullUrl = profile.link.url.startsWith("http")
@@ -44,18 +44,17 @@ export default async function SettingsPage() {
     : `https://${shortUrl}`;
   const imageSrc = profile.user.image || null;
   const accepting = profile.link.acceptingMessages;
+  const demo = viewer.kind === "demo";
 
   return (
     <main className="bg-atmosphere flex flex-1 flex-col py-8 sm:py-10 lg:py-12">
-      <AdRailLayout width="narrow" rails="right">
-        <div className={`${SHELL_CONTENT} w-full`}>
+      <div className={`${SHELL_CONTENT} w-full`}>
         <header className="mb-6 sm:mb-8">
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight lg:text-4xl">
             帳號設定
           </h1>
         </header>
 
-        {/* 個人名片 */}
         <section className="overflow-hidden rounded-3xl border border-[var(--line)] bg-white shadow-[0_16px_40px_rgba(20,33,43,0.06)]">
           <div className="bg-atmosphere px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
             <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left sm:gap-5 lg:gap-6">
@@ -79,6 +78,7 @@ export default async function SettingsPage() {
                 </p>
                 <p className="mt-1 text-sm text-[var(--muted)] lg:text-base">
                   {accepting ? "目前開放收件" : "已暫停收件"}
+                  {demo ? " · 示範帳號" : ""}
                 </p>
                 <Link
                   href="/dashboard"
@@ -134,11 +134,14 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        {/* 登出 */}
         <section className="mt-6 rounded-2xl border border-[var(--line)] bg-white px-5 py-5 sm:px-8">
-          <p className="text-sm font-semibold text-[var(--ink)]">登出此裝置</p>
+          <p className="text-sm font-semibold text-[var(--ink)]">
+            {demo ? "登出示範帳號" : "登出此裝置"}
+          </p>
           <p className="mt-1 text-xs text-[var(--muted)]">
-            登出後要再使用短網址與收件匣，需重新登入。
+            {demo
+              ? "登出後會回到首頁。這是公開示範帳號，其他人也可以再登入來看。"
+              : "登出後要再使用短網址與收件匣，需重新登入。"}
           </p>
           <form
             className="mt-4"
@@ -152,8 +155,7 @@ export default async function SettingsPage() {
             </Button>
           </form>
         </section>
-        </div>
-      </AdRailLayout>
+      </div>
     </main>
   );
 }

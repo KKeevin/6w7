@@ -37,6 +37,7 @@ const providers: Provider[] = [
         name: user.name ?? user.username,
         image: user.image,
         username: user.username,
+        isDemo: user.isDemo,
       };
     },
   }),
@@ -62,19 +63,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        const u = user as { username?: string };
+        const u = user as { username?: string; isDemo?: boolean };
         if (u.username) token.username = u.username;
+        token.isDemo = Boolean(u.isDemo);
       }
-      if (token.sub && !token.username) {
+      if (token.sub && (!token.username || token.isDemo === undefined)) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { username: true, image: true, name: true, updatedAt: true },
+          select: {
+            username: true,
+            image: true,
+            name: true,
+            updatedAt: true,
+            isDemo: true,
+          },
         });
         if (dbUser) {
           token.username = dbUser.username;
           const { avatarDisplayUrl } = await import("@/shared/avatar-url");
           token.picture = avatarDisplayUrl(dbUser.image, dbUser.updatedAt);
           token.name = dbUser.name;
+          token.isDemo = dbUser.isDemo;
         }
       }
       return token;
@@ -83,6 +92,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token.sub) {
         session.user.id = token.sub;
         session.user.username = (token.username as string) || "";
+        session.user.isDemo = Boolean(token.isDemo);
         if (token.picture) session.user.image = token.picture as string;
       }
       return session;

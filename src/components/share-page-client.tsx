@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ASK_LIMITS, BRAND } from "@/shared/tools";
+import { getDemoShareProfile } from "@/shared/demo-account";
 
 type Profile = {
   user: {
@@ -23,18 +24,21 @@ type Profile = {
     prompt: string;
     acceptingMessages: boolean;
     url: string;
+    topics?: string[];
+    requireTopic?: boolean;
   };
 };
 
-export function SharePageClient() {
+export function SharePageClient({ demo = false }: { demo?: boolean }) {
+  const demoProfile = demo ? getDemoShareProfile() : null;
   const fileRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const previewSectionRef = useRef<HTMLElement>(null);
   const previewEndRef = useRef<HTMLDivElement>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [prompt, setPrompt] = useState("");
+  const [profile, setProfile] = useState<Profile | null>(demoProfile);
+  const [prompt, setPrompt] = useState(demoProfile?.link.prompt ?? "");
   const [editingPrompt, setEditingPrompt] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!demo);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +50,7 @@ export function SharePageClient() {
   const [showPreviewHint, setShowPreviewHint] = useState(true);
 
   async function load() {
+    if (demo) return;
     setLoading(true);
     setError(null);
     try {
@@ -62,8 +67,9 @@ export function SharePageClient() {
   }
 
   useEffect(() => {
+    if (demo) return;
     void load();
-  }, []);
+  }, [demo]);
 
   useEffect(() => {
     if (editingPrompt && promptRef.current) {
@@ -113,6 +119,10 @@ export function SharePageClient() {
   }
 
   async function savePrompt(next: string) {
+    if (demo) {
+      setEditingPrompt(false);
+      return;
+    }
     const trimmed = next.trim();
     if (!trimmed || !profile || trimmed === profile.link.prompt) {
       setPrompt(profile?.link.prompt || "");
@@ -141,7 +151,7 @@ export function SharePageClient() {
   }
 
   async function toggleAccepting() {
-    if (!profile) return;
+    if (demo || !profile) return;
     const res = await fetch("/api/v1/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -158,7 +168,7 @@ export function SharePageClient() {
   }
 
   async function onAvatarChange(file: File | null) {
-    if (!file) return;
+    if (demo || !file) return;
     setUploading(true);
     setError(null);
     try {
@@ -275,8 +285,10 @@ export function SharePageClient() {
           <button
             type="button"
             className="group relative"
-            onClick={() => fileRef.current?.click()}
-            aria-label="上傳大頭貼"
+            onClick={() => {
+              if (!demo) fileRef.current?.click();
+            }}
+            aria-label={demo ? "示範頭貼" : "上傳大頭貼"}
           >
             <div
               className={`overflow-hidden rounded-full border-2 border-[var(--line)] bg-[var(--surface)] transition group-hover:border-[var(--mint)] ${
@@ -309,7 +321,7 @@ export function SharePageClient() {
                 compact ? "text-sm" : "text-xs"
               }`}
             >
-              {uploading ? "上傳中…" : "更換頭貼"}
+              {demo ? "示範帳號" : uploading ? "上傳中…" : "更換頭貼"}
             </span>
           </button>
 
@@ -321,7 +333,7 @@ export function SharePageClient() {
             @{profile.user.username}
           </p>
 
-          {editingPrompt ? (
+          {editingPrompt && !demo ? (
             <div className="mt-4 w-full">
               <textarea
                 ref={promptRef}
@@ -354,7 +366,9 @@ export function SharePageClient() {
             <button
               type="button"
               className="group mt-4 w-full rounded-lg px-1 transition hover:bg-black/[0.03]"
-              onClick={() => setEditingPrompt(true)}
+              onClick={() => {
+                if (!demo) setEditingPrompt(true);
+              }}
             >
               <h1
                 className={`font-[family-name:var(--font-display)] font-bold leading-tight ${
@@ -368,8 +382,14 @@ export function SharePageClient() {
                   compact ? "text-xs" : "text-[11px]"
                 }`}
               >
-                <span aria-hidden>✎</span>
-                點擊修改提示
+                {demo ? (
+                  "示範提示"
+                ) : (
+                  <>
+                    <span aria-hidden>✎</span>
+                    點擊修改提示
+                  </>
+                )}
               </span>
             </button>
           )}
@@ -396,6 +416,23 @@ export function SharePageClient() {
             className={`space-y-3 ${compact ? "mt-5 space-y-3.5" : "mt-8 space-y-4"}`}
             aria-hidden
           >
+            {(profile.link.topics?.length ?? 0) > 0 ? (
+              <div>
+                <Label className={compact ? "text-sm" : undefined}>
+                  主題{profile.link.requireTopic ? "（必選）" : "（選填）"}
+                </Label>
+                <div className="mt-2 flex flex-wrap justify-center gap-2">
+                  {profile.link.topics?.map((topic) => (
+                    <span
+                      key={topic}
+                      className="rounded-full border border-[var(--line)] px-3 py-1.5 text-sm"
+                    >
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div>
               <Label className={compact ? "text-sm" : undefined}>匿名留言</Label>
               <Textarea

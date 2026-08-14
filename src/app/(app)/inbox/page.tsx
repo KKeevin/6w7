@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
+import { LoggedInPublisherNote } from "@/components/ads/logged-in-publisher-note";
 import { InboxClient } from "@/components/inbox-client";
+import { getViewer } from "@/lib/viewer";
 import { SHELL_CONTENT } from "@/shared/shell";
 
 export const metadata: Metadata = {
@@ -10,14 +11,14 @@ export const metadata: Metadata = {
 };
 
 export default async function InboxPage() {
-  const session = await auth();
-  if (!session?.user) {
+  const viewer = await getViewer();
+  if (viewer.kind === "guest") {
     redirect("/login?next=/inbox");
   }
 
   return (
     <main className="bg-atmosphere flex flex-1 flex-col py-8 sm:py-10 lg:py-12">
-      <AdRailLayout width="narrow" rails="right">
+      <AdRailLayout width="narrow">
         <div className={`${SHELL_CONTENT} w-full`}>
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold lg:text-4xl">
             收件匣
@@ -28,6 +29,9 @@ export default async function InboxPage() {
           <div className="mt-8 lg:mt-10">
             <InboxClient />
           </div>
+          {viewer.kind === "demo" ? (
+            <LoggedInPublisherNote page="inbox" />
+          ) : null}
         </div>
       </AdRailLayout>
     </main>

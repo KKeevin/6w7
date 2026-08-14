@@ -18,11 +18,7 @@ export function LoginPageClient() {
           : "用 IG 帳號註冊，馬上拿到專屬短連結。"}
       </p>
       <div className="mt-8">
-        <LoginForm
-          defaultMode="login"
-          redirectTo="/dashboard"
-          onModeChange={setMode}
-        />
+        <LoginForm defaultMode="login" onModeChange={setMode} />
       </div>
     </>
   );

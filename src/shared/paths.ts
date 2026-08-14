@@ -14,12 +14,10 @@ export function safeInternalPath(
 
 export function loginPath(next?: string | null) {
   const target = safeInternalPath(next, "/dashboard");
-  if (target === "/dashboard") return "/login";
   return `/login?next=${encodeURIComponent(target)}`;
 }
 
 export function demoEnterHref(next?: string | null) {
   const target = safeInternalPath(next, "/dashboard");
-  if (target === "/dashboard") return DEMO_ENTER_PATH;
   return `${DEMO_ENTER_PATH}?next=${encodeURIComponent(target)}`;
 }

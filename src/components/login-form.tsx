@@ -7,7 +7,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { demoEnterHref } from "@/shared/paths";
+import { demoEnterHref, safeInternalPath } from "@/shared/paths";
 import {
   markDeviceHasAccount,
   resolveAuthMode,
@@ -33,7 +33,7 @@ export function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const modeParam = searchParams.get("mode");
-  const next = redirectTo || searchParams.get("next") || "/dashboard";
+  const next = safeInternalPath(searchParams.get("next") || redirectTo);
 
   // 首屏先用 URL／後備，mount 後再依 localStorage 調整（避免 hydration 不一致）
   const [mode, setMode] = useState<AuthMode>(() =>

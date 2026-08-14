@@ -4,6 +4,7 @@ import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { LoggedInPublisherNote } from "@/components/ads/logged-in-publisher-note";
 import { SharePageClient } from "@/components/share-page-client";
 import { getViewer } from "@/lib/viewer";
+import { loginPath } from "@/shared/paths";
 
 export const metadata: Metadata = {
   title: "短網址",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const viewer = await getViewer();
   if (viewer.kind === "guest") {
-    redirect("/login");
+    redirect(loginPath("/dashboard"));
   }
 
   return (

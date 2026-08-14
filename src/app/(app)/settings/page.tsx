@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signOut } from "@/lib/auth";
 import { getViewer } from "@/lib/viewer";
+import { loginPath } from "@/shared/paths";
 import { Button } from "@/components/ui/button";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { getProfileForOwner } from "@/services/ask-link.service";
@@ -33,7 +34,7 @@ function UserIcon({ className }: { className?: string }) {
 export default async function SettingsPage() {
   const viewer = await getViewer();
   if (viewer.kind === "guest") {
-    redirect("/login?next=/settings");
+    redirect(loginPath("/settings"));
   }
 
   const profile = await getProfileForOwner(viewer.user.id);

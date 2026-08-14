@@ -13,7 +13,7 @@ export function SiteFooter() {
           © {new Date().getFullYear()} {BRAND.en}（{BRAND.zh}）· {BRAND.domain}
         </p>
         <div className="flex shrink-0 gap-4">
-          <Link href="/api/v1/auth/demo" className="hover:text-[var(--ink)]">
+          <Link href="/login" className="hover:text-[var(--ink)]">
             示範
           </Link>
           <Link href="/about" className="hover:text-[var(--ink)]">

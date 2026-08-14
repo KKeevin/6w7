@@ -1,11 +1,11 @@
 import { signIn, signOut } from "@/lib/auth";
 import { ensureDemoAccount, demoAccountPassword } from "@/services/demo-account.service";
 import { DEMO_PROFILE } from "@/shared/demo-account";
+import { safeInternalPath } from "@/shared/paths";
 
 function nextPath(request: Request) {
   const url = new URL(request.url);
-  const next = url.searchParams.get("next") || DEMO_PROFILE.dashboardPath;
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  return safeInternalPath(url.searchParams.get("next"));
 }
 
 /** 以真實帳密登入示範帳號 */

@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { demoEnterHref } from "@/shared/paths";
 import {
   markDeviceHasAccount,
   resolveAuthMode,
@@ -149,6 +151,21 @@ export function LoginForm({
       >
         {mode === "login" ? "還沒有帳號？註冊" : "已有帳號？登入"}
       </button>
+      <div className="relative py-1 text-center">
+        <span className="bg-[var(--bg)] px-2 text-xs text-[var(--muted)] lg:bg-white">
+          或
+        </span>
+      </div>
+      <a
+        id="demo-login"
+        href={demoEnterHref(next)}
+        className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+      >
+        用示範帳號登入
+      </a>
+      <p className="text-center text-[11px] leading-relaxed text-[var(--muted)]">
+        快使用示範帳號體驗匿名問答網站的魅力吧！
+      </p>
     </form>
   );
 }

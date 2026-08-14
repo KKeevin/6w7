@@ -380,7 +380,7 @@ export function InboxClient({
                   href={`/inbox/${selected.id}`}
                   className="font-semibold text-[var(--mint)] hover:underline"
                 >
-                  開獨立頁（給搜尋引擎索引）→
+                  開獨立頁 →
                 </Link>
               </p>
             ) : null}

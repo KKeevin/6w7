@@ -147,7 +147,7 @@ AI 搭骨架時請朝此結構靠攏（可微調，但意圖不變）：
 | `/settings` | 帳號與安全 | 建議 |
 | `/tools/face` 等 | AI 換臉等 | **未上線前不出現在 UI**；僅程式內占位可保留 |
 | `/legal/privacy` `/legal/terms` | 隱私權／條款 | 必做（可先簡版） |
-| `/demo` | 進入後以真實 User `@lewanq`（`isDemo`）登入，走正式 `/dashboard` `/inbox` `/settings` `/lewanq`；可登出 | 示範帳號 |
+| `/demo` | 舊路徑導向登入頁。未登入造訪 `/dashboard` `/inbox` `/settings` 一律進登入；登入畫面可「用示範帳號登入」成真實 User `@lewanq`（`isDemo`），再走正式頁，可登出 | 示範帳號 |
 
 短連結對外以 **`https://6w7.link/...`** 為準。
 

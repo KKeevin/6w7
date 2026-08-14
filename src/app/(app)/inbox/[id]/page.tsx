@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import {
   DEMO_MESSAGES,
@@ -8,16 +8,16 @@ import {
   getDemoMessage,
   demoMessagePath,
 } from "@/shared/demo-account";
+import { getViewer } from "@/lib/viewer";
+import { loginPath } from "@/shared/paths";
 import { BRAND } from "@/shared/tools";
 import { SHELL_CONTENT } from "@/shared/shell";
 
 type Props = { params: Promise<{ id: string }> };
 
-export function generateStaticParams() {
-  return DEMO_MESSAGES.map((m) => ({ id: m.id }));
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const viewer = await getViewer();
+  if (viewer.kind === "guest") return { title: "登入" };
   const { id } = await params;
   const message = getDemoMessage(id);
   if (!message) return { title: "問答" };
@@ -29,6 +29,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function InboxMessagePage({ params }: Props) {
   const { id } = await params;
+  const viewer = await getViewer();
+  if (viewer.kind === "guest") {
+    redirect(loginPath(`/inbox/${id}`));
+  }
+  if (viewer.kind === "user") {
+    redirect("/inbox");
+  }
   const message = getDemoMessage(id);
   if (!message) notFound();
 
@@ -78,7 +85,7 @@ export default async function InboxMessagePage({ params }: Props) {
             </h2>
             <p>
               訪客在公開頁選主題「{message.topic}
-              」後送出，文字只進主人收件匣。示範帳號把範例全文公開，方便還沒註冊的人與搜尋引擎閱讀；真實使用者的留言預設不會這樣公開。
+              」後送出，文字只進主人收件匣。這則是示範帳號裡的範例；真實使用者的留言只有本人登入後看得到。
             </p>
             <p>
               想看其他主題，回到{" "}

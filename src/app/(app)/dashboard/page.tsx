@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const viewer = await getViewer();
   if (viewer.kind === "guest") {
-    redirect("/login?next=/dashboard");
+    redirect("/login");
   }
 
   return (

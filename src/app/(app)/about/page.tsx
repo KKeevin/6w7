@@ -51,11 +51,15 @@ export default function AboutPage() {
             公開示範帳號
           </h2>
           <p>
-            真實收件匣只有主人登入後看得到。為了讓還沒註冊的人（以及搜尋、廣告爬蟲）讀得到足夠的原創問答，我們提供{" "}
-            <Link href="/api/v1/auth/demo" className="underline hover:text-[var(--ink)]">
-              公開示範帳號
+            真實收件匣、短網址與帳號設定只有登入後看得到。想先逛逛，請到{" "}
+            <Link href="/login" className="underline hover:text-[var(--ink)]">
+              登入頁
             </Link>
-            ：短網址已設好主題、收件匣有多則完整範例、每則問答都有獨立網址，全文直接寫在頁面上，不必登入、也不用點擊才載入。
+            按「用示範帳號登入」（@lewanq）。示範帳號可隨時登出，再註冊屬於你的帳號。公開留言頁{" "}
+            <Link href="/lewanq" className="underline hover:text-[var(--ink)]">
+              6w7.link/lewanq
+            </Link>{" "}
+            不必登入，任何人都能留下一句話。
           </p>
           <h2 className="font-[family-name:var(--font-display)] pt-2 text-xl font-bold text-[var(--ink)]">
             資料與廣告

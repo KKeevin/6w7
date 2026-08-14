@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getViewer } from "@/lib/viewer";
+import { getViewer, isMemberViewer } from "@/lib/viewer";
 import { BrandLogo } from "@/components/brand-logo";
 import { LoginPageClient } from "@/components/login-page-client";
+import { safeInternalPath } from "@/shared/paths";
 
 export const metadata: Metadata = {
   title: "登入",
 };
 
-export default async function LoginPage() {
+type Props = { searchParams: Promise<{ next?: string }> };
+
+export default async function LoginPage({ searchParams }: Props) {
   const viewer = await getViewer();
-  if (viewer.kind === "user") {
-    redirect("/dashboard");
+  const { next } = await searchParams;
+  if (isMemberViewer(viewer)) {
+    redirect(safeInternalPath(next));
   }
 
   return (

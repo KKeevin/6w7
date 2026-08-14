@@ -4,6 +4,7 @@ import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { LoggedInPublisherNote } from "@/components/ads/logged-in-publisher-note";
 import { InboxClient } from "@/components/inbox-client";
 import { getViewer } from "@/lib/viewer";
+import { loginPath } from "@/shared/paths";
 import { SHELL_CONTENT } from "@/shared/shell";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export default async function InboxPage() {
   const viewer = await getViewer();
   if (viewer.kind === "guest") {
-    redirect("/login?next=/inbox");
+    redirect(loginPath("/inbox"));
   }
 
   return (

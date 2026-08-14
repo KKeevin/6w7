@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/viewer";
 import { BrandLogo } from "@/components/brand-logo";
 import { HomeAuthPanel } from "@/components/home-auth-panel";
-import { DEMO_ENTER_PATH } from "@/shared/demo-account";
 import { BRAND } from "@/shared/tools";
 
 export const metadata: Metadata = {
@@ -38,15 +36,6 @@ export default async function HomePage() {
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)] sm:text-base lg:mx-0 lg:mt-4 lg:max-w-lg lg:text-lg [@media(max-height:740px)]:lg:mt-2 [@media(max-height:740px)]:lg:text-sm">
             {BRAND.tagline}
-          </p>
-          <p className="mx-auto mt-3 max-w-md text-xs leading-relaxed text-[var(--muted)] sm:text-sm lg:mx-0 lg:max-w-lg [@media(max-height:740px)]:lg:mt-2">
-            想先看短網址、收件匣與問答全文，不必註冊。{" "}
-            <Link
-              href={DEMO_ENTER_PATH}
-              className="font-semibold text-[var(--ink)] underline underline-offset-2 hover:text-[#3197e5]"
-            >
-              進入示範帳號
-            </Link>
           </p>
         </div>
       </section>

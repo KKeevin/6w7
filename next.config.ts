@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp"],
   async redirects() {
     return [
-      { source: "/demo", destination: "/api/v1/auth/demo", permanent: false },
+      { source: "/demo", destination: "/login", permanent: false },
       {
         source: "/demo/dashboard",
         destination: "/dashboard",

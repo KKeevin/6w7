@@ -12,12 +12,15 @@ export function SiteFooter() {
         <p className="min-w-0 truncate">
           © {new Date().getFullYear()} {BRAND.en}（{BRAND.zh}）· {BRAND.domain}
         </p>
-        <div className="flex shrink-0 gap-4">
+        <div className="flex shrink-0 flex-wrap justify-end gap-3 sm:gap-4">
           <Link href="/login" className="hover:text-[var(--ink)]">
             示範
           </Link>
           <Link href="/about" className="hover:text-[var(--ink)]">
             關於
+          </Link>
+          <Link href="/contact" className="hover:text-[var(--ink)]">
+            聯絡
           </Link>
           <Link href="/legal/privacy" className="hover:text-[var(--ink)]">
             隱私權

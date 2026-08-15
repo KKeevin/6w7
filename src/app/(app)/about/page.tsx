@@ -69,14 +69,18 @@ export default function AboutPage() {
             <Link href="/legal/privacy" className="underline hover:text-[var(--ink)]">
               隱私權政策
             </Link>
-            與{" "}
+            、{" "}
             <Link href="/legal/terms" className="underline hover:text-[var(--ink)]">
               服務條款
+            </Link>
+            與{" "}
+            <Link href="/contact" className="underline hover:text-[var(--ink)]">
+              聯絡我們
             </Link>
             。
           </p>
           <p>
-            部分有說明文字的頁面可能顯示由 Google AdSense 提供的廣告，例如本頁、隱私權政策、服務條款、帶使用說明的留言頁、公開示範帳號，以及登入後附說明的短網址與收件匣。登入、註冊、帳號設定與錯誤頁不會放送廣告。廣告夥伴可能使用
+            部分有說明文字的頁面可能顯示由 Google AdSense 提供的廣告，例如本頁、聯絡我們、隱私權政策、服務條款、帶使用說明的留言頁、公開示範帳號，以及登入後附說明的短網址與收件匣。登入、註冊、帳號設定與錯誤頁不會放送廣告。廣告夥伴可能使用
             Cookie；你可透過瀏覽器或廣告網路提供的退出方式管理偏好。
           </p>
           <h2 className="font-[family-name:var(--font-display)] pt-2 text-xl font-bold text-[var(--ink)]">

@@ -191,11 +191,135 @@ body {
   animation: inbox-highlighter-draw 1.05s ease-out 1 forwards;
 }
 
+/* 67 迷因：偶爾飄過，不擋點擊 */
+@keyframes meme-drift {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(0.86);
+  }
+  14% {
+    opacity: 0.72;
+  }
+  72% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--meme-dx), var(--meme-dy), 0)
+      rotate(var(--meme-rot)) scale(1.08);
+  }
+}
+
+.meme-drift {
+  position: absolute;
+  display: block;
+  line-height: 1;
+  font-weight: 800;
+  user-select: none;
+  will-change: transform, opacity;
+  animation-name: meme-drift;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-fill-mode: forwards;
+  filter: drop-shadow(0 6px 12px rgba(20, 33, 43, 0.12));
+}
+
+.meme-drift-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.06em;
+  white-space: nowrap;
+}
+
+.meme-shrug {
+  display: inline-block;
+  line-height: 1;
+}
+
+@keyframes meme-bob {
+  0%,
+  100% {
+    transform: translateY(0.22em);
+  }
+  50% {
+    transform: translateY(-0.32em);
+  }
+}
+
+.meme-bob {
+  display: inline-block;
+  font-weight: 800;
+  line-height: 1;
+  animation: meme-bob 0.72s ease-in-out infinite;
+}
+
+.meme-bob-six {
+  color: color-mix(in srgb, var(--mint) 88%, white);
+}
+
+.meme-bob-seven {
+  color: color-mix(in srgb, var(--accent) 90%, white);
+  animation-delay: -0.36s;
+}
+
+.meme-drift-mint {
+  color: color-mix(in srgb, var(--mint) 88%, white);
+}
+
+.meme-drift-accent {
+  color: color-mix(in srgb, var(--accent) 90%, white);
+}
+
+.meme-drift-ink {
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+@keyframes meme-firework {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(0.22)
+      rotate(0deg);
+  }
+  16% {
+    opacity: 1;
+    transform: translate(-50%, -50%)
+      translate3d(calc(var(--fw-x) * 0.42), calc(var(--fw-y) * 0.38), 0)
+      scale(1.12) rotate(calc(var(--fw-rot) * 0.35));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%)
+      translate3d(var(--fw-x), calc(var(--fw-y) + 88px), 0) scale(0.72)
+      rotate(var(--fw-rot));
+  }
+}
+
+.meme-firework {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  font-weight: 800;
+  user-select: none;
+  will-change: transform, opacity;
+  animation-name: meme-firework;
+  animation-timing-function: cubic-bezier(0.12, 0.72, 0.18, 1);
+  animation-fill-mode: forwards;
+  filter: drop-shadow(0 8px 14px rgba(20, 33, 43, 0.16));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-accepting-hint,
   .animate-closed-hint,
-  .animate-scroll-cue {
+  .animate-scroll-cue,
+  .meme-drift,
+  .meme-firework,
+  .meme-bob {
     animation: none;
+  }
+
+  .meme-drift,
+  .meme-firework {
+    display: none;
   }
 
   .inbox-just-added-ring {

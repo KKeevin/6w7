@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { burstMemeFireworks } from "@/components/meme-drift";
 import { ASK_LIMITS } from "@/shared/tools";
 import type { PublicAskLink } from "@/shared/schemas";
 
@@ -31,24 +32,16 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
           已送出
         </h2>
         <p className="mt-2 text-[var(--muted)]">
-          你的匿名留言已送進對方的 6w7 收件匣。想再留一則也可以。
+          你的匿名問題已送進對方的 6w7 收件匣。
         </p>
-        <Button
-          className="mt-6"
-          variant="outline"
-          onClick={() => {
-            setDone(false);
-            setBody("");
-          }}
-        >
-          再留一則
-        </Button>
       </div>
     );
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const submitter = (e.nativeEvent as SubmitEvent).submitter;
+    burstMemeFireworks(submitter);
     setLoading(true);
     setError(null);
     try {
@@ -98,7 +91,7 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
           onChange={(e) => setBody(e.target.value)}
           required
           maxLength={ASK_LIMITS.bodyMax}
-          placeholder="說吧，對方只會在收件匣看到內容。"
+          placeholder="輸入你的提問 ⁶🤷🏻‍♀️⁷"
         />
         <p className="mt-1 text-right text-xs text-[var(--muted)]">
           {body.length}/{ASK_LIMITS.bodyMax}

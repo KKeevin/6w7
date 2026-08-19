@@ -7,7 +7,7 @@ import {
   SHARE_STORY_SIZE,
 } from "@/components/share-story-card";
 import { renderShareStoryPng } from "@/lib/render-story-canvas";
-import { saveImageHint, saveOrSharePng } from "@/lib/save-image";
+import { saveOrSharePng } from "@/lib/save-image";
 
 type Props = {
   open: boolean;
@@ -40,16 +40,29 @@ export function ShareStoryDialog({
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hint, setHint] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   if (!open) return null;
 
   const previewSrc = imageUrl ? absoluteUrl(imageUrl) : null;
+  const fullShortUrl = shortUrl.startsWith("http")
+    ? shortUrl
+    : `https://${shortUrl}`;
+
+  async function copyShortUrl() {
+    try {
+      await navigator.clipboard.writeText(fullShortUrl);
+      setCopied(true);
+      onCopiedLink?.();
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("複製失敗，請手動選取短網址再複製。");
+    }
+  }
 
   async function download() {
     setBusy(true);
     setError(null);
-    setHint(null);
     try {
       // Canvas 繪製：避開 iOS html-to-image 不畫 <img> 的問題
       const dataUrl = await renderShareStoryPng({
@@ -59,19 +72,14 @@ export function ShareStoryDialog({
         displayName,
       });
 
-      const result = await saveOrSharePng(
-        dataUrl,
-        `6w7-share-${username}.png`,
-      );
-      setHint(saveImageHint(result));
-
+      await saveOrSharePng(dataUrl, `6w7-share-${username}.png`);
       try {
-        await navigator.clipboard.writeText(
-          shortUrl.startsWith("http") ? shortUrl : `https://${shortUrl}`,
-        );
+        await navigator.clipboard.writeText(fullShortUrl);
+        setCopied(true);
         onCopiedLink?.();
+        window.setTimeout(() => setCopied(false), 2000);
       } catch {
-        /* ignore */
+        /* 分享後不一定還在使用者手勢內，改由按鈕複製 */
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -104,8 +112,8 @@ export function ShareStoryDialog({
               分享到 IG 限動
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              手機：系統分享 → 選 Instagram → 限動，圖會直接進編輯。電腦：下載
-              PNG 後再上傳限動。發佈前記得加「連結」貼紙。
+              手機：點選分享此圖後 → 選 Instagram →
+              限動，圖會直接進編輯。加入「連結」貼紙後貼上你的短網址，即可發佈！
             </p>
           </div>
           <button
@@ -143,21 +151,27 @@ export function ShareStoryDialog({
         {error && (
           <p className="mt-3 text-center text-sm text-[var(--danger)]">{error}</p>
         )}
-        {hint && !error && (
-          <p className="mt-3 text-center text-sm text-[var(--muted)]">{hint}</p>
-        )}
 
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>
-            關閉
-          </Button>
+        <div className="mt-5 grid gap-2">
           <Button
             type="button"
-            onClick={() => void download()}
-            disabled={busy}
+            variant="secondary"
+            onClick={() => void copyShortUrl()}
           >
-            {busy ? "產生中…" : "分享到 IG 限動"}
+            {copied ? "已複製短網址" : "複製專屬短網址"}
           </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              關閉
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void download()}
+              disabled={busy}
+            >
+              {busy ? "產生中…" : "分享此圖"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

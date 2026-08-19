@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Figtree, Syne } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { MemeDrift } from "@/components/meme-drift";
 import { BRAND } from "@/shared/tools";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {children}
+        <MemeDrift />
         <Analytics />
         <SpeedInsights />
       </body>

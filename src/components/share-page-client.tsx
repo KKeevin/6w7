@@ -418,7 +418,7 @@ export function SharePageClient({
             compact ? "text-sm" : "text-xs"
           }`}
         >
-          匿名留言，對方只會在收件匣看到內容。
+          採完全匿名提問，請放心問答！
         </p>
 
         {!accepting ? (
@@ -456,7 +456,7 @@ export function SharePageClient({
               <Textarea
                 disabled
                 tabIndex={-1}
-                placeholder="說吧，對方只會在收件匣看到內容。"
+                placeholder="輸入你的提問 ⁶🤷🏻‍♀️⁷"
                 className={`pointer-events-none ${
                   compact ? "mt-1.5 min-h-[100px] text-base" : ""
                 }`}
@@ -608,13 +608,13 @@ export function SharePageClient({
               匿名問答
             </p>
             <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight xl:text-[2.75rem] xl:leading-tight">
-              把連結丟出去，
+              把連結分享出去，
               <br />
-              訊息會進收件匣。
+              看看多少人會跟你悄悄話！
             </h1>
             <p className="mt-3 max-w-lg text-lg text-[var(--muted)]">
-              這頁管的是「別人怎麼找到你」——複製網址、用分享圖丟到 IG
-              限動，或先微調公開頁文案。
+              先設定公開頁人像頭貼、文案，複製短網址後，再使用「分享到 IG
+              限動」功能讓大家踴躍問問題吧。
             </p>
           </header>
 
@@ -700,15 +700,19 @@ export function SharePageClient({
             <ol className="mt-3 space-y-2.5 text-base text-[var(--muted)]">
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">01</span>
-                按「分享到 IG 限動」→ 系統分享選 Instagram → 限動
+                按「分享到 IG 限動」
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">02</span>
-                在限動加上「連結」貼紙，貼上上方短網址
+                點選「複製專屬短網址」，再按「分享此圖」→ 選 Instagram → 限動
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">03</span>
-                發佈後到「收件匣」看匿名訊息
+                加上「連結」貼紙，並貼上短網址，按下發佈
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-[var(--accent)]">04</span>
+                有人提問，收件匣都會顯示未讀問題數量～立刻點入查看吧！
               </li>
             </ol>
           </section>

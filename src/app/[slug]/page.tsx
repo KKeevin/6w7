@@ -95,7 +95,7 @@ export default async function PublicAskPage({ params }: Props) {
           </div>
 
           <p className="mt-4 text-center text-xs text-[var(--muted)]">
-            匿名留言，對方只會在收件匣看到內容。
+            採完全匿名提問，請放心問答！
           </p>
 
           <PublicAskForm link={link} />

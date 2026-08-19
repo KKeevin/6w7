@@ -135,7 +135,7 @@ export function StoryCardDialog({ open, onClose, message }: Props) {
 
             <div className="mt-auto flex flex-wrap gap-2 pt-6">
               <Button type="button" onClick={() => void download()} disabled={busy}>
-                {busy ? "產生中…" : "分享到 IG 限動"}
+                {busy ? "產生中…" : "分享此圖"}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
                 取消

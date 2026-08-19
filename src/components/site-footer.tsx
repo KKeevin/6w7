@@ -10,7 +10,7 @@ export function SiteFooter() {
         className={`${SHELL_X} flex h-full items-center justify-between gap-4 text-xs text-[var(--muted)]`}
       >
         <p className="min-w-0 truncate">
-          © {new Date().getFullYear()} {BRAND.en}（{BRAND.zh}）· {BRAND.domain}
+          © {new Date().getFullYear()} {BRAND.domain} 匿名問答
         </p>
         <div className="flex shrink-0 flex-wrap justify-end gap-3 sm:gap-4">
           <Link href="/about" className="hover:text-[var(--ink)]">

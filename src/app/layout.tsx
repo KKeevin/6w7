@@ -5,10 +5,13 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BRAND } from "@/shared/tools";
 import "./globals.css";
 
+/** 台灣流量為主，Neon 在 Singapore；預設 iad1 會拉長 TTFB */
+export const preferredRegion = "sin1";
+
 const display = Syne({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: ["700", "800"],
   display: "swap",
   fallback: ["system-ui", "sans-serif"],
 });
@@ -16,7 +19,7 @@ const display = Syne({
 const body = Figtree({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "600", "700"],
   display: "swap",
   fallback: ["system-ui", "sans-serif"],
 });
@@ -50,6 +53,10 @@ export default function RootLayout({
       className={`${display.variable} ${body.variable} min-h-full`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="preconnect" href="https://cdn.6w7.link" />
+        <link rel="dns-prefetch" href="https://cdn.6w7.link" />
+      </head>
       {/* suppressHydrationWarning：避免密碼管理等擴充注入 bis_register 等屬性觸發 hydration 警告 */}
       <body
         className="flex min-h-dvh flex-col antialiased"

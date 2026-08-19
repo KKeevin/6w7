@@ -137,36 +137,45 @@ export function NotificationProvider({
       }, 12000);
     };
 
-    try {
-      es = new EventSource("/api/v1/notifications/stream");
-      es.onmessage = (ev) => {
-        if (closed) return;
-        try {
-          const data = JSON.parse(ev.data) as {
-            type?: string;
-            isNewArrival?: boolean;
-            summary?: NotificationSummary;
-          };
-          if (data.type === "summary" && data.summary) {
-            applySummary(data.summary, Boolean(data.isNewArrival));
+    const connect = () => {
+      if (closed) return;
+      try {
+        es = new EventSource("/api/v1/notifications/stream");
+        es.onmessage = (ev) => {
+          if (closed) return;
+          try {
+            const data = JSON.parse(ev.data) as {
+              type?: string;
+              isNewArrival?: boolean;
+              summary?: NotificationSummary;
+            };
+            if (data.type === "summary" && data.summary) {
+              applySummary(data.summary, Boolean(data.isNewArrival));
+            }
+          } catch {
+            /* ignore malformed */
           }
-        } catch {
-          /* ignore malformed */
-        }
-      };
-      es.onerror = () => {
-        es?.close();
-        es = null;
+        };
+        es.onerror = () => {
+          es?.close();
+          es = null;
+          startPoll();
+          void refresh();
+        };
+      } catch {
         startPoll();
         void refresh();
-      };
-    } catch {
-      startPoll();
+      }
       void refresh();
-    }
+    };
 
-    // 初次也拉一次 summary（SSE 第一包可能稍慢）
-    void refresh();
+    let idleId = 0;
+    let timeoutId = 0;
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(connect, { timeout: 2200 });
+    } else {
+      timeoutId = window.setTimeout(connect, 1600);
+    }
 
     const onVisible = () => {
       if (document.visibilityState === "visible") void refresh();
@@ -175,6 +184,10 @@ export function NotificationProvider({
 
     return () => {
       closed = true;
+      if (idleId && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId) window.clearTimeout(timeoutId);
       es?.close();
       if (pollTimer) window.clearInterval(pollTimer);
       document.removeEventListener("visibilitychange", onVisible);

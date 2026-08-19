@@ -6,7 +6,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { PublicAskForm } from "@/components/public-ask-form";
 import { PublicAskExplainer } from "@/components/public-ask-explainer";
 import { getPublicAskLink } from "@/services/ask-link.service";
-import { ensureDemoAccount } from "@/services/demo-account.service";
+import { ensureDemoAccountIfMissing } from "@/services/demo-account.service";
 import { AppError } from "@/shared/errors";
 import { isValidSlugFormat, isReservedSlug } from "@/shared/slug";
 import { isDemoUsername } from "@/shared/demo-account";
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   if (isDemoUsername(slug)) {
     try {
-      await ensureDemoAccount();
+      await ensureDemoAccountIfMissing();
     } catch {
       /* 建立示範帳號失敗時仍走一般查詢 */
     }
@@ -41,7 +41,7 @@ export default async function PublicAskPage({ params }: Props) {
   const { slug } = await params;
 
   if (isDemoUsername(slug)) {
-    await ensureDemoAccount();
+    await ensureDemoAccountIfMissing();
   }
 
   if (isReservedSlug(slug) || !isValidSlugFormat(slug)) {
@@ -63,7 +63,7 @@ export default async function PublicAskPage({ params }: Props) {
       <div className="bg-atmosphere flex w-full flex-1 flex-col rounded-3xl">
         <div className="flex min-h-[calc(100dvh-var(--footer-h))] flex-col px-4 py-8 sm:px-6 sm:py-10">
           <Link href="/" className="inline-flex items-center gap-2">
-            <BrandLogo height={26} />
+            <BrandLogo height={26} priority />
             <span className="text-sm font-medium text-[var(--muted)]">
               {BRAND.zh}
             </span>
@@ -76,6 +76,10 @@ export default async function PublicAskPage({ params }: Props) {
                 <img
                   src={link.image}
                   alt=""
+                  width={96}
+                  height={96}
+                  fetchPriority="high"
+                  decoding="async"
                   className="h-full w-full object-cover"
                 />
               ) : (

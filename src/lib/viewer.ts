@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { auth } from "@/lib/auth";
 
 export type MemberUser = {
@@ -13,7 +14,7 @@ export type Viewer =
   | { kind: "demo"; user: MemberUser }
   | { kind: "guest" };
 
-export async function getViewer(): Promise<Viewer> {
+export const getViewer = cache(async (): Promise<Viewer> => {
   const session = await auth();
   if (!session?.user?.id) return { kind: "guest" };
 
@@ -27,7 +28,7 @@ export async function getViewer(): Promise<Viewer> {
 
   if (user.isDemo) return { kind: "demo", user };
   return { kind: "user", user };
-}
+});
 
 export function isMemberViewer(viewer: Viewer) {
   return viewer.kind === "user" || viewer.kind === "demo";

@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { asTopicList } from "@/lib/topics";
 import { AppError } from "@/shared/errors";
@@ -122,7 +123,7 @@ export async function setUserImage(userId: string, imagePath: string) {
   };
 }
 
-export async function getPublicAskLink(slug: string) {
+export const getPublicAskLink = cache(async (slug: string) => {
   const link = await prisma.askLink.findUnique({
     where: { slug: slug.toLowerCase() },
     include: {
@@ -150,7 +151,7 @@ export async function getPublicAskLink(slug: string) {
     image: avatarDisplayUrl(link.user.image, link.user.updatedAt),
     displayName: link.user.name || link.user.username,
   };
-}
+});
 
 // 相容舊 API 匯出名稱
 export async function createAskLink() {

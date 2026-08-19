@@ -2,13 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { BrandLogo } from "@/components/brand-logo";
-import { ShareStoryDialog } from "@/components/share-story-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ASK_LIMITS, BRAND } from "@/shared/tools";
 import { getDemoShareProfile } from "@/shared/demo-account";
+
+const ShareStoryDialog = dynamic(
+  () =>
+    import("@/components/share-story-dialog").then((m) => m.ShareStoryDialog),
+  { ssr: false },
+);
 
 type Profile = {
   user: {
@@ -29,16 +35,23 @@ type Profile = {
   };
 };
 
-export function SharePageClient({ demo = false }: { demo?: boolean }) {
+export function SharePageClient({
+  demo = false,
+  initialProfile,
+}: {
+  demo?: boolean;
+  initialProfile?: Profile;
+}) {
   const demoProfile = demo ? getDemoShareProfile() : null;
+  const seeded = demoProfile ?? initialProfile ?? null;
   const fileRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const previewSectionRef = useRef<HTMLElement>(null);
   const previewEndRef = useRef<HTMLDivElement>(null);
-  const [profile, setProfile] = useState<Profile | null>(demoProfile);
-  const [prompt, setPrompt] = useState(demoProfile?.link.prompt ?? "");
+  const [profile, setProfile] = useState<Profile | null>(seeded);
+  const [prompt, setPrompt] = useState(seeded?.link.prompt ?? "");
   const [editingPrompt, setEditingPrompt] = useState(false);
-  const [loading, setLoading] = useState(!demo);
+  const [loading, setLoading] = useState(!seeded);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,8 +80,9 @@ export function SharePageClient({ demo = false }: { demo?: boolean }) {
   }
 
   useEffect(() => {
-    if (demo) return;
+    if (demo || seeded) return;
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demo]);
 
   useEffect(() => {
@@ -300,6 +314,10 @@ export function SharePageClient({ demo = false }: { demo?: boolean }) {
                 <img
                   src={imageSrc}
                   alt=""
+                  width={compact ? 128 : 96}
+                  height={compact ? 128 : 96}
+                  fetchPriority="high"
+                  decoding="async"
                   className="h-full w-full object-cover"
                 />
               ) : (

@@ -172,6 +172,10 @@ export const DEMO_MESSAGES: DemoMessage[] = [
   },
 ];
 
+export function demoMessageBody(message: DemoMessage) {
+  return `${message.title}\n\n${message.body}`;
+}
+
 export function getDemoMessage(id: string): DemoMessage | undefined {
   return DEMO_MESSAGES.find((m) => m.id === id);
 }

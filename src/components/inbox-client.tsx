@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { StoryCardDialog } from "@/components/story-card-dialog";
 import { useNotifications } from "@/components/notifications/notification-provider";
+
+const StoryCardDialog = dynamic(
+  () =>
+    import("@/components/story-card-dialog").then((m) => m.StoryCardDialog),
+  { ssr: false },
+);
 
 export type InboxMessage = {
   id: string;
@@ -24,14 +30,17 @@ type Filter = "all" | "unread" | "featured" | "archived";
 
 export function InboxClient({
   demoMessages,
+  initialMessages,
 }: {
   demoMessages?: InboxMessage[];
+  initialMessages?: InboxMessage[];
 }) {
   const demo = Boolean(demoMessages?.length);
+  const seeded = demoMessages ?? initialMessages;
   const { refresh: refreshNotifications } = useNotifications();
-  const [messages, setMessages] = useState<Message[]>(demoMessages ?? []);
+  const [messages, setMessages] = useState<Message[]>(seeded ?? []);
   const [filter, setFilter] = useState<Filter>("all");
-  const [loading, setLoading] = useState(!demo);
+  const [loading, setLoading] = useState(!seeded);
   const [error, setError] = useState<string | null>(null);
   const [storyMessage, setStoryMessage] = useState<Message | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -69,7 +78,7 @@ export function InboxClient({
   }
 
   useEffect(() => {
-    void load(filter);
+    void load(filter, { quiet: Boolean(seeded) && filter === "all" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 

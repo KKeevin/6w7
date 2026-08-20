@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/components/notifications/notification-provider";
 
 const StoryCardDialog = dynamic(
@@ -43,7 +42,6 @@ export function InboxClient({
   const [loading, setLoading] = useState(!seeded);
   const [error, setError] = useState<string | null>(null);
   const [storyMessage, setStoryMessage] = useState<Message | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openingId, setOpeningId] = useState<string | null>(null);
   /** 剛精選／封存的訊息：在目標分頁框選提示一次 */
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -124,7 +122,7 @@ export function InboxClient({
   }
 
   async function openMessage(m: Message) {
-    setSelectedId(m.id);
+    setStoryMessage(m);
     if (demo || m.isRead || openingId === m.id) return;
     setOpeningId(m.id);
     try {
@@ -135,7 +133,7 @@ export function InboxClient({
   }
 
   function closeDetail() {
-    setSelectedId(null);
+    setStoryMessage(null);
   }
 
   async function toggleFeatured(m: Message) {
@@ -164,7 +162,7 @@ export function InboxClient({
       setError(data?.error?.message || "刪除失敗");
       return;
     }
-    setSelectedId(null);
+    setStoryMessage(null);
     await load();
     void refreshNotifications();
   }
@@ -193,7 +191,9 @@ export function InboxClient({
     { id: "archived", label: "已封存" },
   ];
 
-  const selected = messages.find((m) => m.id === selectedId) ?? null;
+  const selected = storyMessage
+    ? (messages.find((m) => m.id === storyMessage.id) ?? storyMessage)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -270,7 +270,7 @@ export function InboxClient({
                     !m.isRead
                       ? "border-[var(--mint)]/35 bg-[#e7f7f2] shadow-sm hover:border-[var(--mint)]/55 hover:bg-[#dcf3ec]"
                       : "border-[var(--line)] bg-white hover:border-[var(--line)] hover:bg-[#f0f3f6]"
-                  } ${selectedId === m.id ? "ring-2 ring-[var(--mint)]/30" : ""}`}
+                  } ${storyMessage?.id === m.id ? "ring-2 ring-[var(--mint)]/30" : ""}`}
                 >
                   <span
                     className={`mt-1 w-1 shrink-0 self-stretch rounded-full ${
@@ -333,58 +333,15 @@ export function InboxClient({
         </ul>
       )}
 
-      {selected && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ink)]/45 p-4 backdrop-blur-[3px]"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="inbox-detail-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeDetail();
-          }}
-        >
-          <div className="animate-rise max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--line)] bg-white p-5 shadow-[0_24px_60px_rgba(20,33,43,0.22)] sm:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {selected.topic && (
-                    <span className="inline-flex rounded-full bg-[var(--surface)] px-2 py-0.5 text-[11px] font-semibold text-[var(--muted)]">
-                      {selected.topic}
-                    </span>
-                  )}
-                  {selected.isFeatured && (
-                    <span className="inline-flex rounded-full bg-[var(--accent)]/12 px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)]">
-                      精選
-                    </span>
-                  )}
-                  {selected.status === "flagged" && (
-                    <span className="inline-flex rounded-full bg-[var(--danger)]/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--danger)]">
-                      已檢舉
-                    </span>
-                  )}
-                </div>
-                <h2 id="inbox-detail-title" className="sr-only">
-                  留言內容
-                </h2>
-                <time className="mt-2 block text-xs text-[var(--muted)]">
-                  {new Date(selected.createdAt).toLocaleString("zh-TW")}
-                </time>
-              </div>
-              <button
-                type="button"
-                onClick={closeDetail}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
-                aria-label="關閉"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="mt-5 whitespace-pre-wrap text-lg font-medium leading-relaxed text-[var(--ink)]">
-              {selected.body}
-            </p>
-            {demo ? (
-              <p className="mt-3 text-sm">
+      {selected ? (
+        <StoryCardDialog
+          key={selected.id}
+          open
+          message={selected}
+          demo={demo}
+          extra={
+            demo ? (
+              <p className="text-sm">
                 <Link
                   href={`/inbox/${selected.id}`}
                   className="font-semibold text-[var(--mint)] hover:underline"
@@ -392,60 +349,15 @@ export function InboxClient({
                   開獨立頁 →
                 </Link>
               </p>
-            ) : null}
-
-            <div className="mt-6 flex flex-wrap gap-2 border-t border-[var(--line)] pt-4">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setStoryMessage(selected)}
-              >
-                限動圖卡
-              </Button>
-              {demo ? null : (
-                <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => void toggleFeatured(selected)}
-              >
-                {selected.isFeatured ? "取消精選" : "精選"}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => void toggleArchived(selected)}
-              >
-                {selected.isArchived ? "取消封存" : "封存"}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => void report(selected.id)}
-              >
-                檢舉
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => void remove(selected.id)}
-              >
-                刪除
-              </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {storyMessage && (
-        <StoryCardDialog
-          open={Boolean(storyMessage)}
-          message={storyMessage}
-          onClose={() => setStoryMessage(null)}
+            ) : null
+          }
+          onClose={closeDetail}
+          onFeatured={demo ? undefined : () => void toggleFeatured(selected)}
+          onArchived={demo ? undefined : () => void toggleArchived(selected)}
+          onReport={demo ? undefined : () => void report(selected.id)}
+          onDelete={demo ? undefined : () => void remove(selected.id)}
         />
-      )}
+      ) : null}
     </div>
   );
 }

@@ -39,7 +39,7 @@ export default async function InboxPage() {
             收件匣
           </h1>
           <p className="mt-2 text-[var(--muted)] lg:text-lg">
-            點開留言才會顯示內容並標為已讀；可精選、封存、刪除、檢舉，或產生限動圖卡。
+            點開提問就會看到限動圖卡，可直接寫回覆並分享；也能精選、封存、刪除或檢舉。未讀先不展開內文，方便在外面打開。
           </p>
           <div className="mt-8 lg:mt-10">
             <InboxClient initialMessages={initialMessages} />

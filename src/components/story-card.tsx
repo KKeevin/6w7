@@ -1,5 +1,6 @@
 import { BRAND } from "@/shared/tools";
 import { getSiteUrl } from "@/lib/utils";
+import { StoryBrandLockup } from "@/components/story-brand-lockup";
 
 const W = 1080;
 const H = 1920;
@@ -21,6 +22,8 @@ export type StoryCardProps = {
   shareHost?: string;
   /** 匯出用 logo data URL */
   logoSrc?: string | null;
+  /** 預覽模式：點提問文字放大閱讀 */
+  onBodyClick?: () => void;
 };
 
 /** IG 限動尺寸圖卡（6w7 自有版型，非 NGL 複製） */
@@ -29,8 +32,8 @@ export function StoryCard({
   reply,
   topic,
   linkTitle,
-  shareHost = "6w7.link",
   logoSrc,
+  onBodyClick,
 }: StoryCardProps) {
   const resolvedLogo = logoSrc || logoUrl();
   return (
@@ -107,16 +110,37 @@ export function StoryCard({
             alignItems: "stretch",
             gap: 48,
             minHeight: 0,
-            padding: "40px 0",
+            padding: "16px 0 80px",
           }}
         >
+          <div style={{ position: "relative", width: "100%", flexShrink: 0 }}>
           <div
+            role={onBodyClick ? "button" : undefined}
+            tabIndex={onBodyClick ? 0 : undefined}
+            onClick={onBodyClick}
+            onKeyDown={
+              onBodyClick
+                ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onBodyClick();
+                    }
+                  }
+                : undefined
+            }
             style={{
               display: "flex",
               borderRadius: 28,
               overflow: "hidden",
               backgroundColor: "#ffffff",
               boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
+              cursor: onBodyClick ? "pointer" : "default",
+              textAlign: "left",
+              border: "none",
+              padding: 0,
+              width: "100%",
+              font: "inherit",
+              color: "inherit",
             }}
           >
             <div
@@ -163,6 +187,13 @@ export function StoryCard({
               />
             </div>
           </div>
+          {onBodyClick ? (
+            <>
+              <span className="story-read-hint-box" aria-hidden />
+              <span className="story-read-hint-label">點一下看清楚</span>
+            </>
+          ) : null}
+          </div>
 
           <div
             style={{
@@ -203,65 +234,7 @@ export function StoryCard({
         </div>
 
         {/* 底部品牌 */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 20,
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 12,
-              backgroundColor: "#ffffff",
-              color: "#14212b",
-              borderRadius: 999,
-              padding: "14px 28px",
-              fontSize: 28,
-              fontWeight: 700,
-            }}
-          >
-            <span
-              style={{
-                width: 16,
-                height: 16,
-                borderRadius: 4,
-                backgroundColor: "#ff5a3c",
-                display: "inline-block",
-              }}
-            />
-            {shareHost}
-          </div>
-          <div style={{ textAlign: "center" as const }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={resolvedLogo}
-              alt={BRAND.en}
-              width={280}
-              height={120}
-              style={{
-                height: 64,
-                width: "auto",
-                objectFit: "contain",
-                margin: "0 auto",
-              }}
-            />
-            <div
-              style={{
-                marginTop: 10,
-                fontSize: 26,
-                fontWeight: 600,
-                color: "rgba(255,248,246,0.7)",
-              }}
-            >
-              {BRAND.zh} · 匿名問答
-            </div>
-          </div>
-        </div>
+        <StoryBrandLockup logoSrc={resolvedLogo} />
       </div>
     </div>
   );

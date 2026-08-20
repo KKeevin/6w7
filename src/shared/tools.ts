@@ -58,6 +58,8 @@ export const BRAND = {
   contactEmail: "service@6w7.link",
   /** 靜態資源：public/brand/logo.png */
   logoSrc: "/brand/logo.png",
+  /** 分享限動圖右下角指向圖：public/brand/point-at.png */
+  pointAtSrc: "/brand/point-at.png",
   /** 換 logo 後遞增，用來清瀏覽器／元件快取（勿加在 Next Image src query） */
   logoVersion: 3,
 } as const;

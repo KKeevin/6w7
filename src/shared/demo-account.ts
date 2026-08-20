@@ -6,7 +6,7 @@ export const DEMO_ENTER_PATH = "/api/v1/auth/demo" as const;
 export const DEMO_PROFILE = {
   username: "lewanq",
   displayName: "樂玩ㄑ小編",
-  prompt: "想問就問，想說就說。這裡只進收件匣，不會預設公開掛牆。",
+  prompt: "想問想說，隨你高興：D",
   acceptingMessages: true,
   requireTopic: true,
   topics: ["學業", "感情", "日常", "職場", "真心話"] as const,

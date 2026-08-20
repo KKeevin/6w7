@@ -6,6 +6,11 @@
 
 import { BRAND } from "@/shared/tools";
 import { fetchAsDataUrl } from "@/lib/save-image";
+import {
+  SHARE_POINT_AT,
+  SHARE_STICKER_BOX,
+  sharePointAtLayout,
+} from "@/shared/share-story-art";
 
 export const STORY_PNG_SIZE = { width: 1080, height: 1920 } as const;
 
@@ -103,6 +108,77 @@ function drawContain(
   return { w, h };
 }
 
+const LOCKUP_LOGO_H = 64;
+const LOCKUP_CAPTION_SIZE = 24;
+const LOCKUP_CAPTION_GAP = 6;
+const LOCKUP_CAPTION_INSET = 8;
+const LOCKUP_LINK_SIZE = 36;
+export const STORY_BRAND_LOCKUP_H =
+  LOCKUP_LOGO_H + LOCKUP_CAPTION_GAP + LOCKUP_CAPTION_SIZE;
+
+/** 底部品牌：logo + .link，下方「匿名問答」拉開對齊 */
+function drawBrandLockup(
+  ctx: CanvasRenderingContext2D,
+  logo: HTMLImageElement | null,
+  centerX: number,
+  topY: number,
+) {
+  ctx.font = `700 ${LOCKUP_LINK_SIZE}px ${FONT}`;
+  const linkLabel = ".link";
+  const linkW = ctx.measureText(linkLabel).width;
+  const logoLinkOverlap = 4;
+  let groupX = centerX;
+  let groupW = 0;
+
+  if (logo) {
+    const scale = Math.min(
+      280 / logo.naturalWidth,
+      LOCKUP_LOGO_H / logo.naturalHeight,
+    );
+    const lw = logo.naturalWidth * scale;
+    const lh = logo.naturalHeight * scale;
+    groupW = lw + linkW - logoLinkOverlap;
+    groupX = centerX - groupW / 2;
+    const imgY = topY + (LOCKUP_LOGO_H - lh) / 2;
+    ctx.drawImage(logo, groupX, imgY, lw, lh);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "rgba(255,248,246,0.88)";
+    ctx.fillText(linkLabel, groupX + lw - logoLinkOverlap, imgY + lh - 8);
+  } else {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#fff8f6";
+    ctx.font = `800 40px ${FONT}`;
+    const fallback = `${BRAND.en}.link`;
+    groupW = ctx.measureText(fallback).width;
+    groupX = centerX - groupW / 2;
+    ctx.fillText(fallback, centerX, topY + LOCKUP_LOGO_H);
+  }
+
+  ctx.font = `600 ${LOCKUP_CAPTION_SIZE}px ${FONT}`;
+  ctx.fillStyle = "rgba(255,248,246,0.7)";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  const caption = "匿名問答";
+  const chars = [...caption];
+  const charWs = chars.map((ch) => ctx.measureText(ch).width);
+  const glyphW = charWs.reduce((sum, w) => sum + w, 0);
+  const spread =
+    chars.length > 1
+      ? (groupW - LOCKUP_CAPTION_INSET - glyphW) / (chars.length - 1)
+      : 0;
+  let cx = groupX + LOCKUP_CAPTION_INSET;
+  const captionY = topY + LOCKUP_LOGO_H + LOCKUP_CAPTION_GAP;
+  for (let i = 0; i < chars.length; i += 1) {
+    ctx.fillText(chars[i], cx, captionY);
+    cx += charWs[i] + spread;
+  }
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+}
+
 function drawCoverCircle(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -141,9 +217,10 @@ export async function renderShareStoryPng(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("canvas unsupported");
 
-  const [logo, avatar] = await Promise.all([
+  const [logo, avatar, pointAt] = await Promise.all([
     tryLoadDataUrl(brandLogoUrl()),
     tryLoadDataUrl(input.imageUrl),
+    tryLoadDataUrl(SHARE_POINT_AT.src),
   ]);
 
   // 底色
@@ -177,24 +254,18 @@ export async function renderShareStoryPng(
   ctx.fillStyle = bar;
   ctx.fillRect(0, 0, 22, H);
 
-  // 頂部 logo + 標籤
-  let logoDrawnW = 0;
+  // 頂部小 logo（底部已有完整品牌 lockup，避免重複「匿名問答」）
   if (logo) {
-    const drawn = drawContain(ctx, logo, 96, 88, 200, 52);
-    logoDrawnW = drawn.w;
+    drawContain(ctx, logo, 96, 88, 200, 52);
   } else {
     ctx.fillStyle = "#fff8f6";
     ctx.font = `800 40px ${FONT}`;
     ctx.fillText(BRAND.en, 96, 128);
-    logoDrawnW = ctx.measureText(BRAND.en).width;
   }
-  ctx.fillStyle = "rgba(255,248,246,0.55)";
-  ctx.font = `700 26px ${FONT}`;
-  ctx.fillText("匿名問答", 96 + logoDrawnW + 16, 122);
 
   // 中央頭貼
   const avatarCx = W / 2;
-  const avatarCy = 520;
+  const avatarCy = 456;
   const avatarD = 220;
   ctx.beginPath();
   ctx.arc(avatarCx, avatarCy, avatarD / 2 + 6, 0, Math.PI * 2);
@@ -223,7 +294,7 @@ export async function renderShareStoryPng(
   ctx.fillStyle = "rgba(255,248,246,0.65)";
   ctx.font = `600 32px ${FONT}`;
   ctx.textAlign = "center";
-  ctx.fillText(`@${input.username}`, avatarCx, 680);
+  ctx.fillText(`@${input.username}`, avatarCx, 616);
 
   // prompt
   const promptSize =
@@ -232,36 +303,22 @@ export async function renderShareStoryPng(
   ctx.font = `800 ${promptSize}px ${FONT}`;
   const promptLines = wrapText(ctx, input.prompt, 820);
   const promptLineH = promptSize * 1.25;
-  let promptY = 760;
+  let promptY = 696;
   for (const line of promptLines.slice(0, 8)) {
     ctx.fillText(line, avatarCx, promptY);
     promptY += promptLineH;
   }
 
-  // CTA pill
-  const cta = "匿名留言給我吧";
-  ctx.font = `600 28px ${FONT}`;
-  const ctaW = ctx.measureText(cta).width + 72;
-  const ctaH = 64;
-  const ctaX = avatarCx - ctaW / 2;
-  const ctaY = promptY + 24;
-  roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 999);
-  ctx.fillStyle = "rgba(255,248,246,0.12)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(255,248,246,0.22)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.fillStyle = "rgba(255,248,246,0.85)";
-  ctx.textBaseline = "middle";
-  ctx.fillText(cta, avatarCx, ctaY + ctaH / 2);
-  ctx.textBaseline = "alphabetic";
-
-  // 連結貼紙虛線框（略矮、略往上，底下留給品牌腳）
-  const boxW = 520;
-  const boxH = 132;
-  const boxX = (W - boxW) / 2;
-  // 比舊版再往上：加大與底部品牌的間距
-  const boxY = H - 80 - 220 - boxH;
+  // 連結貼紙虛線框：對準右下指向圖指尖；品牌 lockup 蓋在人物上方以免被擋
+  const padBottom = 80;
+  const groupMarginBottom = 8;
+  const art = sharePointAtLayout(W, H);
+  const boxW = SHARE_STICKER_BOX.width;
+  const boxH = SHARE_STICKER_BOX.height;
+  const boxX = art.stickerX;
+  const boxY = art.stickerY;
+  const lockupTop =
+    H - padBottom - groupMarginBottom - STORY_BRAND_LOCKUP_H;
   ctx.setLineDash([14, 12]);
   ctx.strokeStyle = "rgba(255,248,246,0.35)";
   ctx.lineWidth = 3;
@@ -272,12 +329,26 @@ export async function renderShareStoryPng(
   ctx.setLineDash([]);
   ctx.fillStyle = "rgba(255,248,246,0.5)";
   ctx.font = `600 26px ${FONT}`;
-  ctx.fillText("連結貼紙可放這裡", avatarCx, boxY + boxH / 2 + 8);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    "連結貼紙可放這裡",
+    boxX + boxW / 2,
+    boxY + boxH / 2,
+  );
+  ctx.textBaseline = "alphabetic";
 
-  // 品牌腳
-  ctx.fillStyle = "rgba(255,248,246,0.5)";
-  ctx.font = `600 24px ${FONT}`;
-  ctx.fillText(`${BRAND.en}（${BRAND.zh}）`, avatarCx, H - 80);
+  if (pointAt) {
+    ctx.drawImage(
+      pointAt,
+      art.imgX,
+      art.imgY,
+      SHARE_POINT_AT.width,
+      SHARE_POINT_AT.height,
+    );
+  }
+
+  drawBrandLockup(ctx, logo, avatarCx, lockupTop);
 
   ctx.textAlign = "left";
   return canvas.toDataURL("image/png");
@@ -291,7 +362,7 @@ export type InboxStoryRenderInput = {
   shareHost?: string;
 };
 
-/** 收件匣回覆限動圖卡 → PNG data URL */
+/** 收件匣回覆限動圖卡 → PNG data URL（版型對齊 `StoryCard` 預覽） */
 export async function renderInboxStoryPng(
   input: InboxStoryRenderInput,
 ): Promise<string> {
@@ -303,8 +374,25 @@ export async function renderInboxStoryPng(
   if (!ctx) throw new Error("canvas unsupported");
 
   const logo = await tryLoadDataUrl(brandLogoUrl());
-  const shareHost = input.shareHost || "6w7.link";
   const reply = input.reply?.trim() || "";
+  const body = input.body || "";
+
+  const padX = 72;
+  const padTop = 80;
+  const padBottom = 72;
+  const logoH = 56;
+  const midPadY = 40;
+  const gapMain = 48;
+  const barW = 18;
+  const cardRadius = 28;
+  const innerPadX = 44;
+  const innerPadTop = 48;
+  const innerPadBottom = 56;
+  const innerGap = 28;
+  const labelSize = 26;
+  const underlineH = 4;
+  const underlineW = 72;
+  const underlineGap = 8;
 
   ctx.fillStyle = "#14212b";
   ctx.fillRect(0, 0, W, H);
@@ -321,109 +409,138 @@ export async function renderInboxStoryPng(
   ctx.fillStyle = glow2;
   ctx.fillRect(0, 0, W, H);
 
-  // 頂部 logo
   if (logo) {
-    drawContain(ctx, logo, 72, 80, 220, 56);
+    drawContain(ctx, logo, padX, padTop, 220, logoH);
   } else {
     ctx.fillStyle = "#fff8f6";
     ctx.font = `800 44px ${FONT}`;
-    ctx.fillText(BRAND.en, 72, 125);
+    ctx.textBaseline = "top";
+    ctx.fillText(BRAND.en, padX, padTop);
   }
 
-  // 白卡片
-  const cardX = 72;
-  const cardY = 220;
-  const cardW = W - 144;
-  const cardH = 720;
-  roundRect(ctx, cardX, cardY, cardW, cardH, 28);
-  ctx.fillStyle = "#ffffff";
+  const cardX = padX;
+  const cardW = W - padX * 2;
+  const textMaxW = cardW - barW - innerPadX * 2;
+
+  let bodySize = body.length > 80 ? 42 : body.length > 40 ? 48 : 56;
+  const replySize = reply.length > 60 ? 40 : 48;
+  const replyLineH = replySize * 1.4;
+
+  ctx.font = `600 ${replySize}px ${FONT}`;
+  const replyLines = reply ? wrapText(ctx, reply, W - padX * 2 - 48) : [];
+  const replyH = reply
+    ? Math.max(1, Math.min(replyLines.length, 6)) * replyLineH
+    : 0;
+  const replyGap = reply ? gapMain : 0;
+
+  const footerH = STORY_BRAND_LOCKUP_H;
+  const footerTop = H - padBottom - footerH;
+  const middleTop = padTop + logoH + midPadY;
+  const middleBottom = footerTop - midPadY;
+  const maxBlockH = Math.max(280, middleBottom - middleTop);
+
+  let bodyLines: string[] = [];
+  let bodyLineH = bodySize * 1.35;
+  let cardH = 0;
+  let blockH = 0;
+
+  for (let i = 0; i < 8; i += 1) {
+    ctx.font = `700 ${bodySize}px ${FONT}`;
+    bodyLines = wrapText(ctx, body, textMaxW);
+    bodyLineH = bodySize * 1.35;
+    const maxBodyLines = Math.max(
+      1,
+      Math.floor(
+        (maxBlockH -
+          replyGap -
+          replyH -
+          innerPadTop -
+          labelSize -
+          innerGap -
+          underlineGap -
+          underlineH -
+          innerPadBottom) /
+          bodyLineH,
+      ),
+    );
+    bodyLines = bodyLines.slice(0, Math.min(bodyLines.length, maxBodyLines));
+    const bodyH = bodyLines.length * bodyLineH;
+    cardH =
+      innerPadTop +
+      labelSize +
+      innerGap +
+      bodyH +
+      underlineGap +
+      underlineH +
+      innerPadBottom;
+    blockH = cardH + replyGap + replyH;
+    if (blockH <= maxBlockH || bodySize <= 32) break;
+    bodySize -= 4;
+  }
+
+  const cardY = middleTop + Math.max(0, (maxBlockH - blockH) / 2 - 56);
+  const replyY = cardY + cardH + replyGap;
+
+  ctx.save();
+  roundRect(ctx, cardX, cardY, cardW, cardH, cardRadius);
   ctx.shadowColor = "rgba(0,0,0,0.35)";
   ctx.shadowBlur = 40;
   ctx.shadowOffsetY = 18;
+  ctx.fillStyle = "#ffffff";
   ctx.fill();
   ctx.shadowColor = "transparent";
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
-
-  // 左側紅條
+  ctx.clip();
   ctx.fillStyle = "#ff5a3c";
-  ctx.fillRect(cardX, cardY, 18, cardH);
+  ctx.fillRect(cardX, cardY, barW, cardH);
+  ctx.restore();
+
+  const textX = cardX + barW + innerPadX;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
 
   const label = input.topic
     ? `主題｜${input.topic}`
     : input.linkTitle || "匿名留言";
   ctx.fillStyle = "#1aa68a";
-  ctx.font = `700 26px ${FONT}`;
-  ctx.fillText(label, cardX + 62, cardY + 70);
+  ctx.font = `700 ${labelSize}px ${FONT}`;
+  ctx.fillText(label, textX, cardY + innerPadTop);
 
-  const bodySize =
-    input.body.length > 80 ? 42 : input.body.length > 40 ? 48 : 56;
   ctx.fillStyle = "#14212b";
   ctx.font = `700 ${bodySize}px ${FONT}`;
-  const bodyLines = wrapText(ctx, input.body, cardW - 130);
-  let by = cardY + 130;
-  for (const line of bodyLines.slice(0, 10)) {
-    ctx.fillText(line, cardX + 62, by);
-    by += bodySize * 1.35;
+  let by = cardY + innerPadTop + labelSize + innerGap;
+  for (const line of bodyLines) {
+    ctx.fillText(line, textX, by);
+    by += bodyLineH;
   }
 
   ctx.fillStyle = "#14212b";
-  roundRect(ctx, cardX + 62, by + 16, 72, 4, 2);
+  roundRect(
+    ctx,
+    textX,
+    by + underlineGap,
+    underlineW,
+    underlineH,
+    2,
+  );
   ctx.fill();
 
-  // 回覆
-  ctx.textAlign = "center";
   if (reply) {
-    const replySize = reply.length > 60 ? 40 : 48;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
     ctx.fillStyle = "#fff8f6";
     ctx.font = `600 ${replySize}px ${FONT}`;
-    const replyLines = wrapText(ctx, reply, W - 160);
-    let ry = cardY + cardH + 100;
+    let ry = replyY;
     for (const line of replyLines.slice(0, 6)) {
       ctx.fillText(line, W / 2, ry);
-      ry += replySize * 1.4;
+      ry += replyLineH;
     }
-  } else {
-    ctx.fillStyle = "rgba(255,248,246,0.35)";
-    ctx.font = `500 32px ${FONT}`;
-    ctx.fillText("（在此寫下你的回覆）", W / 2, cardY + cardH + 100);
   }
 
-  // 底部 host pill
-  ctx.font = `700 28px ${FONT}`;
-  const pillText = shareHost;
-  const pillW = ctx.measureText(pillText).width + 70;
-  const pillH = 56;
-  const pillX = (W - pillW) / 2;
-  const pillY = H - 220;
-  roundRect(ctx, pillX, pillY, pillW, pillH, 999);
-  ctx.fillStyle = "#ffffff";
-  ctx.fill();
-  ctx.fillStyle = "#ff5a3c";
-  roundRect(ctx, pillX + 20, pillY + 20, 16, 16, 4);
-  ctx.fill();
-  ctx.fillStyle = "#14212b";
-  ctx.textBaseline = "middle";
-  ctx.fillText(pillText, W / 2 + 10, pillY + pillH / 2);
-  ctx.textBaseline = "alphabetic";
-
-  // 底部 logo
-  if (logo) {
-    const maxH = 64;
-    const scale = Math.min(280 / logo.naturalWidth, maxH / logo.naturalHeight);
-    const lw = logo.naturalWidth * scale;
-    const lh = logo.naturalHeight * scale;
-    ctx.drawImage(logo, (W - lw) / 2, H - 140, lw, lh);
-  } else {
-    ctx.fillStyle = "#fff8f6";
-    ctx.font = `800 40px ${FONT}`;
-    ctx.fillText(BRAND.en, W / 2, H - 100);
-  }
-
-  ctx.fillStyle = "rgba(255,248,246,0.7)";
-  ctx.font = `600 26px ${FONT}`;
-  ctx.fillText(`${BRAND.zh} · 匿名問答`, W / 2, H - 50);
+  drawBrandLockup(ctx, logo, W / 2, footerTop);
 
   ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
   return canvas.toDataURL("image/png");
 }

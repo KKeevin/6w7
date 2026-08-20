@@ -269,6 +269,69 @@ body {
   color: color-mix(in srgb, var(--accent) 90%, white);
 }
 
+@keyframes story-read-hint {
+  0%,
+  14% {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  24%,
+  48% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  62%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+}
+
+@keyframes story-read-hint-box {
+  0%,
+  14% {
+    opacity: 0;
+  }
+  24%,
+  48% {
+    opacity: 1;
+  }
+  62%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.story-read-hint-box {
+  position: absolute;
+  inset: -18px;
+  z-index: 2;
+  pointer-events: none;
+  border: 10px dashed #1aa68a;
+  border-radius: 44px;
+  box-shadow: 0 0 0 4px rgba(26, 166, 138, 0.2);
+  animation: story-read-hint-box 6.2s ease-in-out infinite;
+}
+
+.story-read-hint-label {
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  z-index: 3;
+  pointer-events: none;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: #1aa68a;
+  color: #fff;
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 16px 36px;
+  box-shadow: 0 12px 28px rgba(20, 33, 43, 0.32);
+  animation: story-read-hint 6.2s ease-in-out infinite;
+}
+
 .meme-drift-ink {
   color: color-mix(in srgb, var(--ink) 55%, transparent);
 }
@@ -313,8 +376,19 @@ body {
   .animate-scroll-cue,
   .meme-drift,
   .meme-firework,
-  .meme-bob {
+  .meme-bob,
+  .story-read-hint-box,
+  .story-read-hint-label {
     animation: none;
+  }
+
+  .story-read-hint-box,
+  .story-read-hint-label {
+    opacity: 0.85;
+  }
+
+  .story-read-hint-label {
+    transform: translate(-50%, 0);
   }
 
   .meme-drift,

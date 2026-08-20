@@ -1,15 +1,28 @@
 import { BRAND } from "@/shared/tools";
 import { getSiteUrl } from "@/lib/utils";
+import { StoryBrandLockup } from "@/components/story-brand-lockup";
+import {
+  SHARE_POINT_AT,
+  SHARE_STICKER_BOX,
+  sharePointAtLayout,
+} from "@/shared/share-story-art";
 
 const W = 1080;
 const H = 1920;
 
-function logoUrl() {
-  const path = `${BRAND.logoSrc}?v=${BRAND.logoVersion}`;
+function assetUrl(path: string) {
   if (typeof window !== "undefined") {
     return `${window.location.origin}${path}`;
   }
   return `${getSiteUrl()}${path}`;
+}
+
+function logoUrl() {
+  return `${assetUrl(BRAND.logoSrc)}?v=${BRAND.logoVersion}`;
+}
+
+function pointAtUrl() {
+  return assetUrl(SHARE_POINT_AT.src);
 }
 
 export type ShareStoryCardProps = {
@@ -32,6 +45,8 @@ export function ShareStoryCard({
 }: ShareStoryCardProps) {
   const initial = (displayName || username).slice(0, 1).toUpperCase();
   const resolvedLogo = logoSrc || logoUrl();
+  const resolvedPointAt = pointAtUrl();
+  const art = sharePointAtLayout(W, H);
 
   return (
     <div
@@ -72,7 +87,7 @@ export function ShareStoryCard({
       <div
         style={{
           position: "relative",
-          zIndex: 1,
+          zIndex: 4,
           flex: 1,
           display: "flex",
           flexDirection: "column",
@@ -84,7 +99,6 @@ export function ShareStoryCard({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 16,
             flexShrink: 0,
           }}
         >
@@ -96,16 +110,6 @@ export function ShareStoryCard({
             height={80}
             style={{ height: 52, width: "auto", objectFit: "contain" }}
           />
-          <span
-            style={{
-              fontSize: 26,
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              color: "rgba(255,248,246,0.55)",
-            }}
-          >
-            匿名問答
-          </span>
         </div>
 
         <div
@@ -118,7 +122,7 @@ export function ShareStoryCard({
             textAlign: "center",
             gap: 36,
             minHeight: 0,
-            padding: "48px 0 32px",
+            padding: "16px 0 120px",
           }}
         >
           <div
@@ -169,74 +173,70 @@ export function ShareStoryCard({
           >
             {prompt}
           </p>
-
-          <div
-            style={{
-              marginTop: 8,
-              padding: "16px 36px",
-              borderRadius: 999,
-              backgroundColor: "rgba(255,248,246,0.12)",
-              border: "2px solid rgba(255,248,246,0.22)",
-              fontSize: 28,
-              fontWeight: 600,
-              color: "rgba(255,248,246,0.85)",
-            }}
-          >
-            匿名留言給我吧
-          </div>
         </div>
 
-        {/* 下方留給連結貼紙的提示區 */}
         <div
           style={{
             flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 28,
-            // 整塊略往上，底下多留一點給品牌腳
-            marginBottom: 28,
+            alignSelf: "center",
+            marginBottom: 8,
           }}
         >
-          <div
-            style={{
-              width: 520,
-              maxWidth: "100%",
-              minHeight: 132,
-              height: 132,
-              borderRadius: 24,
-              border: "3px dashed rgba(255,248,246,0.35)",
-              backgroundColor: "rgba(255,248,246,0.06)",
-              padding: "20px 28px",
-              textAlign: "center" as const,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              boxSizing: "border-box",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 26,
-                fontWeight: 600,
-                color: "rgba(255,248,246,0.5)",
-              }}
-            >
-              連結貼紙可放這裡
-            </div>
-          </div>
-          <div
-            style={{
-              fontSize: 24,
-              fontWeight: 600,
-              color: "rgba(255,248,246,0.5)",
-            }}
-          >
-            {BRAND.en}（{BRAND.zh}）
-          </div>
+          <StoryBrandLockup logoSrc={resolvedLogo} />
         </div>
       </div>
+
+      {/* 連結貼紙：對準右下指向圖的指尖 */}
+      <div
+        style={{
+          position: "absolute",
+          left: art.stickerX,
+          top: art.stickerY,
+          width: SHARE_STICKER_BOX.width,
+          height: SHARE_STICKER_BOX.height,
+          zIndex: 2,
+          borderRadius: 24,
+          border: "3px dashed rgba(255,248,246,0.35)",
+          backgroundColor: "rgba(255,248,246,0.06)",
+          padding: "20px 28px",
+          textAlign: "center" as const,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          boxSizing: "border-box",
+          pointerEvents: "none",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 26,
+            fontWeight: 600,
+            color: "rgba(255,248,246,0.5)",
+          }}
+        >
+          連結貼紙可放這裡
+        </div>
+      </div>
+
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={resolvedPointAt}
+        alt=""
+        width={SHARE_POINT_AT.width}
+        height={SHARE_POINT_AT.height}
+        style={{
+          position: "absolute",
+          right: 0,
+          bottom: 0,
+          width: SHARE_POINT_AT.width,
+          height: SHARE_POINT_AT.height,
+          objectFit: "contain",
+          objectPosition: "right bottom",
+          zIndex: 3,
+          pointerEvents: "none",
+        }}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 > **給之後所有 AI／開發者：** 開專案、寫功能、重構、加工具前，**必須先讀完本檔並遵守**。  
 > 本檔是單一真相來源（source of truth）。若實作與本檔衝突，以本檔為準；若要改規格，先更新本檔再改程式。
 
-**最後更新：** 2026-08-20（品牌：開心玩樂去／six seven）  
+**最後更新：** 2026-08-24（註冊先帳密進站；信箱在設定頁綁定並驗證）  
 **網域：** https://6w7.link  
 **品牌英文：** 6w7  
 **品牌中文：** 樂玩ㄑ  
@@ -100,8 +100,8 @@
 | AI 產圖／換臉 | 外部 API（Replicate／自架 GPU）、佇列（Inngest／BullMQ）、物件儲存（S3／R2） |
 | 即時通知 | Web Push、Expo Push、可選 SSE／WebSocket |
 | 分析 | **Vercel Analytics**（`@vercel/analytics`，根 layout；隱私友善、勿再亂塞追蹤） |
-| 廣告收益 | 僅有原創說明的頁可放 AdSense：`/about`、`/contact`、`/legal/privacy`、`/legal/terms`、帶說明的 `/{slug}`、示範帳號與正式登入後的 dashboard／inbox。**禁止**登入／註冊／settings／404。見 `NEXT_PUBLIC_ADS_*`；AdSense 後台須關閉自動廣告 |
-| 郵件／通知 | Resend 等 |
+| 廣告收益 | 僅有原創說明的頁可放 AdSense：`/about`、`/contact`、`/legal/privacy`、`/legal/terms`、帶說明的 `/{slug}`、示範帳號與正式登入後的 dashboard／inbox。**禁止**登入／註冊／忘記密碼／重設密碼／驗證信箱／settings／404。見 `NEXT_PUBLIC_ADS_*`；AdSense 後台須關閉自動廣告 |
+| 郵件／通知 | 忘記密碼已接 SMTP（Gmail 代發）。對外 From 固定 `service@6w7.link`，**禁止**把代發 Gmail 寫進前端。環境變數：`SMTP_HOST`／`SMTP_USER`／`SMTP_PASS`／`MAIL_FROM` |
 | 監控 | **Vercel Speed Insights**（`@vercel/speed-insights`，根 layout）；Sentry 可之後再加 |
 | Monorepo | pnpm workspace：`apps/web`、`apps/mobile`、`packages/*` |
 | 獨立 API | 當流量或 AI worker 變重時，再拆 Node／Python worker |
@@ -145,7 +145,8 @@ AI 搭骨架時請朝此結構靠攏（可微調，但意圖不變）：
 | `/[slug]` | 訪客留言（6 碼英數／可含 `-`） | 必做（路徑選定後勿亂改） |
 | `/inbox` | 收件匣 | 必做 |
 | `/dashboard` | 建立／管理連結、取得專屬 URL | 必做 |
-| `/settings` | 帳號與安全 | 建議 |
+| `/settings` | 帳號與安全（可綁定信箱） | 建議 |
+| `/forgot-password` `/reset-password` `/verify-email` | 忘記密碼／重設／驗證信箱（寄信；禁止廣告） | 必做 |
 | `/tools/face` 等 | AI 換臉等 | **未上線前不出現在 UI**；僅程式內占位可保留 |
 | `/legal/privacy` `/legal/terms` | 隱私權／條款 | 必做（可先簡版） |
 | `/about` `/contact` | 關於我們／聯絡我們（AdSense 透明度） | 必做 |
@@ -161,7 +162,8 @@ AI 實作時可細化欄位，但概念實體不可缺：
 
 ### 4.1 User（帳號）
 
-- id、**username**（Instagram ID 風格，唯一；對外連結即此）、email（可選／內部用）、passwordHash、name、image（頭貼 URL／路徑）、createdAt、status（active／suspended）
+- id、**username**（Instagram ID 風格，唯一；對外連結即此）、email（可選；註冊不強制，設定頁綁定）、emailVerified、passwordHash、name、image（頭貼 URL／路徑）、createdAt、status（active／suspended）
+- PasswordResetToken／EmailVerificationToken：只存 token 雜湊與到期時間；用過即刪
 - 角色預設 `user`；預留 `admin`
 - 註冊 UI 帳號欄位前綴顯示 `@`，引導使用者填 IG ID
 
@@ -206,7 +208,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 
 ### 5.1 使用者旅程
 
-1. **主人**以 Instagram ID（`@username`）註冊／登入，可上傳大頭貼。
+1. **主人**以 Instagram ID（`@username`）註冊／登入（先帳號＋密碼即可進站），可上傳大頭貼；信箱之後到設定頁綁定並驗證。
 2. 專屬連結固定為 `https://6w7.link/{username}`（不用隨機 slug）；人設提示（prompt）像 bio，修改即覆蓋。
 3. **分享頁**（簡單）：預覽圖卡 → 第一步複製連結 → 第二步分享到 IG 限動（含簡短教學，文案／視覺須 6w7 原創，禁止抄 NGL）。
 4. **訪客**打開連結 → 看到頭貼與提示 → 送出匿名留言（無需登入）。
@@ -216,6 +218,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 ### 5.2 必須有的能力（MVP）
 
 - [ ] 以 IG ID（username）註冊／登入／登出（UI 顯示 `@` 前綴）
+- [ ] 忘記密碼：設定頁綁定並驗證信箱後寄重設連結（From：`service@6w7.link`）
 - [ ] 每人一條連結：`/{username}`；prompt 可更新覆蓋
 - [ ] 大頭貼上傳（轉 profile.png、刪舊檔）
 - [ ] 簡單分享頁：複製連結 + 限動分享引導
@@ -323,6 +326,8 @@ AI 實作時可細化欄位，但概念實體不可缺：
 - 永遠不把金鑰、token、連線字串寫進前端 bundle。
 - 日誌避免打印留言全文與 token。
 - 生產／開發環境設定分離。
+- 對外聯絡信箱只顯示 **service@6w7.link**。忘記密碼信以 Gmail SMTP「代發／Send mail as」寄出；代發用的 Gmail 與應用程式密碼只寫環境變數／本機密鑰備忘，禁止上網站、前端或公開 Git。
+- 忘記密碼 API 不可透露帳號是否存在；只寄給**已驗證**信箱。token 只存雜湊，重設連結 1 小時失效，驗證連結 24 小時失效。
 
 ---
 
@@ -338,8 +343,13 @@ AI 實作時可細化欄位，但概念實體不可缺：
 ### 8.1 建議端點（MVP）
 
 ```
-POST   /api/v1/auth/...          # 依所選方案
+POST   /api/v1/auth/register
+POST   /api/v1/auth/forgot-password   # 公開＋限流；無論是否存在帳號皆回成功
+POST   /api/v1/auth/reset-password
 GET    /api/v1/me
+PATCH  /api/v1/me                     # 綁定／更新登入信箱（會寄驗證信）
+POST   /api/v1/me/email/verify        # 重寄驗證信（需登入）
+POST   /api/v1/auth/verify-email      # 點信件連結完成驗證
 
 POST   /api/v1/ask-links         # 建立連結
 GET    /api/v1/ask-links

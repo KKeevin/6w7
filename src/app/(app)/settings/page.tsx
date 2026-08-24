@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { signOut } from "@/lib/auth";
 import { getViewer } from "@/lib/viewer";
 import { loginPath } from "@/shared/paths";
 import { Button } from "@/components/ui/button";
 import { CopyLinkButton } from "@/components/copy-link-button";
+import { SettingsEmailForm } from "@/components/settings-email-form";
 import { getProfileForOwner } from "@/services/ask-link.service";
 import { SHELL_CONTENT } from "@/shared/shell";
 
@@ -132,6 +134,33 @@ export default async function SettingsPage() {
                 {accepting ? "ON" : "OFF"}
               </span>
             </div>
+          </div>
+        </section>
+
+        <section
+          id="email"
+          className="mt-6 scroll-mt-24 overflow-hidden rounded-3xl border border-[var(--line)] bg-white shadow-[0_16px_40px_rgba(20,33,43,0.06)]"
+        >
+          <div className="border-b border-[var(--line)] px-5 py-4 sm:px-8">
+            <p className="text-sm font-semibold text-[var(--ink)]">信箱與密碼救援</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              {demo
+                ? "示範帳號不開放改信箱。"
+                : "綁定信箱以便使用未來更多服務，以及方便帳號救回。"}
+            </p>
+          </div>
+          <div className="px-5 py-5 sm:px-8">
+            <Suspense
+              fallback={
+                <p className="text-sm text-[var(--muted)]">載入信箱設定…</p>
+              }
+            >
+              <SettingsEmailForm
+                initialEmail={profile.user.email}
+                initialVerified={Boolean(profile.user.emailVerified)}
+                disabled={demo}
+              />
+            </Suspense>
           </div>
         </section>
 

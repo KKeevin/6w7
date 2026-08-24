@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,7 +70,10 @@ export function LoginForm({
         const res = await fetch("/api/v1/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({
+            username,
+            password,
+          }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -90,7 +94,7 @@ export function LoginForm({
         );
       }
       markDeviceHasAccount();
-      router.push(next);
+      router.push(mode === "register" ? "/dashboard?welcome=1" : next);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "發生錯誤");
@@ -125,7 +129,17 @@ export function LoginForm({
         )}
       </div>
       <div>
-        <Label htmlFor="password">密碼（至少 8 碼）</Label>
+        <div className="flex items-end justify-between gap-3">
+          <Label htmlFor="password">密碼（至少 8 碼）</Label>
+          {mode === "login" ? (
+            <Link
+              href="/forgot-password"
+              className="mb-0.5 text-xs font-medium text-[var(--muted)] hover:text-[var(--ink)]"
+            >
+              忘記密碼？
+            </Link>
+          ) : null}
+        </div>
         <Input
           id="password"
           type="password"

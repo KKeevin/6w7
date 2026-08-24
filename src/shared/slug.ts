@@ -5,6 +5,9 @@ import { ASK_LIMITS } from "@/shared/tools";
 export const RESERVED_SLUGS = new Set([
   "api",
   "login",
+  "forgot-password",
+  "reset-password",
+  "verify-email",
   "dashboard",
   "inbox",
   "settings",

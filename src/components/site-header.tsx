@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/viewer";
+import { prisma } from "@/lib/db";
 import { BrandLogo } from "@/components/brand-logo";
 import { HeaderNav } from "@/components/site-header-nav";
 import { BRAND } from "@/shared/tools";
@@ -39,6 +40,15 @@ export async function SiteHeader() {
       ? ""
       : viewer.user.username || viewer.user.name || "";
 
+  let needsEmail = false;
+  if (viewer.kind === "user") {
+    const row = await prisma.user.findUnique({
+      where: { id: viewer.user.id },
+      select: { emailVerified: true },
+    });
+    needsEmail = !row?.emailVerified;
+  }
+
   return (
     <header className="sticky top-0 z-20 h-[var(--header-h)] shrink-0 border-b border-[var(--line)]/70 bg-[var(--bg)]/90 backdrop-blur-md">
       <div
@@ -58,12 +68,15 @@ export async function SiteHeader() {
 
         {signedIn ? (
           <Link
-            href="/settings"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--mint)] hover:text-[var(--ink)]"
+            href={needsEmail ? "/settings#email" : "/settings"}
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--mint)] hover:text-[var(--ink)]"
             title={username ? `設定 · @${username}` : "帳號設定"}
             aria-label={username ? `帳號設定，@${username}` : "帳號設定"}
           >
             <UserIcon className="h-5 w-5" />
+            {needsEmail ? (
+              <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--bg)]" />
+            ) : null}
           </Link>
         ) : (
           <Link

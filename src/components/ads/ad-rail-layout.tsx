@@ -13,7 +13,7 @@ type AdRailLayoutProps = {
 
 /**
  * 用於有發布商內容的頁。桌機廣告只放右側（上＋下兩格），手機放內容下方。
- * 登入／註冊／設定／404 不要包這層。
+ * 登入／註冊／忘記密碼／重設密碼／驗證信箱／設定／404 不要包這層。
  */
 export function AdRailLayout({
   children,

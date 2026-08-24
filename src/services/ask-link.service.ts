@@ -33,11 +33,22 @@ export async function registerUser(input: z.infer<typeof registerSchema>) {
     throw new AppError("CONFLICT", "這個 IG 帳號已被註冊。", 409);
   }
 
+  if (input.email) {
+    const emailTaken = await prisma.user.findUnique({
+      where: { email: input.email },
+      select: { id: true },
+    });
+    if (emailTaken) {
+      throw new AppError("CONFLICT", "這個信箱已被其他帳號使用。", 409);
+    }
+  }
+
   const passwordHash = await bcrypt.hash(input.password, 12);
   const user = await prisma.user.create({
     data: {
       username,
       name: input.name || username,
+      email: input.email,
       passwordHash,
       askLink: {
         create: {
@@ -81,6 +92,8 @@ export async function getProfileForOwner(userId: string) {
       id: user.id,
       username: user.username,
       name: user.name,
+      email: user.email,
+      emailVerified: Boolean(user.emailVerified),
       image: avatarDisplayUrl(user.image, user.updatedAt),
     },
     link: serializeLink(user.askLink),

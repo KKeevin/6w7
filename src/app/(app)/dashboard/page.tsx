@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
+import { EmailNudge } from "@/components/email-nudge";
 import { LoggedInPublisherNote } from "@/components/ads/logged-in-publisher-note";
 import { SharePageClient } from "@/components/share-page-client";
 import { getViewer } from "@/lib/viewer";
@@ -11,17 +12,28 @@ export const metadata: Metadata = {
   title: "短網址",
 };
 
-export default async function DashboardPage() {
+type Props = { searchParams: Promise<{ welcome?: string }> };
+
+export default async function DashboardPage({ searchParams }: Props) {
   const viewer = await getViewer();
   if (viewer.kind === "guest") {
     redirect(loginPath("/dashboard"));
   }
 
+  const { welcome } = await searchParams;
   const profile = await getProfileForOwner(viewer.user.id);
+  const emailVerified = Boolean(profile.user.emailVerified);
 
   return (
     <main className="bg-atmosphere flex flex-1 flex-col py-2 sm:py-3">
       <AdRailLayout width="wide">
+        {viewer.kind === "user" && !emailVerified ? (
+          <EmailNudge
+            welcome={welcome === "1"}
+            hasEmail={Boolean(profile.user.email)}
+            verified={emailVerified}
+          />
+        ) : null}
         <SharePageClient
           initialProfile={{
             user: profile.user,
@@ -44,3 +56,4 @@ export default async function DashboardPage() {
     </main>
   );
 }
+

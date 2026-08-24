@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export function SettingsEmailForm({
   initialEmail,
@@ -17,8 +19,10 @@ export function SettingsEmailForm({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState(initialEmail ?? "");
   const [verified, setVerified] = useState(initialVerified);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(
     searchParams.get("verified") === "1" ? "信箱已驗證，忘記密碼可以用了。" : null,
@@ -28,9 +32,27 @@ export function SettingsEmailForm({
   const [savedEmail, setSavedEmail] = useState(initialEmail ?? "");
 
   const savedPending = Boolean(savedEmail) && !verified;
+  const locked = Boolean(savedEmail) && verified && !editing;
+  const showVerified =
+    verified && email.trim().toLowerCase() === savedEmail.trim().toLowerCase();
+
+  function startEdit() {
+    setEditing(true);
+    setError(null);
+    setMessage(null);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  function cancelEdit() {
+    setEmail(savedEmail);
+    setEditing(false);
+    setError(null);
+    setMessage(null);
+  }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (locked) return;
     setError(null);
     setMessage(null);
     setLoading(true);
@@ -49,6 +71,7 @@ export function SettingsEmailForm({
       setEmail(nextEmail);
       setSavedEmail(nextEmail);
       setVerified(nextVerified);
+      setEditing(false);
       if (!nextEmail) {
         setMessage("已移除信箱。");
       } else if (nextVerified) {
@@ -103,12 +126,12 @@ export function SettingsEmailForm({
           {email ? (
             <span
               className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                verified
+                showVerified
                   ? "bg-[var(--mint)]/15 text-[var(--mint)]"
                   : "bg-[var(--accent)]/12 text-[var(--accent)]"
               }`}
             >
-              {verified ? "已驗證" : "未驗證"}
+              {showVerified ? "已驗證" : "未驗證"}
             </span>
           ) : (
             <span className="inline-flex rounded-full bg-[var(--surface)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--muted)]">
@@ -116,23 +139,40 @@ export function SettingsEmailForm({
             </span>
           )}
         </div>
-        <Input
-          id="account-email"
-          type="email"
-          value={email}
-          onChange={(event) => {
-            setEmail(event.target.value);
-            setVerified(false);
-            setMessage(null);
-          }}
-          placeholder="you@example.com"
-          autoComplete="email"
-          disabled={disabled}
-          maxLength={120}
-          className="mt-2"
-        />
+        <div className="relative mt-2">
+          <Input
+            ref={inputRef}
+            id="account-email"
+            type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setMessage(null);
+            }}
+            placeholder="you@example.com"
+            autoComplete="email"
+            disabled={disabled}
+            readOnly={locked}
+            aria-readonly={locked}
+            maxLength={120}
+            className={cn(
+              locked && "cursor-default bg-[var(--surface)] disabled:opacity-100",
+              locked && !disabled && "pr-28",
+            )}
+          />
+          {locked && !disabled ? (
+            <button
+              type="button"
+              className="absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 text-xs font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
+              onClick={startEdit}
+            >
+              <Pencil className="h-3 w-3" aria-hidden />
+              更改信箱
+            </button>
+          ) : null}
+        </div>
         <p className="mt-1 text-xs text-[var(--muted)]">
-          {verified
+          {showVerified
             ? "不會顯示在公開留言頁。驗證後才能用忘記密碼把信寄到這裡。"
             : "儲存後會寄出驗證信，請到信箱點連結完成驗證。信箱不會顯示在公開留言頁。"}
         </p>
@@ -141,21 +181,33 @@ export function SettingsEmailForm({
       {message && !error && (
         <p className="text-sm text-[var(--mint)]">{message}</p>
       )}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading || disabled}>
-          {loading ? "儲存中…" : "儲存"}
-        </Button>
-        {savedPending ? (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={resending || disabled}
-            onClick={() => void resend()}
-          >
-            {resending ? "寄送中…" : "重寄驗證信"}
+      {locked ? null : (
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={loading || disabled}>
+            {loading ? "儲存中…" : "儲存"}
           </Button>
-        ) : null}
-      </div>
+          {editing ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading || disabled}
+              onClick={cancelEdit}
+            >
+              取消
+            </Button>
+          ) : null}
+          {savedPending ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={resending || disabled}
+              onClick={() => void resend()}
+            >
+              {resending ? "寄送中…" : "重寄驗證信"}
+            </Button>
+          ) : null}
+        </div>
+      )}
     </form>
   );
 }

@@ -146,7 +146,7 @@ export default async function SettingsPage() {
             <p className="mt-1 text-xs text-[var(--muted)]">
               {demo
                 ? "示範帳號不開放改信箱。"
-                : "綁定信箱以便使用未來更多服務，以及方便帳號救回。"}
+                : "綁定並驗證信箱，方便帳號救回；有新的匿名留言時也會通知你（信裡不放內容）。"}
             </p>
           </div>
           <div className="px-5 py-5 sm:px-8">

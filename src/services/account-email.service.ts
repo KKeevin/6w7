@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
+import { buildTransactionalMail } from "@/lib/mail-template";
 import { createRawToken, hashToken } from "@/lib/token-hash";
 import { getSiteUrl } from "@/lib/utils";
 import { AppError } from "@/shared/errors";
@@ -7,28 +8,27 @@ import { BRAND } from "@/shared/tools";
 
 const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 
-function verifyMailCopy(username: string, url: string) {
-  const subject = `驗證你的 ${BRAND.en} 信箱`;
-  const text = [
-    `@${username} 你好，`,
-    "",
-    `請在 24 小時內開啟這個連結，完成 ${BRAND.en}（${BRAND.zh}）信箱驗證：`,
-    url,
-    "",
-    "驗證後，忘記密碼才能寄重設信到這個信箱。",
-    "若不是你本人，可以忽略這封信。",
-    `這封信由 ${BRAND.contactEmail} 寄出。`,
-  ].join("\n");
-
-  const html = `
-    <p>@${username} 你好，</p>
-    <p>請在 24 小時內開啟這個連結，完成 ${BRAND.en}（${BRAND.zh}）信箱驗證：</p>
-    <p><a href="${url}">驗證信箱</a></p>
-    <p>驗證後，忘記密碼才能寄重設信到這個信箱。若不是你本人，可以忽略這封信。</p>
-    <p>這封信由 ${BRAND.contactEmail} 寄出。</p>
-  `.trim();
-
-  return { subject, text, html };
+function verifyMailCopy(username: string, email: string, url: string) {
+  return buildTransactionalMail({
+    subject: `驗證你的 ${BRAND.en} 信箱`,
+    preheader: "24 小時內點一下即可。不是你綁定的話，忽略這封信就好。",
+    title: "驗證這個信箱",
+    username,
+    paragraphs: [
+      `你在 ${BRAND.en}（${BRAND.zh}）把這個信箱綁到帳號。請在 24 小時內按下面的按鈕完成驗證。`,
+      "驗證後，忘記密碼才能把重設信寄到這裡。現在不驗證也沒關係，其他功能一樣能用。",
+    ],
+    ctaLabel: "驗證信箱",
+    ctaUrl: url,
+    specs: [
+      { label: "帳號", value: `@${username}` },
+      { label: "信箱", value: email },
+      { label: "用途", value: "驗證登入信箱" },
+      { label: "有效期限", value: "24 小時（用過或逾期請到設定頁重寄）" },
+      { label: "寄件者", value: BRAND.contactEmail },
+      { label: "網站", value: BRAND.domain },
+    ],
+  });
 }
 
 async function deliverVerifyLink(user: {
@@ -65,7 +65,7 @@ async function deliverVerifyLink(user: {
   }
 
   try {
-    const copy = verifyMailCopy(user.username, url);
+    const copy = verifyMailCopy(user.username, user.email, url);
     await sendMail({
       to: user.email,
       subject: copy.subject,

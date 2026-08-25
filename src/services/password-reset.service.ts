@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
+import { buildTransactionalMail } from "@/lib/mail-template";
 import { createRawToken, hashToken } from "@/lib/token-hash";
 import { getSiteUrl } from "@/lib/utils";
 import { AppError } from "@/shared/errors";
@@ -44,27 +45,27 @@ async function findUserForReset(identifier: string) {
   });
 }
 
-function resetMailCopy(username: string, url: string) {
-  const subject = `重設你的 ${BRAND.en} 密碼`;
-  const text = [
-    `@${username} 你好，`,
-    "",
-    `有人要重設 ${BRAND.en}（${BRAND.zh}）帳號密碼。請在 1 小時內開啟這個連結：`,
-    url,
-    "",
-    "若不是你本人，可以忽略這封信，密碼不會變。",
-    `這封信由 ${BRAND.contactEmail} 寄出。`,
-  ].join("\n");
-
-  const html = `
-    <p>@${username} 你好，</p>
-    <p>有人要重設 ${BRAND.en}（${BRAND.zh}）帳號密碼。請在 1 小時內開啟這個連結：</p>
-    <p><a href="${url}">重設密碼</a></p>
-    <p>若不是你本人，可以忽略這封信，密碼不會變。</p>
-    <p>這封信由 ${BRAND.contactEmail} 寄出。</p>
-  `.trim();
-
-  return { subject, text, html };
+function resetMailCopy(username: string, email: string, url: string) {
+  return buildTransactionalMail({
+    subject: `重設你的 ${BRAND.en} 密碼`,
+    preheader: "連結 1 小時內有效。不是你本人請直接忽略，密碼不會變。",
+    title: "重設密碼",
+    username,
+    paragraphs: [
+      `有人申請重設你在 ${BRAND.en}（${BRAND.zh}）的密碼。若是你本人，請在 1 小時內按下面的按鈕。`,
+      "我們不會在信裡要你回覆密碼，也不會要你下載檔案。若有人這樣跟你要，請當成詐騙。",
+    ],
+    ctaLabel: "重設密碼",
+    ctaUrl: url,
+    specs: [
+      { label: "帳號", value: `@${username}` },
+      { label: "信箱", value: email },
+      { label: "用途", value: "重設密碼" },
+      { label: "有效期限", value: "1 小時（用過即失效）" },
+      { label: "寄件者", value: BRAND.contactEmail },
+      { label: "網站", value: BRAND.domain },
+    ],
+  });
 }
 
 /**
@@ -107,7 +108,7 @@ export async function requestPasswordReset(identifier: string) {
   }
 
   try {
-    const copy = resetMailCopy(user.username, url);
+    const copy = resetMailCopy(user.username, user.email, url);
     await sendMail({
       to: user.email,
       subject: copy.subject,

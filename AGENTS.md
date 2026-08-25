@@ -3,7 +3,7 @@
 > **給之後所有 AI／開發者：** 開專案、寫功能、重構、加工具前，**必須先讀完本檔並遵守**。  
 > 本檔是單一真相來源（source of truth）。若實作與本檔衝突，以本檔為準；若要改規格，先更新本檔再改程式。
 
-**最後更新：** 2026-08-24（註冊先帳密進站；信箱在設定頁綁定並驗證）  
+**最後更新：** 2026-08-26（已驗證信箱可收新留言通知；信裡不放內容）  
 **網域：** https://6w7.link  
 **品牌英文：** 6w7  
 **品牌中文：** 樂玩ㄑ  
@@ -101,7 +101,7 @@
 | 即時通知 | Web Push、Expo Push、可選 SSE／WebSocket |
 | 分析 | **Vercel Analytics**（`@vercel/analytics`，根 layout；隱私友善、勿再亂塞追蹤） |
 | 廣告收益 | 僅有原創說明的頁可放 AdSense：`/about`、`/contact`、`/legal/privacy`、`/legal/terms`、帶說明的 `/{slug}`、示範帳號與正式登入後的 dashboard／inbox。**禁止**登入／註冊／忘記密碼／重設密碼／驗證信箱／settings／404。見 `NEXT_PUBLIC_ADS_*`；AdSense 後台須關閉自動廣告 |
-| 郵件／通知 | 忘記密碼已接 SMTP（Gmail 代發）。對外 From 固定 `service@6w7.link`，**禁止**把代發 Gmail 寫進前端。環境變數：`SMTP_HOST`／`SMTP_USER`／`SMTP_PASS`／`MAIL_FROM` |
+| 郵件／通知 | 忘記密碼、信箱驗證、新留言通知已接 SMTP（Gmail 代發）。對外 From 固定 `service@6w7.link`，**禁止**把代發 Gmail 寫進前端。新留言通知**禁止**帶留言全文。環境變數：`SMTP_HOST`／`SMTP_USER`／`SMTP_PASS`／`MAIL_FROM` |
 | 監控 | **Vercel Speed Insights**（`@vercel/speed-insights`，根 layout）；Sentry 可之後再加 |
 | Monorepo | pnpm workspace：`apps/web`、`apps/mobile`、`packages/*` |
 | 獨立 API | 當流量或 AI worker 變重時，再拆 Node／Python worker |
@@ -372,6 +372,7 @@ GET    /api/v1/public/ask/:slug            # 公開連結資訊（不暴露敏�
 
 - **目標：** 主人收到新匿名留言時，登入中的 Web（之後 App）能近即時更新角標／提示；體驗要即時，**樣式與互動勿仿冒 Facebook**。
 - **資料：** `NotificationSummary`（`unreadCount`、`latestId`、`latestAt`、`latestTopic`）；**禁止**在通知通道帶留言全文。
+- **信件：** 主人已驗證信箱時，新留言可另寄通知（同一套 mail 版型）。只放「去收件匣」連結與未讀則數，**禁止**放留言正文、指紋或訪客資訊。限流（每小時／每日）；SMTP 未設或寄信失敗不影響訪客送出。示範帳號不寄。
 - **Web：** SSE（`/notifications/stream`）為主；斷線改輪詢 `summary`；頁面可見時補拉一次。
 - **未來 App：** 同一 `summary` API 輪詢或之後加 Expo Push（見 §2.4）；業務邏輯僅在 `notification.service`。
 - **UI：** Header「收件匣」未讀角標、文件標題 `(n)`、品牌風格 toast（可進收件匣）；在收件匣頁時可觸發列表安靜刷新。

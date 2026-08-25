@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { asTopicList } from "@/lib/topics";
 import { AppError } from "@/shared/errors";
 import { containsBlockedContent, sanitizePlainText } from "@/lib/moderation";
+import { notifyOwnerNewMessage } from "@/services/notification.service";
 import type { z } from "zod";
 import type { createMessageSchema, updateMessageSchema } from "@/shared/schemas";
 
@@ -60,7 +61,7 @@ export async function createPublicMessage(
     throw new AppError("FORBIDDEN", "無法送出留言。", 403);
   }
 
-  return prisma.message.create({
+  const message = await prisma.message.create({
     data: {
       linkId: link.id,
       body,
@@ -69,6 +70,9 @@ export async function createPublicMessage(
     },
     select: { id: true, createdAt: true },
   });
+
+  await notifyOwnerNewMessage(link.userId);
+  return message;
 }
 
 export async function listInbox(

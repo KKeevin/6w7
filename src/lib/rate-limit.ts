@@ -78,3 +78,22 @@ export async function assertRateLimit(options: {
     throw new AppError("RATE_LIMITED", "操作太頻繁，請稍後再試。", 429);
   }
 }
+
+/** 超過上限時回傳 false，不丟錯（給通知寄信這類可略過的動作） */
+export async function allowRateLimit(options: {
+  key: string;
+  limit: number;
+  windowMs: number;
+  windowLabel: `${number} s` | `${number} m` | `${number} h` | `${number} d`;
+  name?: string;
+}) {
+  try {
+    await assertRateLimit(options);
+    return true;
+  } catch (error) {
+    if (error instanceof AppError && error.code === "RATE_LIMITED") {
+      return false;
+    }
+    throw error;
+  }
+}

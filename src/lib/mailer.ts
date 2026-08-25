@@ -28,6 +28,8 @@ export async function sendMail(input: SendMailInput) {
     host: process.env.SMTP_HOST?.trim() || "smtp.gmail.com",
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_PORT === "465",
+    connectionTimeout: 8_000,
+    socketTimeout: 12_000,
     auth: {
       user: process.env.SMTP_USER!.trim(),
       pass: process.env.SMTP_PASS!.trim(),
@@ -41,5 +43,9 @@ export async function sendMail(input: SendMailInput) {
     subject: input.subject,
     text: input.text,
     html: input.html,
+    headers: {
+      "Auto-Submitted": "auto-generated",
+      "X-Auto-Response-Suppress": "All",
+    },
   });
 }

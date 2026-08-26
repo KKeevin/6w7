@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { asTopicList } from "@/lib/topics";
 import { AppError } from "@/shared/errors";
+import { ASK_LIMITS } from "@/shared/tools";
 import { containsBlockedContent, sanitizePlainText } from "@/lib/moderation";
 import { notifyOwnerNewMessage } from "@/services/notification.service";
 import type { z } from "zod";
@@ -80,40 +81,48 @@ export async function listInbox(
   options?: {
     filter?: "unread" | "featured" | "archived" | "all";
     linkId?: string;
+    page?: number;
   },
 ) {
+  const pageSize = ASK_LIMITS.inboxPageSize;
+  const requestedPage = Math.max(1, Math.floor(options?.page ?? 1));
   const links = await prisma.askLink.findMany({
     where: { userId },
     select: { id: true },
   });
   const linkIds = links.map((l) => l.id);
-  if (linkIds.length === 0) return [];
+  if (linkIds.length === 0) {
+    return { messages: [], page: 1, pageSize, total: 0, totalPages: 1 };
+  }
 
   const filter = options?.filter ?? "all";
-  return prisma.message.findMany({
-    where: {
-      linkId: options?.linkId
-        ? options.linkId
-        : { in: linkIds },
-      ...(options?.linkId
-        ? {
-            link: { userId },
-          }
-        : {}),
-      status: { not: "deleted" },
-      ...(filter === "unread" ? { isRead: false, isArchived: false } : {}),
-      ...(filter === "featured" ? { isFeatured: true } : {}),
-      ...(filter === "archived" ? { isArchived: true } : {}),
-      ...(filter === "all" ? { isArchived: false } : {}),
-    },
+  const where = {
+    linkId: options?.linkId ? options.linkId : { in: linkIds },
+    ...(options?.linkId ? { link: { userId } } : {}),
+    status: { not: "deleted" as const },
+    ...(filter === "unread" ? { isRead: false, isArchived: false } : {}),
+    ...(filter === "featured" ? { isFeatured: true } : {}),
+    ...(filter === "archived" ? { isArchived: true } : {}),
+    ...(filter === "all" ? { isArchived: false } : {}),
+  };
+
+  const total = await prisma.message.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, totalPages);
+
+  const messages = await prisma.message.findMany({
+    where,
     orderBy: { createdAt: "desc" },
     include: {
       link: {
         select: { id: true, slug: true, title: true },
       },
     },
-    take: 100,
+    skip: (page - 1) * pageSize,
+    take: pageSize,
   });
+
+  return { messages, page, pageSize, total, totalPages };
 }
 
 async function getOwnedMessage(userId: string, messageId: string) {

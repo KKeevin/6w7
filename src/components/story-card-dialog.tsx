@@ -13,6 +13,7 @@ type MessageLite = {
   body: string;
   topic: string | null;
   createdAt?: string;
+  isRead?: boolean;
   isFeatured?: boolean;
   isArchived?: boolean;
   status?: string;
@@ -27,6 +28,7 @@ type Props = {
   extra?: ReactNode;
   onFeatured?: () => void;
   onArchived?: () => void;
+  onMarkUnread?: () => void;
   onReport?: () => void;
   onDelete?: () => void;
 };
@@ -39,6 +41,7 @@ export function StoryCardDialog({
   extra,
   onFeatured,
   onArchived,
+  onMarkUnread,
   onReport,
   onDelete,
 }: Props) {
@@ -72,7 +75,9 @@ export function StoryCardDialog({
 
   if (!open) return null;
 
-  const showManage = Boolean(onFeatured || onArchived || onReport || onDelete);
+  const showManage = Boolean(
+    onFeatured || onArchived || onMarkUnread || onReport || onDelete,
+  );
   const previewWidth = STORY_CARD_SIZE.width * scale;
   const previewHeight = STORY_CARD_SIZE.height * scale;
 
@@ -237,6 +242,15 @@ export function StoryCardDialog({
                   className="text-[var(--muted)] transition hover:text-[var(--ink)]"
                 >
                   {message.isArchived ? "取消封存" : "封存"}
+                </button>
+              ) : null}
+              {onMarkUnread && message.isRead !== false ? (
+                <button
+                  type="button"
+                  onClick={onMarkUnread}
+                  className="text-[var(--muted)] transition hover:text-[var(--ink)]"
+                >
+                  標示為未讀
                 </button>
               ) : null}
               {onReport ? (

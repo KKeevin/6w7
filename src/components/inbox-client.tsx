@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import { useNotifications } from "@/components/notifications/notification-provider";
+import { ASK_LIMITS, BRAND } from "@/shared/tools";
 
 const StoryCardDialog = dynamic(
   () =>
@@ -30,15 +33,27 @@ type Filter = "all" | "unread" | "featured" | "archived";
 export function InboxClient({
   demoMessages,
   initialMessages,
+  initialPage = 1,
+  initialTotal,
+  initialTotalPages = 1,
 }: {
   demoMessages?: InboxMessage[];
   initialMessages?: InboxMessage[];
+  initialPage?: number;
+  initialTotal?: number;
+  initialTotalPages?: number;
 }) {
   const demo = Boolean(demoMessages?.length);
   const seeded = demoMessages ?? initialMessages;
   const { refresh: refreshNotifications } = useNotifications();
+  const listTopRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>(seeded ?? []);
   const [filter, setFilter] = useState<Filter>("all");
+  const [page, setPage] = useState(initialPage);
+  const [total, setTotal] = useState(
+    initialTotal ?? seeded?.length ?? 0,
+  );
+  const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading, setLoading] = useState(!seeded);
   const [error, setError] = useState<string | null>(null);
   const [storyMessage, setStoryMessage] = useState<Message | null>(null);
@@ -46,10 +61,14 @@ export function InboxClient({
   /** 剛精選／封存的訊息：在目標分頁框選提示一次 */
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
-  async function load(nextFilter = filter, opts?: { quiet?: boolean }) {
+  async function load(
+    nextFilter = filter,
+    nextPage = page,
+    opts?: { quiet?: boolean },
+  ) {
     if (demo) {
       const source = demoMessages ?? [];
-      const next =
+      const filtered =
         nextFilter === "unread"
           ? source.filter((m) => !m.isRead && !m.isArchived)
           : nextFilter === "featured"
@@ -57,17 +76,30 @@ export function InboxClient({
             : nextFilter === "archived"
               ? source.filter((m) => m.isArchived)
               : source.filter((m) => !m.isArchived);
-      setMessages(next);
+      const pageSize = ASK_LIMITS.inboxPageSize;
+      const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+      const safePage = Math.min(Math.max(1, nextPage), pages);
+      setTotal(filtered.length);
+      setTotalPages(pages);
+      setPage(safePage);
+      setMessages(
+        filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+      );
       setLoading(false);
       return;
     }
     if (!opts?.quiet) setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/inbox?filter=${nextFilter}`);
+      const res = await fetch(
+        `/api/v1/inbox?filter=${nextFilter}&page=${nextPage}`,
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error?.message || "載入失敗");
       setMessages(data.messages);
+      setPage(data.page ?? nextPage);
+      setTotal(data.total ?? data.messages.length);
+      setTotalPages(data.totalPages ?? 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "載入失敗");
     } finally {
@@ -76,18 +108,20 @@ export function InboxClient({
   }
 
   useEffect(() => {
-    void load(filter, { quiet: Boolean(seeded) && filter === "all" });
+    void load(filter, page, {
+      quiet: Boolean(seeded) && filter === "all" && page === initialPage,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [filter, page]);
 
   useEffect(() => {
     const onRefresh = () => {
-      void load(filter, { quiet: true });
+      void load(filter, page, { quiet: true });
     };
     window.addEventListener("6w7:inbox-refresh", onRefresh);
     return () => window.removeEventListener("6w7:inbox-refresh", onRefresh);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [filter, page]);
 
   useEffect(() => {
     if (loading || !highlightId) return;
@@ -115,7 +149,7 @@ export function InboxClient({
     } else {
       await load();
     }
-    if (body.isRead === true || body.isArchived !== undefined) {
+    if (body.isRead !== undefined || body.isArchived !== undefined) {
       void refreshNotifications();
     }
     return true;
@@ -142,7 +176,17 @@ export function InboxClient({
     if (!ok) return;
     closeDetail();
     setHighlightId(next ? m.id : null);
+    setPage(1);
     setFilter(next ? "featured" : "all");
+  }
+
+  async function markUnread(m: Message) {
+    const ok = await patch(m.id, { isRead: false });
+    if (!ok) return;
+    closeDetail();
+    setHighlightId(m.id);
+    setPage(1);
+    setFilter("unread");
   }
 
   async function toggleArchived(m: Message) {
@@ -151,6 +195,7 @@ export function InboxClient({
     if (!ok) return;
     closeDetail();
     setHighlightId(next ? m.id : null);
+    setPage(1);
     setFilter(next ? "archived" : "all");
   }
 
@@ -163,7 +208,7 @@ export function InboxClient({
       return;
     }
     setStoryMessage(null);
-    await load();
+    await load(filter, page);
     void refreshNotifications();
   }
 
@@ -184,6 +229,13 @@ export function InboxClient({
     await load();
   }
 
+  function goToPage(next: number) {
+    const safe = Math.min(totalPages, Math.max(1, next));
+    if (safe === page) return;
+    setPage(safe);
+    listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   const filters: { id: Filter; label: string }[] = [
     { id: "all", label: "全部" },
     { id: "unread", label: "未讀" },
@@ -197,28 +249,52 @@ export function InboxClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
-        {filters.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => setFilter(f.id)}
-            className={`rounded-xl px-3 py-1.5 text-sm font-semibold ${
-              filter === f.id
-                ? "bg-[var(--ink)] text-[var(--bg)]"
-                : "border border-[var(--line)] text-[var(--muted)]"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          {filters.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => {
+                setPage(1);
+                setFilter(f.id);
+              }}
+              className={`rounded-xl px-3 py-1.5 text-sm font-semibold ${
+                filter === f.id
+                  ? "bg-[var(--ink)] text-[var(--bg)]"
+                  : "border border-[var(--line)] text-[var(--muted)]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        {total > 0 ? (
+          <p className="text-xs tabular-nums text-[var(--muted)]">
+            共 {total} 則
+          </p>
+        ) : null}
       </div>
 
+      <div ref={listTopRef} className="scroll-mt-[calc(var(--header-h)+0.75rem)]">
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
       {loading ? (
         <p className="text-sm text-[var(--muted)]">載入中…</p>
       ) : messages.length === 0 ? (
-        <p className="text-sm text-[var(--muted)]">目前沒有留言。</p>
+        <div className="relative mx-auto flex w-full max-w-sm justify-center pt-2">
+          <div className="relative w-[min(100%,16.5rem)]">
+            <p className="pointer-events-none absolute inset-x-0 top-2 z-10 text-center font-[family-name:var(--font-display)] text-lg font-bold leading-tight text-[var(--ink)] drop-shadow-[0_2px_0_rgba(255,255,255,0.92)] sm:top-3 sm:text-xl">
+              目前沒有留言
+            </p>
+            <Image
+              src={BRAND.inboxEmptySrc}
+              alt=""
+              width={660}
+              height={720}
+              className="h-auto w-full object-contain object-top"
+            />
+          </div>
+        </div>
       ) : (
         <ul className="space-y-2">
           {messages.map((m) => {
@@ -332,6 +408,36 @@ export function InboxClient({
           })}
         </ul>
       )}
+      </div>
+
+      {totalPages > 1 ? (
+        <nav
+          className="flex items-center justify-center gap-2"
+          aria-label="收件匣分頁"
+        >
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => goToPage(page - 1)}
+            className="inline-flex h-10 items-center gap-1 rounded-xl border border-[var(--line)] px-3 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--surface)] disabled:pointer-events-none disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+            上一頁
+          </button>
+          <p className="min-w-[7.5rem] text-center text-sm tabular-nums text-[var(--muted)]">
+            第 {page} / {totalPages} 頁
+          </p>
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() => goToPage(page + 1)}
+            className="inline-flex h-10 items-center gap-1 rounded-xl border border-[var(--line)] px-3 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--surface)] disabled:pointer-events-none disabled:opacity-40"
+          >
+            下一頁
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </button>
+        </nav>
+      ) : null}
 
       {selected ? (
         <StoryCardDialog
@@ -354,6 +460,7 @@ export function InboxClient({
           onClose={closeDetail}
           onFeatured={demo ? undefined : () => void toggleFeatured(selected)}
           onArchived={demo ? undefined : () => void toggleArchived(selected)}
+          onMarkUnread={demo ? undefined : () => void markUnread(selected)}
           onReport={demo ? undefined : () => void report(selected.id)}
           onDelete={demo ? undefined : () => void remove(selected.id)}
         />

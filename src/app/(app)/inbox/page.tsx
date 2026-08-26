@@ -18,8 +18,8 @@ export default async function InboxPage() {
     redirect(loginPath("/inbox"));
   }
 
-  const messages = await listInbox(viewer.user.id);
-  const initialMessages = messages.map((m) => ({
+  const result = await listInbox(viewer.user.id, { filter: "all", page: 1 });
+  const initialMessages = result.messages.map((m) => ({
     id: m.id,
     body: m.body,
     topic: m.topic,
@@ -39,10 +39,15 @@ export default async function InboxPage() {
             收件匣
           </h1>
           <p className="mt-2 text-[var(--muted)] lg:text-lg">
-            點開提問就會看到限動圖卡，可直接寫回覆並分享；也能精選、封存、刪除或檢舉。未讀先不展開內文，方便在外面打開。
+            點開提問就會看到限動圖卡，可直接寫回覆並分享；也能標示為未讀、精選、封存、刪除或檢舉。未讀先不展開內文，方便在外面打開。
           </p>
           <div className="mt-8 lg:mt-10">
-            <InboxClient initialMessages={initialMessages} />
+            <InboxClient
+              initialMessages={initialMessages}
+              initialPage={result.page}
+              initialTotal={result.total}
+              initialTotalPages={result.totalPages}
+            />
           </div>
           {viewer.kind === "demo" ? (
             <LoggedInPublisherNote page="inbox" />

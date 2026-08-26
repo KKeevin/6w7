@@ -60,6 +60,8 @@ export const BRAND = {
   logoSrc: "/brand/logo.png",
   /** 分享限動圖右下角指向圖：public/brand/point-at.png */
   pointAtSrc: "/brand/point-at.png",
+  /** 收件匣沒有留言時的插畫：public/brand/inbox-empty.png */
+  inboxEmptySrc: "/brand/inbox-empty.png",
   /** 換 logo 後遞增，用來清瀏覽器／元件快取（勿加在 Next Image src query） */
   logoVersion: 3,
 } as const;
@@ -77,4 +79,5 @@ export const ASK_LIMITS = {
   stickerMaxBytes: 5 * 1024 * 1024,
   stickerScaleMin: 0.35,
   stickerScaleMax: 2.8,
+  inboxPageSize: 20,
 } as const;

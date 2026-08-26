@@ -706,18 +706,10 @@ export function SharePageClient({
             <Link
               href={`/${profile.user.username}`}
               target="_blank"
-              className="mt-2 inline-flex h-12 w-full items-center justify-center rounded-xl border border-[var(--line)] bg-transparent text-base font-semibold text-[var(--ink)] transition-all hover:bg-[var(--surface)] active:scale-[0.98]"
+              className="mt-2.5 inline-flex h-12 w-full items-center justify-center rounded-xl border border-[var(--line)] bg-transparent text-base font-semibold text-[var(--ink)] transition-all hover:bg-[var(--surface)] active:scale-[0.98]"
             >
               預覽公開頁
             </Link>
-            {!demo ? (
-              <Link
-                href={`/${profile.user.username}?edit=1`}
-                className="mt-2.5 inline-flex h-12 w-full items-center justify-center rounded-xl bg-[var(--ink)] text-base font-semibold text-[var(--bg)] transition-all hover:opacity-90 active:scale-[0.98]"
-              >
-                裝扮公開頁
-              </Link>
-            ) : null}
           </section>
 
           <section className="rounded-3xl border border-dashed border-[var(--line)] bg-white/60 px-7 py-6">

@@ -12,11 +12,14 @@ export async function GET(request: Request) {
       | "all"
       | null;
     const linkId = searchParams.get("linkId") || undefined;
-    const messages = await listInbox(userId, {
+    const pageRaw = Number(searchParams.get("page"));
+    const page = Number.isFinite(pageRaw) ? pageRaw : 1;
+    const result = await listInbox(userId, {
       filter: filter || "all",
       linkId,
+      page,
     });
-    return jsonOk({ messages });
+    return jsonOk(result);
   } catch (error) {
     return jsonError(error);
   }

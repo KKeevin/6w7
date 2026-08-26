@@ -493,7 +493,7 @@ export function PublicPageStudio({
                         {confirmDeleteId === item.id ? (
                           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-[var(--ink)]/82 p-1 text-center">
                             <p className="text-[9px] font-semibold leading-tight text-white">
-                              連檔案一起刪？
+                              是否刪除？
                             </p>
                             <div className="mt-1 flex gap-1">
                               <button

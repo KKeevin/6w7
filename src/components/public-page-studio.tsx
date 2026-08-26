@@ -337,8 +337,8 @@ export function PublicPageStudio({
         />
         <div
           className={cn(
-            "relative z-10 flex min-w-0 flex-1 flex-col",
-            editing && "pointer-events-none select-none",
+            "relative flex min-w-0 flex-1 flex-col",
+            editing && "z-10 pointer-events-none select-none",
           )}
         >
           {children}

@@ -85,14 +85,17 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
       )}
       <div>
         <Label htmlFor="body">匿名留言</Label>
-        <Textarea
-          id="body"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          required
-          maxLength={ASK_LIMITS.bodyMax}
-          placeholder="輸入你的提問 ⁶🤷🏻‍♀️⁷"
-        />
+        <div className="relative focus-within:z-30">
+          <Textarea
+            id="body"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            required
+            maxLength={ASK_LIMITS.bodyMax}
+            placeholder="輸入你的提問 ⁶🤷🏻‍♀️⁷"
+            className="transition-[background-color,backdrop-filter,box-shadow] duration-200 focus:bg-[var(--bg)]/68 focus:shadow-[0_10px_28px_rgba(20,33,43,0.14)] focus:backdrop-blur-[3px]"
+          />
+        </div>
         <p className="mt-1 text-right text-xs text-[var(--muted)]">
           {body.length}/{ASK_LIMITS.bodyMax}
         </p>

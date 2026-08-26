@@ -7,7 +7,7 @@ export default function PublicLinkLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className={`flex min-h-dvh flex-1 flex-col ${SHELL.padFooter}`}>
+    <div className={`flex min-h-dvh flex-1 flex-col overflow-x-hidden ${SHELL.padFooter}`}>
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       <SiteFooter />
     </div>

@@ -317,8 +317,9 @@ export function PublicPageStudio({
     >
       <div
         className={cn(
-          "relative isolate flex min-w-0 flex-1 flex-col",
-          editing && "rounded-[1.5rem] ring-2 ring-[var(--mint)]/35 ring-offset-2 ring-offset-[var(--bg)]",
+          "relative isolate flex min-w-0 flex-1 flex-col overflow-hidden rounded-t-3xl",
+          editing &&
+            "rounded-[1.5rem] ring-2 ring-inset ring-[var(--mint)]/35",
         )}
       >
         <StickerLayer

@@ -211,7 +211,7 @@ export function StickerLayer({
     <div
       ref={stageRef}
       className={cn(
-        "absolute inset-0 z-20",
+        "absolute inset-0 z-20 overflow-hidden",
         interactive ? "pointer-events-auto touch-none" : "pointer-events-none",
       )}
       onPointerDown={(event) => {

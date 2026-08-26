@@ -72,4 +72,9 @@ export const ASK_LIMITS = {
   topicsMax: 5,
   /** 公開短連結長度：https://6w7.link/{slug} */
   slugLength: 6,
+  stickerLibraryMax: 20,
+  stickerCanvasMax: 12,
+  stickerMaxBytes: 5 * 1024 * 1024,
+  stickerScaleMin: 0.35,
+  stickerScaleMax: 2.8,
 } as const;

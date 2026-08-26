@@ -1,4 +1,5 @@
 import { BRAND } from "@/shared/tools";
+import type { PublicSticker } from "@/shared/page-stickers";
 
 /** 示範帳號走與正式登入相同的網址，不使用 /demo 前綴 */
 export const DEMO_ENTER_PATH = "/api/v1/auth/demo" as const;
@@ -210,6 +211,7 @@ export function getDemoShareProfile() {
       topics: [...DEMO_PROFILE.topics],
       requireTopic: DEMO_PROFILE.requireTopic,
     },
+    stickers: [] as PublicSticker[],
   };
 }
 

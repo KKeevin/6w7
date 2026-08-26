@@ -21,3 +21,14 @@ export async function requireUserId() {
   }
   return session.user.id;
 }
+
+export async function requireRealUserId() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new AppError("UNAUTHORIZED", "請先登入。", 401);
+  }
+  if (session.user.isDemo) {
+    throw new AppError("FORBIDDEN", "示範帳號不能改公開頁裝扮。", 403);
+  }
+  return session.user.id;
+}

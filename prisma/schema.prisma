@@ -47,6 +47,7 @@ model User {
   askLink             AskLink?
   passwordResetTokens PasswordResetToken[]
   emailVerifyTokens   EmailVerificationToken[]
+  mediaAssets         MediaAsset[]
 }
 
 /// 忘記密碼：只存 token 雜湊，明文只出現在信件連結
@@ -128,9 +129,10 @@ model AskLink {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages Message[]
   blocks   BlockRule[]
+  stickers PageSticker[]
 }
 
 model Message {
@@ -173,4 +175,41 @@ model BlockRule {
   link AskLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   @@index([linkId])
+}
+
+/// 公開頁裝扮用的圖片庫（每人獨立目錄，刪除時連檔案一起刪）
+model MediaAsset {
+  id        String   @id @default(cuid())
+  userId    String
+  objectKey String
+  url       String
+  width     Int
+  height    Int
+  bytes     Int
+  createdAt DateTime @default(now())
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stickers  PageSticker[]
+
+  @@index([userId, createdAt])
+}
+
+/// 貼在公開頁上的一張圖（同一媒體可出現多次）
+model PageSticker {
+  id        String   @id @default(cuid())
+  linkId    String
+  assetId   String
+  /// 中心點，相對於舞台寬高的百分比 0–100
+  x         Float
+  y         Float
+  scale     Float    @default(1)
+  rotation  Float    @default(0)
+  zIndex    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  link  AskLink    @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  asset MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([linkId, zIndex])
 }

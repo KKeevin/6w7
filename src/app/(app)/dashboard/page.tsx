@@ -47,6 +47,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               topics: profile.link.topics,
               requireTopic: profile.link.requireTopic,
             },
+            stickers: profile.stickers,
           }}
         />
         {viewer.kind === "demo" ? (

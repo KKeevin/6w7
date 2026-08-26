@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ASK_LIMITS } from "./tools";
 import { isValidUsername, normalizeUsername } from "./slug";
+import type { PublicSticker } from "./page-stickers";
 
 export const usernameSchema = z
   .string()
@@ -88,4 +89,5 @@ export type PublicAskLink = {
   topics: string[];
   image: string | null;
   displayName: string | null;
+  stickers: PublicSticker[];
 };

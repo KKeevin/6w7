@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ASK_LIMITS, BRAND } from "@/shared/tools";
 import { getDemoShareProfile } from "@/shared/demo-account";
+import { StickerLayer } from "@/components/sticker-layer";
+import type { PublicSticker } from "@/shared/page-stickers";
 
 const ShareStoryDialog = dynamic(
   () =>
@@ -33,6 +35,7 @@ type Profile = {
     topics?: string[];
     requireTopic?: boolean;
   };
+  stickers?: PublicSticker[];
 };
 
 export function SharePageClient({
@@ -265,21 +268,32 @@ export function SharePageClient({
         <span className="text-xs font-semibold tracking-wide text-[var(--muted)]">
           訪客會看到的樣子
         </span>
-        <Link
-          href={`/${profile.user.username}`}
-          target="_blank"
-          className="text-xs font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
-        >
-          開公開頁 ↗
-        </Link>
+        <span className="flex items-center gap-3">
+          {!demo ? (
+            <Link
+              href={`/${profile.user.username}?edit=1`}
+              className="text-xs font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
+            >
+              去裝扮
+            </Link>
+          ) : null}
+          <Link
+            href={`/${profile.user.username}`}
+            target="_blank"
+            className="text-xs font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
+          >
+            開公開頁 ↗
+          </Link>
+        </span>
       </div>
 
       {/* 與公開頁 /[slug] 相同配置；桌機側欄放大頭貼與文字 */}
       <div
-        className={`bg-atmosphere mx-auto flex w-full max-w-lg flex-col px-4 sm:px-6 ${
+        className={`bg-atmosphere relative mx-auto flex w-full max-w-lg flex-col overflow-hidden px-4 sm:px-6 ${
           compact ? "px-5 py-7 sm:px-6" : "py-10"
         }`}
       >
+        <StickerLayer stickers={profile.stickers ?? []} />
         <div className="inline-flex items-center gap-2">
           <BrandLogo height={compact ? 28 : 26} />
           <span
@@ -580,6 +594,9 @@ export function SharePageClient({
           <h2 className="mb-3 text-sm font-semibold text-[var(--ink)]">
             調整公開頁樣貌
           </h2>
+          <p className="mb-3 text-xs text-[var(--muted)]">
+            頭貼與提示在這裡改；圖片貼紙請到公開頁按「裝扮此頁」，可拖曳、縮放與旋轉。
+          </p>
           {previewPanel(false)}
           <div ref={previewEndRef} className="h-px w-full" aria-hidden />
         </section>
@@ -689,10 +706,18 @@ export function SharePageClient({
             <Link
               href={`/${profile.user.username}`}
               target="_blank"
-              className="mt-2.5 inline-flex h-12 w-full items-center justify-center rounded-xl border border-[var(--line)] bg-transparent text-base font-semibold text-[var(--ink)] transition-all hover:bg-[var(--surface)] active:scale-[0.98]"
+              className="mt-2 inline-flex h-12 w-full items-center justify-center rounded-xl border border-[var(--line)] bg-transparent text-base font-semibold text-[var(--ink)] transition-all hover:bg-[var(--surface)] active:scale-[0.98]"
             >
               預覽公開頁
             </Link>
+            {!demo ? (
+              <Link
+                href={`/${profile.user.username}?edit=1`}
+                className="mt-2.5 inline-flex h-12 w-full items-center justify-center rounded-xl bg-[var(--ink)] text-base font-semibold text-[var(--bg)] transition-all hover:opacity-90 active:scale-[0.98]"
+              >
+                裝扮公開頁
+              </Link>
+            ) : null}
           </section>
 
           <section className="rounded-3xl border border-dashed border-[var(--line)] bg-white/60 px-7 py-6">
@@ -721,7 +746,7 @@ export function SharePageClient({
         <aside className="animate-rise-delay lg:sticky lg:top-4">
           {previewPanel(true)}
           <p className="mt-2 text-center text-sm text-[var(--muted)]">
-            點頭貼換圖，點提示文字就能編輯
+            點頭貼換圖，點提示文字就能編輯。貼紙請按「去裝扮」。
           </p>
         </aside>
       </div>

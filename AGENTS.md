@@ -3,7 +3,7 @@
 > **給之後所有 AI／開發者：** 開專案、寫功能、重構、加工具前，**必須先讀完本檔並遵守**。  
 > 本檔是單一真相來源（source of truth）。若實作與本檔衝突，以本檔為準；若要改規格，先更新本檔再改程式。
 
-**最後更新：** 2026-08-26（已驗證信箱可收新留言通知）  
+**最後更新：** 2026-08-26（公開頁可裝扮：圖片拖曳／縮放／旋轉＋媒體列）  
 **網域：** https://6w7.link  
 **品牌英文：** 6w7  
 **品牌中文：** 樂玩ㄑ  
@@ -198,9 +198,13 @@ AI 實作時可細化欄位，但概念實體不可缺：
 - BlockRule：linkId、fingerprintHash 或關鍵字規則
 - 預留 AuditLog（管理操作）
 
-### 4.5 之後擴充（現在只預留命名空間，不建複雜表也可）
+### 4.5 公開頁裝扮（MediaAsset／PageSticker）
 
-- `AiJob`、`MediaAsset`、`ToolUsage` 等 —— **等做到該工具再加**，避免空表一堆。
+- MediaAsset：主人圖片庫。檔案放 `stickers/{userId}/{id}.webp`（本機 `public/uploads/{userId}/stickers/`）。刪除媒體必須連儲存檔與畫面上的貼紙一起刪。
+- PageSticker：貼在公開頁上的實例（同一張圖可出現多次）。座標為舞台百分比（中心點 x／y）、scale、rotation、zIndex。
+- 上限：圖庫 20 張、畫面上 12 張；單檔 5MB；僅圖片。
+- 訪客頁貼紙不攔截點擊；示範帳號不可改裝扮。
+- `AiJob`、`ToolUsage` 等 —— **等做到該工具再加**。
 
 ---
 
@@ -236,6 +240,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 
 **P1（盡早）：**
 
+- 公開頁裝扮：主人可匯入圖片、從媒體列點一下加入畫面，拖曳／縮放／旋轉；媒體列 X 刪除含儲存檔。
 - 主人可設 3～5 個「主題標籤」，訪客必選或可選其一再留言。
 - 每日收件上限、字數上限、冷卻時間（同一指紋）。
 - Inbox 篩選：未讀／精選／已封存。
@@ -366,6 +371,13 @@ GET    /api/v1/notifications/stream    # SSE 近即時推送（Web）；payload 
 
 POST   /api/v1/public/ask/:slug/messages   # 訪客送留言（公開＋限流）
 GET    /api/v1/public/ask/:slug            # 公開連結資訊（不暴露敏感欄位）
+
+GET    /api/v1/media                       # 主人圖片庫
+POST   /api/v1/media                       # 上傳圖片（需登入、非示範）
+DELETE /api/v1/media/:id                   # 刪檔＋從畫面移除
+GET    /api/v1/stickers                    # 主人公開頁貼紙布局
+PUT    /api/v1/stickers                    # 儲存布局（拖曳／縮放／旋轉）
+POST   /api/v1/stickers                    # 從圖庫加入畫面
 ```
 
 ### 8.2 通知（近即時）

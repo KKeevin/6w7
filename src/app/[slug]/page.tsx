@@ -5,14 +5,19 @@ import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { BrandLogo } from "@/components/brand-logo";
 import { PublicAskForm } from "@/components/public-ask-form";
 import { PublicAskExplainer } from "@/components/public-ask-explainer";
+import { PublicPageStudio } from "@/components/public-page-studio";
 import { getPublicAskLink } from "@/services/ask-link.service";
 import { ensureDemoAccountIfMissing } from "@/services/demo-account.service";
+import { getViewer } from "@/lib/viewer";
 import { AppError } from "@/shared/errors";
 import { isValidSlugFormat, isReservedSlug } from "@/shared/slug";
 import { isDemoUsername } from "@/shared/demo-account";
 import { BRAND } from "@/shared/tools";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ edit?: string }>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -37,8 +42,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function PublicAskPage({ params }: Props) {
+export default async function PublicAskPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { edit } = await searchParams;
 
   if (isDemoUsername(slug)) {
     await ensureDemoAccountIfMissing();
@@ -58,48 +64,59 @@ export default async function PublicAskPage({ params }: Props) {
     throw error;
   }
 
+  const viewer = await getViewer();
+  const canEdit =
+    viewer.kind === "user" &&
+    viewer.user.username.toLowerCase() === slug.toLowerCase();
+
   return (
     <AdRailLayout width="narrow">
       <div className="bg-atmosphere flex w-full flex-1 flex-col rounded-3xl">
-        <div className="flex min-h-[calc(100dvh-var(--footer-h))] flex-col px-4 py-8 sm:px-6 sm:py-10">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <BrandLogo height={26} priority />
-            <span className="text-sm font-medium text-[var(--muted)]">
-              {BRAND.zh}
-            </span>
-          </Link>
+        <PublicPageStudio
+          canEdit={canEdit}
+          initialEdit={canEdit && edit === "1"}
+          initialStickers={link.stickers ?? []}
+        >
+          <div className="flex min-h-[calc(100dvh-var(--footer-h))] flex-col px-4 py-8 sm:px-6 sm:py-10">
+            <Link href="/" className="inline-flex items-center gap-2">
+              <BrandLogo height={26} priority />
+              <span className="text-sm font-medium text-[var(--muted)]">
+                {BRAND.zh}
+              </span>
+            </Link>
 
-          <div className="mt-10 flex flex-col items-center text-center">
-            <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-[var(--line)] bg-[var(--surface)]">
-              {link.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={link.image}
-                  alt=""
-                  width={96}
-                  height={96}
-                  fetchPriority="high"
-                  decoding="async"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[var(--muted)]">
-                  {(link.displayName || link.slug).slice(0, 1).toUpperCase()}
-                </div>
-              )}
+            <div className="mt-10 flex flex-col items-center text-center">
+              <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-[var(--line)] bg-[var(--surface)]">
+                {link.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={link.image}
+                    alt=""
+                    width={96}
+                    height={96}
+                    fetchPriority="high"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[var(--muted)]">
+                    {(link.displayName || link.slug).slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <p className="mt-3 text-sm text-[var(--muted)]">@{link.slug}</p>
+              <h1 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight">
+                {link.prompt}
+              </h1>
             </div>
-            <p className="mt-3 text-sm text-[var(--muted)]">@{link.slug}</p>
-            <h1 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight">
-              {link.prompt}
-            </h1>
+
+            <p className="mt-4 text-center text-xs text-[var(--muted)]">
+              採完全匿名提問，請放心問答！
+            </p>
+
+            <PublicAskForm link={link} />
           </div>
-
-          <p className="mt-4 text-center text-xs text-[var(--muted)]">
-            採完全匿名提問，請放心問答！
-          </p>
-
-          <PublicAskForm link={link} />
-        </div>
+        </PublicPageStudio>
         <div className="px-4 pb-8 sm:px-6 sm:pb-10">
           <PublicAskExplainer />
         </div>

@@ -10,6 +10,7 @@ import type {
   registerSchema,
   updateProfileSchema,
 } from "@/shared/schemas";
+import { listStickersForLink } from "@/services/page-media.service";
 
 const DEFAULT_PROMPT = "匿名傳訊息給我！";
 const DEFAULT_TITLE = "匿名問我";
@@ -97,6 +98,7 @@ export async function getProfileForOwner(userId: string) {
       image: avatarDisplayUrl(user.image, user.updatedAt),
     },
     link: serializeLink(user.askLink),
+    stickers: await listStickersForLink(user.askLink.id),
   };
 }
 
@@ -154,6 +156,7 @@ export const getPublicAskLink = cache(async (slug: string) => {
   if (!link || !link.isActive || link.user.status !== "active") {
     throw new AppError("NOT_FOUND", "找不到此匿名問答連結。", 404);
   }
+  const stickers = await listStickersForLink(link.id);
   return {
     slug: link.slug,
     title: link.title,
@@ -163,6 +166,7 @@ export const getPublicAskLink = cache(async (slug: string) => {
     topics: asTopicList(link.topics),
     image: avatarDisplayUrl(link.user.image, link.user.updatedAt),
     displayName: link.user.name || link.user.username,
+    stickers,
   };
 });
 

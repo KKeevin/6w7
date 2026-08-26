@@ -173,8 +173,8 @@ export function SettingsEmailForm({
         </div>
         <p className="mt-1 text-xs text-[var(--muted)]">
           {showVerified
-            ? "不會顯示在公開留言頁。驗證後可用忘記密碼；有新的匿名留言時也會寄通知到這裡，信裡不會放內容。"
-            : "儲存後會寄出驗證信，請到信箱點連結完成驗證。驗證後可用忘記密碼，也會在有新留言時通知你。信箱不會顯示在公開留言頁。"}
+            ? "不會顯示在公開留言頁。驗證後可用忘記密碼，有新留言時也會寄通知。"
+            : "儲存後會寄出驗證信，請到信箱點連結完成驗證。信箱不會顯示在公開留言頁。"}
         </p>
       </div>
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}

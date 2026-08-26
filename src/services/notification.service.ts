@@ -101,19 +101,17 @@ export async function notifyOwnerNewMessage(userId: string) {
 
     const copy = buildTransactionalMail({
       subject: `你的 ${BRAND.en} 收到新的匿名留言`,
-      preheader: "內容只在收件匣。請到網站查看。",
+      preheader: "打開收件匣看看吧。",
       title: "有新的匿名留言",
       username: user.username,
       paragraphs: [
         `有人透過你的專屬連結，在 ${BRAND.en}（${BRAND.zh}）傳了一則匿名留言。`,
-        "這封信故意不放內容，避免在信箱被別人看到。請登入後到收件匣查看。",
+        "點下面的按鈕即可查看。",
       ],
       ctaLabel: "開啟收件匣",
       ctaUrl: inboxUrl,
       specs: [
         { label: "帳號", value: `@${user.username}` },
-        { label: "用途", value: "新留言通知" },
-        { label: "查看位置", value: "網站收件匣" },
         { label: "目前未讀", value: unreadLabel },
         { label: "寄件者", value: BRAND.contactEmail },
         { label: "網站", value: BRAND.domain },

@@ -1,6 +1,6 @@
 /**
  * 廣告版位設定（前端可讀的公開設定）。
- * 正式投放建議 Google AdSense；未設定 client 時顯示佔位框方便對版。
+ * 正式投放建議 Google AdSense。沒有真正播出前不要畫空框，以免版面看起來像壞掉。
  */
 export const ADS = {
   enabled: process.env.NEXT_PUBLIC_ADS_ENABLED === "true",
@@ -14,10 +14,18 @@ export const ADS = {
 
 /** 有發布商 ID 即可載入驗證／廣告腳本（不必等版位 slot） */
 export function adsClientReady() {
-  return Boolean(ADS.client);
+  return Boolean(ADS.enabled && ADS.client);
 }
 
-/** 開關開啟且有 client：顯示版位（有 slot 才播真廣告） */
+/** 開關開啟且有 client：腳本可載入 */
 export function adsReady() {
-  return Boolean(ADS.enabled && ADS.client);
+  return adsClientReady();
+}
+
+export function adsSideReady() {
+  return adsReady() && Boolean(ADS.slotSide);
+}
+
+export function adsMobileReady() {
+  return adsReady() && Boolean(ADS.slotMobile);
 }

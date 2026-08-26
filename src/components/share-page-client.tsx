@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import type { ComponentType } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,10 +12,25 @@ import { ASK_LIMITS, BRAND } from "@/shared/tools";
 import { getDemoShareProfile } from "@/shared/demo-account";
 import { StickerLayer } from "@/components/sticker-layer";
 import type { PublicSticker } from "@/shared/page-stickers";
+import type { ShareStoryDialogProps } from "@/components/share-story-dialog";
+import { IgShareGuideHint } from "@/components/ig-share-guide-hint";
+import {
+  hideIgShareGuideHint,
+  isIgShareGuideHintHidden,
+  resetDemoIgShareGuideHint,
+} from "@/lib/ig-share-guide-hint";
 
 const ShareStoryDialog = dynamic(
   () =>
     import("@/components/share-story-dialog").then((m) => m.ShareStoryDialog),
+  { ssr: false },
+) as ComponentType<ShareStoryDialogProps>;
+
+const IgShareGuideDialog = dynamic(
+  () =>
+    import("@/components/ig-share-guide-dialog").then(
+      (m) => m.IgShareGuideDialog,
+    ),
   { ssr: false },
 );
 
@@ -40,9 +56,15 @@ type Profile = {
 
 export function SharePageClient({
   demo = false,
+  isDemoAccount = false,
+  forceGuideHint = false,
   initialProfile,
 }: {
   demo?: boolean;
+  /** 已登入的示範帳號（真實 session）；與僅供預覽的 demo 不同 */
+  isDemoAccount?: boolean;
+  /** 剛用示範帳號登入，這次要再跳出限動教學提示 */
+  forceGuideHint?: boolean;
   initialProfile?: Profile;
 }) {
   const demoProfile = demo ? getDemoShareProfile() : null;
@@ -51,6 +73,8 @@ export function SharePageClient({
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const previewSectionRef = useRef<HTMLElement>(null);
   const previewEndRef = useRef<HTMLDivElement>(null);
+  const mobileGuideRef = useRef<HTMLButtonElement>(null);
+  const desktopGuideRef = useRef<HTMLButtonElement>(null);
   const [profile, setProfile] = useState<Profile | null>(seeded);
   const [prompt, setPrompt] = useState(seeded?.link.prompt ?? "");
   const [editingPrompt, setEditingPrompt] = useState(false);
@@ -60,8 +84,8 @@ export function SharePageClient({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [guideStep, setGuideStep] = useState(0);
   const [storyOpen, setStoryOpen] = useState(false);
+  const [guideHintOpen, setGuideHintOpen] = useState(false);
   /** 手機：尚未捲到「調整公開頁」時顯示引導 */
   const [showPreviewHint, setShowPreviewHint] = useState(true);
 
@@ -127,6 +151,33 @@ export function SharePageClient({
       endObserver.disconnect();
     };
   }, [loading, profile]);
+
+  const hintUserId = profile?.user.id ?? seeded?.user.id;
+
+  useEffect(() => {
+    if (!hintUserId) return;
+    if (isDemoAccount) {
+      if (forceGuideHint) resetDemoIgShareGuideHint();
+      if (isIgShareGuideHintHidden(hintUserId, { demo: true })) return;
+    } else if (isIgShareGuideHintHidden(hintUserId)) {
+      return;
+    }
+    const t = window.setTimeout(() => setGuideHintOpen(true), 400);
+    return () => window.clearTimeout(t);
+  }, [hintUserId, isDemoAccount, forceGuideHint]);
+
+  useEffect(() => {
+    if (!forceGuideHint || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("guideHint")) return;
+    url.searchParams.delete("guideHint");
+    const qs = url.searchParams.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${qs ? `?${qs}` : ""}${url.hash}`,
+    );
+  }, [forceGuideHint]);
 
   function scrollToPreview() {
     previewSectionRef.current?.scrollIntoView({
@@ -216,30 +267,15 @@ export function SharePageClient({
   }
 
   function openGuide() {
-    setGuideStep(0);
     setGuideOpen(true);
+    dismissGuideHint();
   }
 
-  const steps = [
-    {
-      title: "產生限動分享圖",
-      body: "回到本頁按「分享到 IG 限動」。手機會跳出系統分享選單；電腦則會下載 PNG。",
-    },
-    {
-      title: "選 Instagram → 限動",
-      body: "在系統分享選單裡選 Instagram，再選「限動／Story」，圖會直接進限動編輯畫面。若沒出現選項，可先「儲存圖像」再到 IG 開限動上傳。",
-    },
-    {
-      title: "加上「連結」貼紙",
-      body: profile
-        ? `編輯畫面點貼紙 →「連結」，貼上 ${profile.link.url.replace(/^https?:\/\//, "")}（可用下方按鈕先複製）。`
-        : "編輯畫面點貼紙 →「連結」，貼上你的 6w7 短網址。",
-    },
-    {
-      title: "發佈，開始收訊息",
-      body: "把連結貼紙放到好點的位置後發佈；訪客點連結就能匿名留言到你的收件匣。",
-    },
-  ];
+  function dismissGuideHint() {
+    const id = profile?.user.id ?? seeded?.user.id;
+    if (id) hideIgShareGuideHint(id, { demo: isDemoAccount });
+    setGuideHintOpen(false);
+  }
 
   if (loading) {
     return (
@@ -552,6 +588,7 @@ export function SharePageClient({
               分享到 IG 限動
             </Button>
             <Button
+              ref={mobileGuideRef}
               type="button"
               variant="outline"
               className="w-full"
@@ -601,7 +638,7 @@ export function SharePageClient({
           <div ref={previewEndRef} className="h-px w-full" aria-hidden />
         </section>
 
-        {showPreviewHint && (
+        {showPreviewHint && !guideHintOpen && (
           <div className="pointer-events-none fixed inset-x-0 bottom-[4.25rem] z-30 flex justify-center px-4 lg:hidden">
             <button
               type="button"
@@ -695,6 +732,7 @@ export function SharePageClient({
                 分享到 IG 限動
               </Button>
               <Button
+                ref={desktopGuideRef}
                 type="button"
                 variant="outline"
                 className="h-12 text-base"
@@ -732,6 +770,13 @@ export function SharePageClient({
                 有人提問，收件匣都會顯示未讀問題數量～立刻點入查看吧！
               </li>
             </ol>
+            <button
+              type="button"
+              onClick={openGuide}
+              className="mt-4 text-sm font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
+            >
+              看教學影片
+            </button>
           </section>
         </div>
 
@@ -755,117 +800,25 @@ export function SharePageClient({
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         }}
+        onOpenGuide={openGuide}
       />
 
-      {guideOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ink)]/45 p-4 backdrop-blur-[3px]"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="guide-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setGuideOpen(false);
-          }}
-        >
-          <div className="animate-rise w-full max-w-[22rem] overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_24px_60px_rgba(20,33,43,0.22)]">
-            <div className="h-1.5 bg-gradient-to-r from-[var(--mint)] via-[#3197e5] to-[var(--accent)]" />
+      <IgShareGuideDialog
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        copied={copied}
+        onCopyLink={() => {
+          void copyLink();
+        }}
+        onShareStory={() => setStoryOpen(true)}
+      />
 
-            <div className="px-5 pb-5 pt-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-bold tracking-[0.18em] text-[var(--mint)]">
-                    {BRAND.en.toUpperCase()} GUIDE
-                  </p>
-                  <h3
-                    id="guide-title"
-                    className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight"
-                  >
-                    怎麼發到 IG 限動
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
-                  onClick={() => setGuideOpen(false)}
-                  aria-label="關閉"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <p className="mt-4 text-[11px] text-[var(--muted)]">
-                點任一步驟可切換說明
-              </p>
-              <ol className="mt-2 space-y-2">
-                {steps.map((step, i) => {
-                  const active = i === guideStep;
-                  return (
-                    <li key={step.title}>
-                      <button
-                        type="button"
-                        onClick={() => setGuideStep(i)}
-                        aria-current={active ? "step" : undefined}
-                        className={`flex w-full gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                          active
-                            ? "border-[var(--mint)]/40 bg-[var(--mint)]/12 shadow-sm"
-                            : "border-transparent bg-[var(--surface)]/70 opacity-70 hover:border-[var(--line)] hover:opacity-100"
-                        }`}
-                      >
-                        <span
-                          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                            active
-                              ? "bg-[var(--mint)] text-white"
-                              : "bg-white text-[var(--muted)]"
-                          }`}
-                        >
-                          {i + 1}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span
-                            className={`block text-sm font-semibold leading-snug ${
-                              active
-                                ? "text-[var(--ink)]"
-                                : "text-[var(--muted)]"
-                            }`}
-                          >
-                            {step.title}
-                          </span>
-                          {active && (
-                            <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">
-                              {step.body}
-                            </span>
-                          )}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
-
-              <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[var(--line)] pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    void copyLink();
-                  }}
-                >
-                  {copied ? "已複製網址" : "複製短網址"}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setGuideOpen(false);
-                    setStoryOpen(true);
-                  }}
-                >
-                  分享到 IG 限動
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <IgShareGuideHint
+        open={guideHintOpen && !guideOpen && !storyOpen}
+        mobileRef={mobileGuideRef}
+        desktopRef={desktopGuideRef}
+        onDismiss={dismissGuideHint}
+      />
     </div>
   );
 }

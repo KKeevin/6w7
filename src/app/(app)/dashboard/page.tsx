@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "短網址",
 };
 
-type Props = { searchParams: Promise<{ welcome?: string }> };
+type Props = { searchParams: Promise<{ welcome?: string; guideHint?: string }> };
 
 export default async function DashboardPage({ searchParams }: Props) {
   const viewer = await getViewer();
@@ -20,7 +20,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     redirect(loginPath("/dashboard"));
   }
 
-  const { welcome } = await searchParams;
+  const { welcome, guideHint } = await searchParams;
   const profile = await getProfileForOwner(viewer.user.id);
   const emailVerified = Boolean(profile.user.emailVerified);
 
@@ -35,6 +35,8 @@ export default async function DashboardPage({ searchParams }: Props) {
           />
         ) : null}
         <SharePageClient
+          isDemoAccount={viewer.kind === "demo"}
+          forceGuideHint={viewer.kind === "demo" && guideHint === "1"}
           initialProfile={{
             user: profile.user,
             link: {

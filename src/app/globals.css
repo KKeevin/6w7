@@ -140,6 +140,56 @@ body {
   animation: scroll-cue 1.2s ease-in-out infinite;
 }
 
+@keyframes ig-guide-hint-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px var(--mint),
+      0 0 0 6px rgba(26, 166, 138, 0.2),
+      0 0 0 9999px rgba(20, 33, 43, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px var(--accent),
+      0 0 0 10px rgba(255, 90, 60, 0.2),
+      0 0 0 9999px rgba(20, 33, 43, 0.4);
+  }
+}
+
+@keyframes ig-guide-hint-point {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-10px, 5px);
+  }
+}
+
+@keyframes ig-guide-hint-point-flip {
+  0%,
+  100% {
+    transform: scaleX(-1) translate(0, 0);
+  }
+  50% {
+    transform: scaleX(-1) translate(-10px, 5px);
+  }
+}
+
+.ig-guide-hint-frame {
+  animation: ig-guide-hint-pulse 1.8s ease-in-out infinite;
+}
+
+.ig-guide-hint-pointer {
+  pointer-events: none;
+  mix-blend-mode: screen;
+  animation: ig-guide-hint-point 1.1s ease-in-out infinite;
+}
+
+.ig-guide-hint-pointer-flip {
+  animation-name: ig-guide-hint-point-flip;
+}
+
 /* 收件匣：剛加入精選／封存 — 粗螢光筆逆時針框選一次 */
 @keyframes inbox-highlighter-draw {
   from {
@@ -378,7 +428,10 @@ body {
   .meme-firework,
   .meme-bob,
   .story-read-hint-box,
-  .story-read-hint-label {
+  .story-read-hint-label,
+  .ig-guide-hint-frame,
+  .ig-guide-hint-pointer,
+  .ig-guide-hint-pointer-flip {
     animation: none;
   }
 

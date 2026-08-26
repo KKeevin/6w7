@@ -9,7 +9,7 @@ import {
 import { renderShareStoryPng } from "@/lib/render-story-canvas";
 import { saveOrSharePng } from "@/lib/save-image";
 
-type Props = {
+export type ShareStoryDialogProps = {
   open: boolean;
   onClose: () => void;
   username: string;
@@ -18,7 +18,10 @@ type Props = {
   displayName?: string | null;
   shortUrl: string;
   onCopiedLink?: () => void;
+  onOpenGuide?: () => void;
 };
+
+type Props = ShareStoryDialogProps;
 
 const PREVIEW_SCALE = 0.22;
 
@@ -37,6 +40,7 @@ export function ShareStoryDialog({
   displayName,
   shortUrl,
   onCopiedLink,
+  onOpenGuide,
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +119,15 @@ export function ShareStoryDialog({
               手機：點選分享此圖後 → 選 Instagram →
               限動，圖會直接進編輯。加入「連結」貼紙後貼上你的短網址，即可發佈！
             </p>
+            {onOpenGuide ? (
+              <button
+                type="button"
+                className="mt-2 text-sm font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
+                onClick={onOpenGuide}
+              >
+                看教學影片
+              </button>
+            ) : null}
           </div>
           <button
             type="button"

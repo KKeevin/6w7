@@ -13,6 +13,7 @@ import {
   markDeviceHasAccount,
   resolveAuthMode,
 } from "@/lib/device-auth-hint";
+import { resetDemoIgShareGuideHint } from "@/lib/ig-share-guide-hint";
 
 type AuthMode = "login" | "register";
 
@@ -174,6 +175,7 @@ export function LoginForm({
         id="demo-login"
         href={demoEnterHref(next)}
         className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+        onClick={() => resetDemoIgShareGuideHint()}
       >
         用示範帳號登入
       </a>

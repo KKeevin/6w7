@@ -62,6 +62,9 @@ export const BRAND = {
   pointAtSrc: "/brand/point-at.png",
   /** 收件匣沒有留言時的插畫：public/brand/inbox-empty.png */
   inboxEmptySrc: "/brand/inbox-empty.png",
+  /** 分享頁「限動教學」彈窗：手機規格 walkthrough（CDN） */
+  shareIgGuideVideoSrc:
+    "https://cdn.6w7.link/walkthrough/guide_share_to_ig_001.mp4",
   /** 換 logo 後遞增，用來清瀏覽器／元件快取（勿加在 Next Image src query） */
   logoVersion: 3,
 } as const;

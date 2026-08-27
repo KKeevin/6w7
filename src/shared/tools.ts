@@ -84,5 +84,5 @@ export const ASK_LIMITS = {
   stickerMaxBytes: 5 * 1024 * 1024,
   stickerScaleMin: 0.35,
   stickerScaleMax: 2.8,
-  inboxPageSize: 20,
+  inboxPageSize: 10,
 } as const;

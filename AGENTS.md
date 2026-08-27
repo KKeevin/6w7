@@ -246,7 +246,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 - 主人可設 3～5 個「主題標籤」，訪客必選或可選其一再留言。
 - 每日收件上限、字數上限、冷卻時間（同一指紋）。
 - Inbox 篩選：未讀／精選／已封存。
-- 收件匣分頁：每頁 20 筆。
+- 收件匣分頁：每頁 10 筆。
 - 一鍵複製「限動分享文案」（6w7 原創語氣）。
 
 **P2：**
@@ -364,7 +364,7 @@ GET    /api/v1/ask-links
 PATCH  /api/v1/ask-links/:id
 POST   /api/v1/ask-links/:id/rotate-slug   # 可選
 
-GET    /api/v1/inbox             # 主人留言列表（page，每頁 20 筆）
+GET    /api/v1/inbox             # 主人留言列表（page，每頁 10 筆）
 PATCH  /api/v1/messages/:id      # 已讀／隱藏／精選
 DELETE /api/v1/messages/:id
 POST   /api/v1/messages/:id/report

@@ -16,7 +16,7 @@ export function HomeAuthPanel() {
       </h2>
       <p className="mt-1 text-sm text-[var(--muted)]">
         {mode === "login"
-          ? "登入後管理你的專屬連結與收件匣。"
+          ? "登入產生屬於自己的專屬連結，還有查看匿名訊息。"
           : "用 IG 帳號註冊，馬上拿到專屬連結。"}
       </p>
       <div className="mt-5">

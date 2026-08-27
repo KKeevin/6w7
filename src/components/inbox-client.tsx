@@ -284,7 +284,7 @@ export function InboxClient({
         <div className="relative mx-auto flex w-full max-w-sm justify-center pt-2">
           <div className="relative w-[min(100%,16.5rem)]">
             <p className="pointer-events-none absolute inset-x-0 top-2 z-10 text-center font-[family-name:var(--font-display)] text-lg font-bold leading-tight text-[var(--ink)] drop-shadow-[0_2px_0_rgba(255,255,255,0.92)] sm:top-3 sm:text-xl">
-              目前沒有留言
+              空空如也
             </p>
             <Image
               src={BRAND.inboxEmptySrc}

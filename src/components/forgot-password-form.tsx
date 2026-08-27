@@ -29,7 +29,7 @@ export function ForgotPasswordForm() {
       }
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "發生錯誤");
+      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
     } finally {
       setLoading(false);
     }
@@ -39,8 +39,7 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-[var(--ink)]">
-          若這個帳號已綁定並驗證信箱，重設連結已寄出，請在 1
-          小時內到信箱開啟。沒收到的話先看垃圾郵件。
+          如果這個帳號有驗證過的信箱，重設連結已經寄出去了。一小時內去信箱點開，沒看到先翻一下垃圾信。
         </p>
         <p className="text-sm text-[var(--muted)]">
           還沒綁信箱或尚未驗證？到設定頁完成後再回來，或來信{" "}

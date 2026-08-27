@@ -66,7 +66,7 @@ export function NotificationProvider({
       const title = "新的匿名留言";
       const body = summaryNext.latestTopic
         ? `主題「${summaryNext.latestTopic}」· 點開收件匣查看`
-        : "有人剛剛留下一則訊息，點開收件匣查看";
+        : "剛剛有人偷偷丟了一句話給你";
       setToasts((list) => {
         const next = [{ id, title, body }, ...list.filter((t) => t.id !== id)];
         return next.slice(0, 3);
@@ -279,7 +279,7 @@ export function NotificationProvider({
                     onClick={() => dismissToast(toast.id)}
                     className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-medium text-white/60 hover:text-white"
                   >
-                    稍後
+                    等等再看
                   </button>
                 </div>
               </div>

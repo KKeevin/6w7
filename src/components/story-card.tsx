@@ -227,7 +227,7 @@ export function StoryCard({
                   fontWeight: 500,
                 }}
               >
-                （在此寫下你的回覆）
+                （你的回覆會出現在這裡）
               </p>
             )}
           </div>

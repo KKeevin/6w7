@@ -85,7 +85,7 @@ export function SettingsEmailForm({
       }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "發生錯誤");
+      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
     } finally {
       setLoading(false);
     }
@@ -112,7 +112,7 @@ export function SettingsEmailForm({
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "發生錯誤");
+      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
     } finally {
       setResending(false);
     }

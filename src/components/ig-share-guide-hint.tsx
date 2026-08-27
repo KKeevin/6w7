@@ -136,7 +136,7 @@ export function IgShareGuideHint({
       >
         <div className="animate-rise rounded-2xl border border-[var(--line)] bg-white px-3.5 py-3 shadow-[0_16px_40px_rgba(20,33,43,0.2)]">
           <p className="text-sm font-semibold leading-snug text-[var(--ink)]">
-            點這格就能看怎麼 PO 到 IG 限動
+            不會發限動？點這裡看我示範一次
           </p>
           <button
             type="button"

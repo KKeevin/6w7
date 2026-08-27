@@ -105,8 +105,8 @@ export async function notifyOwnerNewMessage(userId: string) {
       title: "有新的匿名留言",
       username: user.username,
       paragraphs: [
-        `有人透過你的專屬連結，在 ${BRAND.en}（${BRAND.zh}）傳了一則匿名留言。`,
-        "點下面的按鈕即可查看。",
+        `有人用你的 ${BRAND.en}（${BRAND.zh}）連結丟了一句匿名留言給你。`,
+        "按下面的按鈕就能看。",
       ],
       ctaLabel: "開啟收件匣",
       ctaUrl: inboxUrl,

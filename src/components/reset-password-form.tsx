@@ -18,7 +18,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
     event.preventDefault();
     setError(null);
     if (password !== confirm) {
-      setError("兩次輸入的密碼不一致");
+      setError("兩次密碼不一樣");
       return;
     }
     setLoading(true);
@@ -35,7 +35,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       router.push("/login?mode=login");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "發生錯誤");
+      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
     } finally {
       setLoading(false);
     }

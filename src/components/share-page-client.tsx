@@ -667,8 +667,8 @@ export function SharePageClient({
               看看多少人會跟你悄悄話！
             </h1>
             <p className="mt-3 max-w-lg text-lg text-[var(--muted)]">
-              先設定公開頁人像頭貼、文案，複製短網址後，再使用「分享到 IG
-              限動」功能讓大家踴躍問問題吧。
+              可以更改頭貼、提示字及裝扮貼紙，佈置完喜好後，複製短網址，再按「分享到
+              IG 限動」，等大家來問。
             </p>
           </header>
 
@@ -677,7 +677,7 @@ export function SharePageClient({
               <div>
                 <p className="text-base font-semibold">專屬短網址</p>
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                  對應你的 IG 帳號，註冊後固定不變
+                  跟你的 IG 帳號同名，之後都不會變
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">

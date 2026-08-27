@@ -116,8 +116,8 @@ export function ShareStoryDialog({
               分享到 IG 限動
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              手機：點選分享此圖後 → 選 Instagram →
-              限動，圖會直接進編輯。加入「連結」貼紙後貼上你的短網址，即可發佈！
+              手機按「分享此圖」→ 選 Instagram →
+              限動，圖會直接進編輯。記得加一個「連結」貼紙貼上你的短網址，即可發佈。
             </p>
           </div>
           <button

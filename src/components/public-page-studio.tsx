@@ -256,7 +256,7 @@ export function PublicPageStudio({
       if (stickersRef.current.length < ASK_LIMITS.stickerCanvasMax) {
         await addFromLibrary(asset.id);
       } else {
-        setError("已加入媒體列。畫面張數已滿，先移出一張再點圖加入。");
+        setError("圖存好了，但畫面已經放滿，先移掉一張再加。");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "上傳失敗");

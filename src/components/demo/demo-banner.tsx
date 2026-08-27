@@ -16,7 +16,7 @@ export function DemoBanner() {
         className={`${SHELL_X} flex flex-col gap-2 py-2.5 text-xs leading-relaxed text-[var(--ink)] sm:flex-row sm:items-center sm:justify-between sm:text-sm`}
       >
         <p>
-          這是 {BRAND.en} 的<strong>示範帳號</strong>（@
+          你正在逛 {BRAND.en} 的<strong>示範帳號</strong>（@
           {DEMO_PROFILE.username}）。
         </p>
         <form action={signOutDemoAndRegister} className="shrink-0">
@@ -24,7 +24,7 @@ export function DemoBanner() {
             type="submit"
             className="text-left font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
           >
-            登出示範帳號並註冊屬於您的帳號
+            登出，換成我自己的帳號
           </button>
         </form>
       </div>

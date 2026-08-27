@@ -196,7 +196,7 @@ export function StoryCardDialog({
             onChange={(e) => setReply(e.target.value)}
             maxLength={200}
             aria-label="你的回覆，會印在圖卡上"
-            placeholder="寫回覆，會出現在圖卡上"
+            placeholder="寫句回覆，會印在圖卡上"
             className="mt-3 min-h-[72px]"
           />
           <p className="mt-1 text-right text-[11px] text-[var(--muted)]">
@@ -250,7 +250,7 @@ export function StoryCardDialog({
                   onClick={onMarkUnread}
                   className="text-[var(--muted)] transition hover:text-[var(--ink)]"
                 >
-                  標示為未讀
+                  標成未讀
                 </button>
               ) : null}
               {onReport ? (

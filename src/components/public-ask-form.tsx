@@ -29,10 +29,10 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
     return (
       <div className="mt-8 border-t-2 border-[var(--mint)] pt-6">
         <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          已送出
+          送出囉！
         </h2>
         <p className="mt-2 text-[var(--muted)]">
-          你的匿名問題已送進對方的 6w7 收件匣。
+          你的問題已經躺在對方的收件匣裡，而且沒人會知道是你。
         </p>
       </div>
     );

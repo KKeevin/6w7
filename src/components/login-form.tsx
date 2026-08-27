@@ -98,7 +98,7 @@ export function LoginForm({
       router.push(mode === "register" ? "/dashboard?welcome=1" : next);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "發生錯誤");
+      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
     } finally {
       setLoading(false);
     }

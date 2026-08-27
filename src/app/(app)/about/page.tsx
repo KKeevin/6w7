@@ -76,7 +76,7 @@ export default function AboutPage() {
             資料與廣告
           </h2>
           <p>
-            我們採最小蒐集：帳號、連結設定與留言是服務所需。刪帳號時會依流程刪除或匿名化相關資料。細節見{" "}
+            我們只留必要的東西：帳號、連結設定和留言。刪帳號時會依流程刪除或匿名化相關資料。細節見{" "}
             <Link href="/legal/privacy" className="underline hover:text-[var(--ink)]">
               隱私權政策
             </Link>

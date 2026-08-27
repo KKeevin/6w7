@@ -27,8 +27,8 @@ const body = Figtree({
 
 export const metadata: Metadata = {
   title: {
-    default: `${BRAND.en}（${BRAND.zh}）`,
-    template: `%s · ${BRAND.en}`,
+    default: BRAND.titleProduct,
+    template: `%s | ${BRAND.titleProduct}`,
   },
   description: BRAND.tagline,
   metadataBase: new URL(

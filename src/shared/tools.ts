@@ -54,6 +54,8 @@ export const BRAND = {
   zh: "樂玩ㄑ",
   domain: "6w7.link",
   tagline: "用你的 IG 帳號，立刻拿到專屬匿名連結。",
+  /** 瀏覽器標題後綴／首頁標題 */
+  titleProduct: "6w7 匿名問答",
   /** 對外聯絡信箱（聯絡我們頁／頁尾）；請確保此信箱收得到信 */
   contactEmail: "service@6w7.link",
   /** 靜態資源：public/brand/logo.png */

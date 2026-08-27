@@ -119,15 +119,6 @@ export function ShareStoryDialog({
               手機：點選分享此圖後 → 選 Instagram →
               限動，圖會直接進編輯。加入「連結」貼紙後貼上你的短網址，即可發佈！
             </p>
-            {onOpenGuide ? (
-              <button
-                type="button"
-                className="mt-2 text-sm font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
-                onClick={onOpenGuide}
-              >
-                看教學影片
-              </button>
-            ) : null}
           </div>
           <button
             type="button"
@@ -174,9 +165,19 @@ export function ShareStoryDialog({
             {copied ? "已複製短網址" : "複製專屬短網址"}
           </Button>
           <div className="grid grid-cols-2 gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              關閉
-            </Button>
+            {onOpenGuide ? (
+              <Button
+                type="button"
+                className="border border-[var(--mint)]/20 bg-[var(--mint)]/12 font-bold text-[color-mix(in_srgb,var(--mint)_55%,var(--ink))] shadow-none hover:bg-[var(--mint)]/20 hover:brightness-100"
+                onClick={onOpenGuide}
+              >
+                看教學
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" onClick={onClose}>
+                關閉
+              </Button>
+            )}
             <Button
               type="button"
               onClick={() => void download()}

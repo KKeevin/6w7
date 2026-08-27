@@ -775,7 +775,7 @@ export function SharePageClient({
               onClick={openGuide}
               className="mt-4 text-sm font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
             >
-              看教學影片
+              看教學
             </button>
           </section>
         </div>

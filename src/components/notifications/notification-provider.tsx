@@ -53,7 +53,8 @@ export function NotificationProvider({
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const prevCountRef = useRef<number | null>(null);
   const prevLatestRef = useRef<string | null>(null);
-  const baseTitleRef = useRef<string | null>(null);
+  const unreadRef = useRef(summary.unreadCount);
+  unreadRef.current = summary.unreadCount;
 
   const dismissToast = useCallback((id: string) => {
     setToasts((list) => list.filter((t) => t.id !== id));
@@ -194,19 +195,37 @@ export function NotificationProvider({
     };
   }, [applySummary, enabled, refresh]);
 
-  // 文件標題角標
+  // 文件標題角標：跟著 Next 換頁更新，不要鎖死第一個頁面的 title
   useEffect(() => {
     if (!enabled) return;
-    if (baseTitleRef.current === null) {
-      baseTitleRef.current = document.title.replace(/^\(\d+\)\s*/, "");
-    }
-    const base = baseTitleRef.current;
-    document.title =
-      summary.unreadCount > 0 ? `(${summary.unreadCount}) ${base}` : base;
-    return () => {
-      if (baseTitleRef.current) document.title = baseTitleRef.current;
+
+    const stripBadge = (value: string) => value.replace(/^\(\d+\)\s*/, "");
+
+    const applyBadge = () => {
+      const base = stripBadge(document.title);
+      const count = unreadRef.current;
+      const next = count > 0 ? `(${count}) ${base}` : base;
+      if (document.title !== next) document.title = next;
     };
-  }, [enabled, summary.unreadCount, pathname]);
+
+    applyBadge();
+
+    const titleEl = document.querySelector("title");
+    if (!titleEl) return;
+
+    const observer = new MutationObserver(() => applyBadge());
+    observer.observe(titleEl, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+
+    return () => {
+      observer.disconnect();
+      const base = stripBadge(document.title);
+      if (document.title !== base) document.title = base;
+    };
+  }, [enabled, summary.unreadCount]);
 
   // 進入收件匣後稍後刷新（讀完未讀會變）
   useEffect(() => {

@@ -7,7 +7,9 @@ import { HomeAuthPanel } from "@/components/home-auth-panel";
 import { BRAND } from "@/shared/tools";
 
 export const metadata: Metadata = {
-  title: `${BRAND.en}（${BRAND.zh}）`,
+  title: {
+    absolute: BRAND.titleProduct,
+  },
   description: BRAND.tagline,
 };
 

@@ -770,13 +770,6 @@ export function SharePageClient({
                 有人提問，收件匣都會顯示未讀問題數量～立刻點入查看吧！
               </li>
             </ol>
-            <button
-              type="button"
-              onClick={openGuide}
-              className="mt-4 text-sm font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
-            >
-              看教學
-            </button>
           </section>
         </div>
 

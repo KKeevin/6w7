@@ -16,6 +16,11 @@ import { StickerLayer } from "@/components/sticker-layer";
 import { Button } from "@/components/ui/button";
 import { ASK_LIMITS } from "@/shared/tools";
 import {
+  IMAGE_UPLOAD_ACCEPT,
+  prepareImageUpload,
+  uploadErrorMessage,
+} from "@/lib/image-upload";
+import {
   clampStickerScale,
   wrapRotation,
   type MediaLibraryItem,
@@ -246,11 +251,14 @@ export function PublicPageStudio({
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     await saveChain.current;
     try {
+      const prepared = await prepareImageUpload(file, {
+        maxEdge: ASK_LIMITS.stickerMaxEdge,
+      });
       const form = new FormData();
-      form.set("file", file);
+      form.set("file", prepared);
       const res = await fetch("/api/v1/media", { method: "POST", body: form });
+      if (!res.ok) throw new Error(await uploadErrorMessage(res, "上傳失敗"));
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "上傳失敗");
       const asset = data.asset as MediaLibraryItem;
       setLibrary((prev) => [asset, ...prev]);
       if (stickersRef.current.length < ASK_LIMITS.stickerCanvasMax) {
@@ -544,7 +552,7 @@ export function PublicPageStudio({
       <input
         ref={fileRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        accept={IMAGE_UPLOAD_ACCEPT}
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];

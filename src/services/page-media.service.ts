@@ -96,7 +96,7 @@ export async function uploadMediaAsset(userId: string, input: Buffer) {
     const meta = await image.metadata();
     width = meta.width || 1;
     height = meta.height || 1;
-    const maxEdge = 1600;
+    const maxEdge = ASK_LIMITS.stickerMaxEdge;
     const resized =
       width > maxEdge || height > maxEdge
         ? image.resize({

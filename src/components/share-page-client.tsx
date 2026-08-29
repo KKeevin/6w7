@@ -19,6 +19,7 @@ import {
   isIgShareGuideHintHidden,
   resetDemoIgShareGuideHint,
 } from "@/lib/ig-share-guide-hint";
+import { prepareImageUpload, uploadErrorMessage } from "@/lib/image-upload";
 
 const ShareStoryDialog = dynamic(
   () =>
@@ -240,14 +241,17 @@ export function SharePageClient({
     setUploading(true);
     setError(null);
     try {
+      const prepared = await prepareImageUpload(file, {
+        maxEdge: ASK_LIMITS.avatarMaxEdge,
+      });
       const form = new FormData();
-      form.append("file", file);
+      form.append("file", prepared);
       const res = await fetch("/api/v1/profile/avatar", {
         method: "POST",
         body: form,
       });
+      if (!res.ok) throw new Error(await uploadErrorMessage(res, "上傳失敗"));
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "上傳失敗");
       setProfile((p) =>
         p ? { ...p, user: { ...p.user, image: data.user.image } } : p,
       );

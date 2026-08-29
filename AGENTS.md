@@ -175,7 +175,13 @@ AI 實作時可細化欄位，但概念實體不可缺：
 - isActive、acceptingMessages；可選 topics／dailyLimit 等
 - createdAt、updatedAt
 
-### 4.2.1 頭貼儲存（Avatar）
+### 4.2.1 圖片上傳共用規則
+
+- 使用者可挑的原始圖片上限 **30MB**（`ASK_LIMITS.imageUploadMaxBytes`）；超過時前端直接擋下並顯示「圖片過大，無法上傳」，不送請求。
+- 30MB 以內一律先在瀏覽器縮到目標最長邊並壓到 `ASK_LIMITS.uploadTargetBytes` 以內再送 API（雲端函式的請求本文有上限），伺服器再做一次權威轉檔。
+- 伺服器仍要驗證大小與 MIME；`413` 要轉成中文提示，不可把原始錯誤丟給使用者。
+
+### 4.2.2 頭貼儲存（Avatar）
 
 - 上傳後**一律轉成** `profile.png`；新上傳覆蓋舊檔，不留舊檔。
 - **本機：** `{UPLOAD_ROOT}/{userId}/profile.png`（預設 `public/uploads/`，gitignore）；`STORAGE_DRIVER=local`
@@ -202,7 +208,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 
 - MediaAsset：主人圖片庫。檔案放 `stickers/{userId}/{id}.webp`（本機 `public/uploads/{userId}/stickers/`）。刪除媒體必須連儲存檔與畫面上的貼紙一起刪。
 - PageSticker：貼在公開頁上的實例（同一張圖可出現多次）。座標為舞台百分比（中心點 x／y）、scale、rotation、zIndex。
-- 上限：圖庫 20 張、畫面上 12 張；貼紙原始檔 15MB；僅圖片。伺服器會將貼紙縮至最長邊 1600px 並轉成 WebP 後儲存，不保留原檔。
+- 上限：圖庫 20 張、畫面上 12 張；僅圖片。伺服器會將貼紙縮至最長邊 1600px 並轉成 WebP 後儲存，不保留原檔。
 - 訪客頁貼紙不攔截點擊；示範帳號不可改裝扮。
 - 貼紙超出公開頁舞台（問答區塊）的部分一律裁切，不可把頁面撐出額外橫向／縱向捲軸。
 - 訪客聚焦留言輸入框時，輸入框提到貼紙之上並半透明，仍看得到底下貼紙；失焦後恢復。

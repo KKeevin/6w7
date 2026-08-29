@@ -23,8 +23,8 @@ export async function POST(request: Request) {
     if (!file || typeof file === "string") {
       throw new AppError("VALIDATION_ERROR", "請選擇圖片檔。", 400);
     }
-    if (file.size > ASK_LIMITS.avatarMaxBytes) {
-      throw new AppError("VALIDATION_ERROR", "頭貼原始檔請小於 10MB。", 400);
+    if (file.size > ASK_LIMITS.imageUploadMaxBytes) {
+      throw new AppError("VALIDATION_ERROR", "圖片過大，無法上傳。", 400);
     }
     if (file.type && !file.type.startsWith("image/")) {
       throw new AppError("VALIDATION_ERROR", "僅支援圖片格式。", 400);

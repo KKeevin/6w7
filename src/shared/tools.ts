@@ -81,10 +81,14 @@ export const ASK_LIMITS = {
   slugLength: 6,
   stickerLibraryMax: 20,
   stickerCanvasMax: 12,
-  /** 頭貼原始上傳上限；伺服器固定輸出 512px PNG */
-  avatarMaxBytes: 10 * 1024 * 1024,
-  /** 貼紙原始上傳上限；伺服器縮至最長邊 1600px 並轉成 WebP */
-  stickerMaxBytes: 15 * 1024 * 1024,
+  /** 使用者可挑的原始圖片上限；超過就在前端擋下，不送出請求 */
+  imageUploadMaxBytes: 30 * 1024 * 1024,
+  /** 瀏覽器先壓到這個大小才送 API（雲端函式的請求本文有上限） */
+  uploadTargetBytes: 4 * 1024 * 1024,
+  /** 頭貼預壓最長邊；伺服器最後固定輸出 512px PNG */
+  avatarMaxEdge: 1024,
+  /** 貼紙最長邊；前端預壓與伺服器輸出一致 */
+  stickerMaxEdge: 1600,
   stickerScaleMin: 0.35,
   stickerScaleMax: 2.8,
   inboxPageSize: 10,

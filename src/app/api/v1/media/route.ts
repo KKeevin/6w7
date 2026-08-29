@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       throw new AppError("VALIDATION_ERROR", "請選擇圖片檔。", 400);
     }
     if (file.size > ASK_LIMITS.stickerMaxBytes) {
-      throw new AppError("VALIDATION_ERROR", "圖片請小於 5MB。", 400);
+      throw new AppError("VALIDATION_ERROR", "貼紙原始檔請小於 15MB。", 400);
     }
     if (file.type && !file.type.startsWith("image/")) {
       throw new AppError("VALIDATION_ERROR", "僅支援圖片格式。", 400);

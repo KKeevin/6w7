@@ -3,6 +3,8 @@ import { AppError, errorBody } from "@/shared/errors";
 
 export const runtime = "nodejs";
 
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
 function allowedBases(): string[] {
   const bases = [
     process.env.S3_PUBLIC_BASE_URL,
@@ -34,6 +36,37 @@ function isAllowed(url: URL) {
   // 允許 *.r2.dev 公開開發網域
   if (url.hostname.endsWith(".r2.dev")) return true;
   return false;
+}
+
+async function readImageBody(response: Response): Promise<ArrayBuffer> {
+  const contentLength = Number(response.headers.get("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
+    throw new AppError("BAD_REQUEST", "圖片檔案過大", 400);
+  }
+
+  if (!response.body) return new ArrayBuffer(0);
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_IMAGE_BYTES) {
+      await reader.cancel();
+      throw new AppError("BAD_REQUEST", "圖片檔案過大", 400);
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body.buffer;
 }
 
 /**
@@ -71,7 +104,7 @@ export async function GET(request: Request) {
       throw new AppError("BAD_REQUEST", "不是圖片", 400);
     }
 
-    const buffer = await upstream.arrayBuffer();
+    const buffer = await readImageBody(upstream);
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": contentType,

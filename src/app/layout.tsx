@@ -6,9 +6,6 @@ import { MemeDrift } from "@/components/meme-drift";
 import { BRAND } from "@/shared/tools";
 import "./globals.css";
 
-/** 台灣流量為主，Neon 在 Singapore；預設 iad1 會拉長 TTFB */
-export const preferredRegion = "sin1";
-
 const display = Syne({
   variable: "--font-display",
   subsets: ["latin"],

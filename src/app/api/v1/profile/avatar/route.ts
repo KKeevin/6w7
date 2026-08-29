@@ -3,37 +3,9 @@ import { saveProfileAvatar } from "@/lib/storage/avatar";
 import { setUserImage } from "@/services/ask-link.service";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { AppError } from "@/shared/errors";
+import { ASK_LIMITS } from "@/shared/tools";
 
 export const runtime = "nodejs";
-
-const MAX_BYTES = 5 * 1024 * 1024;
-
-/** 診斷用：確認正式環境儲存設定（不含密鑰） */
-export async function GET() {
-  let sharpStatus = "unknown";
-  try {
-    const sharp = (await import("sharp")).default;
-    await sharp({
-      create: { width: 1, height: 1, channels: 3, background: "#000" },
-    })
-      .png()
-      .toBuffer();
-    sharpStatus = "ok";
-  } catch (e) {
-    sharpStatus = e instanceof Error ? e.message : "fail";
-  }
-
-  return jsonOk({
-    storageDriver: process.env.STORAGE_DRIVER ?? null,
-    hasS3Bucket: Boolean(process.env.S3_BUCKET),
-    hasS3Endpoint: Boolean(process.env.S3_ENDPOINT),
-    hasS3Key: Boolean(process.env.S3_ACCESS_KEY_ID),
-    hasS3Secret: Boolean(process.env.S3_SECRET_ACCESS_KEY),
-    hasS3Public: Boolean(process.env.S3_PUBLIC_BASE_URL),
-    hasCfToken: Boolean(process.env.CLOUDFLARE_API_TOKEN),
-    sharp: sharpStatus,
-  });
-}
 
 export async function POST(request: Request) {
   try {
@@ -51,8 +23,8 @@ export async function POST(request: Request) {
     if (!file || typeof file === "string") {
       throw new AppError("VALIDATION_ERROR", "請選擇圖片檔。", 400);
     }
-    if (file.size > MAX_BYTES) {
-      throw new AppError("VALIDATION_ERROR", "圖片請小於 5MB。", 400);
+    if (file.size > ASK_LIMITS.avatarMaxBytes) {
+      throw new AppError("VALIDATION_ERROR", "頭貼原始檔請小於 10MB。", 400);
     }
     if (file.type && !file.type.startsWith("image/")) {
       throw new AppError("VALIDATION_ERROR", "僅支援圖片格式。", 400);
@@ -64,9 +36,7 @@ export async function POST(request: Request) {
       ({ publicPath } = await saveProfileAvatar(userId, buffer));
     } catch (storageError) {
       console.error("avatar storage failed", storageError);
-      const detail =
-        storageError instanceof Error ? storageError.message : "unknown";
-      throw new AppError("INTERNAL", `頭貼上傳失敗：${detail}`, 500);
+      throw new AppError("INTERNAL", "頭貼上傳失敗，請稍後再試。", 500);
     }
     // 必須保留 ?v=時間戳 寫入 DB，否則各裝置會共用無版本 URL 而卡在舊快取
     const user = await setUserImage(userId, publicPath);

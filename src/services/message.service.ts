@@ -29,7 +29,7 @@ export async function createPublicMessage(
   }
 
   const topics = asTopicList(link.topics);
-  let topic = input.topic ? sanitizePlainText(input.topic) : undefined;
+  const topic = input.topic ? sanitizePlainText(input.topic) : undefined;
   if (link.requireTopic) {
     if (!topic || !topics.includes(topic)) {
       throw new AppError("VALIDATION_ERROR", "請選擇一個主題標籤。", 400);

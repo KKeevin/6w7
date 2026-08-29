@@ -11,6 +11,8 @@ import type { PublicSticker } from "@/shared/page-stickers";
 import type { z } from "zod";
 import type { saveStickersSchema } from "@/shared/page-stickers";
 
+const MAX_INPUT_PIXELS = 40_000_000;
+
 function serializeSticker(row: {
   id: string;
   assetId: string;
@@ -87,7 +89,10 @@ export async function uploadMediaAsset(userId: string, input: Buffer) {
   let outMeta: { width?: number; height?: number };
   try {
     const sharp = (await import("sharp")).default;
-    const image = sharp(input, { failOn: "none" }).rotate();
+    const image = sharp(input, {
+      failOn: "none",
+      limitInputPixels: MAX_INPUT_PIXELS,
+    }).rotate();
     const meta = await image.metadata();
     width = meta.width || 1;
     height = meta.height || 1;

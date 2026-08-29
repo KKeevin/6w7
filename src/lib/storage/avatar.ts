@@ -2,6 +2,8 @@ import { AwsClient } from "aws4fetch";
 
 export type StorageDriver = "local" | "s3";
 
+const MAX_INPUT_PIXELS = 40_000_000;
+
 function env(name: string) {
   return process.env[name]?.trim().replace(/^["']|["']$/g, "") || undefined;
 }
@@ -160,7 +162,7 @@ export async function saveProfileAvatar(
   input: Buffer,
 ): Promise<{ publicPath: string }> {
   const sharp = (await import("sharp")).default;
-  const png = await sharp(input)
+  const png = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS })
     .rotate()
     .resize(512, 512, { fit: "cover", position: "center" })
     .png({ compressionLevel: 8 })

@@ -5,6 +5,25 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.108", "localhost"],
   // Vercel 上避免 sharp 被錯誤打包
   serverExternalPackages: ["sharp"],
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+          },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       { source: "/demo", destination: "/login", permanent: false },

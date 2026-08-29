@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand-logo";
+import Link from "next/link";
 import { BRAND } from "@/shared/tools";
 
 /** 公開留言頁：原創說明文字，讓頁面不只是表單（AdSense 內容標準） */
@@ -22,13 +23,13 @@ export function PublicAskExplainer() {
       </h2>
       <p>
         請不要傳送違法、威脅、仇恨、涉及未成年人的不當內容，或惡意騷擾。若內容不當，主人與平台都可能處理或檢舉。匿名對主人顯示，不代表可以無視法律或他人界線。想了解我們蒐集哪些資料、廣告出現在哪些頁面，請看{" "}
-        <a href="/legal/privacy" className="underline hover:text-[var(--ink)]">
+        <Link href="/legal/privacy" className="underline hover:text-[var(--ink)]">
           隱私權政策
-        </a>
+        </Link>
         與{" "}
-        <a href="/about" className="underline hover:text-[var(--ink)]">
+        <Link href="/about" className="underline hover:text-[var(--ink)]">
           關於 {BRAND.en}
-        </a>
+        </Link>
         。
       </p>
       <div className="flex items-center gap-2 pt-1">

@@ -81,7 +81,10 @@ export const ASK_LIMITS = {
   slugLength: 6,
   stickerLibraryMax: 20,
   stickerCanvasMax: 12,
-  stickerMaxBytes: 5 * 1024 * 1024,
+  /** 頭貼原始上傳上限；伺服器固定輸出 512px PNG */
+  avatarMaxBytes: 10 * 1024 * 1024,
+  /** 貼紙原始上傳上限；伺服器縮至最長邊 1600px 並轉成 WebP */
+  stickerMaxBytes: 15 * 1024 * 1024,
   stickerScaleMin: 0.35,
   stickerScaleMax: 2.8,
   inboxPageSize: 10,

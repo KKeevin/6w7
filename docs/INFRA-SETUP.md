@@ -2,7 +2,7 @@
 
 > **這份文件是「我們實際做過什麼」的操作手冊與資源清單。**  
 > 規格產品面請看 [`AGENTS.md`](../AGENTS.md)；日常開發請看 [`README.md`](../README.md)。  
-> **最後整理：** 2026-08-12
+> **最後整理：** 2026-08-13（含正式網域 `6w7.link`、頭貼 CDN `cdn.6w7.link`）
 
 ---
 
@@ -35,17 +35,17 @@
         ├──────────────────► Upstash Redis（限流）
         │
         └──────────────────► Cloudflare R2（頭貼檔）
-              公開讀取：r2.dev（或之後 cdn.6w7.link）
+              公開讀取：cdn.6w7.link（自訂網域；舊 r2.dev 可當備用）
 ```
 
 | 服務 | 用途 | 正式現況（摘要） |
 |------|------|------------------|
 | **GitHub** | 原始碼版控；Vercel 自動部署來源 | `https://github.com/KKeevin/6w7`，分支 `main` |
-| **Vercel** | 跑 Next.js、HTTPS、自動 Deploy | 專案名 `6w7`；目前站：`https://6w7.vercel.app` |
+| **Vercel** | 跑 Next.js、HTTPS、自動 Deploy | 專案名 `6w7`；主站 **`https://6w7.link`**（`6w7.vercel.app` 仍可用） |
 | **Neon** | PostgreSQL | 專案名 `6w7`；區域 **Singapore (ap-southeast-1)** |
 | **Upstash** | Redis REST 限流 | DB 名 `6w7`；區域 **Singapore** |
-| **Cloudflare R2** | 頭貼物件儲存 | Bucket：`6w7-avatars`；公開：`*.r2.dev` |
-| **網域 6w7.link** | 品牌短網域 | 規劃綁 Vercel（若尚未綁完，對外可能仍用 vercel.app） |
+| **Cloudflare R2** | 頭貼物件儲存 | Bucket：`6w7-avatars`；公開：**`https://cdn.6w7.link`** |
+| **網域 6w7.link** | 品牌短網域（DNS 在 Cloudflare） | 已綁 Vercel；`www` → 308 → apex |
 
 ---
 
@@ -55,9 +55,10 @@
 2. **GitHub** 建 repo、push `main`  
 3. **Neon** → 拿 `DATABASE_URL` → 本機 `npm run db:deploy`  
 4. **Upstash** → 兩組 Redis REST 變數  
-5. **Vercel** Import GitHub → 填 env → Deploy  
-6. **Cloudflare R2** → bucket／公開網域／金鑰 → Vercel 改 `STORAGE_DRIVER=s3` 等  
-7. （可選）綁 `6w7.link`、R2 自訂 CDN 網域  
+5. **Vercel** Import GitHub → 填 env → Deploy（當時先用 `*.vercel.app`）  
+6. **Cloudflare R2** → bucket／r2.dev 公開網域／金鑰 → `STORAGE_DRIVER=s3`  
+7. **購買／接入 `6w7.link`**（DNS 在 Cloudflare）→ Vercel Domains → 改 `AUTH_*`／Redeploy（詳見 §7.1）  
+8. **R2 Custom Domain `cdn.6w7.link`** → 改 `S3_PUBLIC_BASE_URL` → Redeploy（詳見 §6 公開 URL／§7.2）  
 
 ---
 
@@ -169,24 +170,34 @@ S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
 S3_ACCESS_KEY_ID=…
 S3_SECRET_ACCESS_KEY=…
 S3_REGION=auto
-S3_PUBLIC_BASE_URL=https://pub-xxxx.r2.dev
+S3_PUBLIC_BASE_URL=https://cdn.6w7.link
 CLOUDFLARE_API_TOKEN=cfat_…
 CLOUDFLARE_ACCOUNT_ID=<ACCOUNT_ID>
 ```
+
+（過渡期可用 `https://pub-xxxx.r2.dev`；正式建議改 CDN 網域。）
 
 ### 公開 URL 規則（很重要）
 
 - `S3_PUBLIC_BASE_URL` 必須是 **`https://…` 開頭、不要尾隨 `/`**  
 - 物件 key：`avatars/{userId}/profile.png`  
 - 顯示時會加 `?v=時間戳／updatedAt` 破快取（同一檔名覆蓋時瀏覽器才不會卡舊圖）  
-- **建議自訂網域**（較好看）：`https://cdn.6w7.link`  
-  1. Cloudflare → **R2** → bucket `6w7-avatars` → **Settings** → **Custom Domains** → Connect Domain  
-  2. 填 `cdn.6w7.link`（網域已在同一 Cloudflare 帳號時會自動加 CNAME）  
-  3. 等 Status 變 Active／SSL 就緒  
-  4. Vercel／本機把 `S3_PUBLIC_BASE_URL` 改成 `https://cdn.6w7.link`（勿尾隨 `/`）  
-  5. Redeploy；程式會把舊的 `*.r2.dev/avatars/…` 顯示時改寫到新網域  
+- 程式（`avatarDisplayUrl`）會把舊的 `*.r2.dev/avatars/…` **顯示時改寫**到目前的 `S3_PUBLIC_BASE_URL`
 
-舊的 `https://pub-xxxx.r2.dev` 可暫時保留當備用，新上傳會用新網域。
+### R2 自訂網域 `cdn.6w7.link`（已做／復現步驟）
+
+1. Cloudflare → **R2** → bucket **`6w7-avatars`** → **Settings** → **Custom Domains** → **Connect Domain**  
+2. 填：**`cdn.6w7.link`**  
+3. 狀態會先顯示「**正在初始化**」→ 等到 **Active**（SSL 就緒；可能幾分鐘～半小時）  
+4. 同一 Cloudflare 帳號若已管 `6w7.link`，通常會自動加 DNS（CNAME `cdn` → R2）  
+5. 用瀏覽器測：`https://cdn.6w7.link/avatars/<userId>/profile.png` 應看得到圖  
+6. Vercel Production（與本機若也用 s3）改：
+   ```env
+   S3_PUBLIC_BASE_URL=https://cdn.6w7.link
+   ```
+7. **Redeploy**；之後新上傳與舊頭貼顯示都會走 CDN 網域  
+
+舊的 `https://pub-xxxx.r2.dev` 可暫時保留當備用，不必立刻刪。
 
 ### 本機開發
 
@@ -208,15 +219,16 @@ STORAGE_DRIVER=local
 1. https://vercel.com → Add New Project  
 2. Import **`KKeevin/6w7`**  
 3. Project Name：`6w7`；Framework：Next.js；Root：`./`  
-4. **Environment Variables（Production）** 貼齊（見下一節清單）  
+4. **Environment Variables（Production）** 貼齊（見 §8）  
 5. Deploy；之後每次 `git push origin main` 自動部署  
 
-### 站台 URL
+### 站台 URL（現況）
 
 | 項目 | 值 |
 |------|-----|
-| 目前 Production | `https://6w7.vercel.app` |
-| 規劃品牌網域 | `https://6w7.link`（DNS 綁到 Vercel 後，記得改 `AUTH_URL`／`NEXT_PUBLIC_SITE_URL`） |
+| **主站（品牌）** | `https://6w7.link` |
+| www | `https://www.6w7.link` → **308** → `https://6w7.link` |
+| 備用 | `https://6w7.vercel.app`（可留） |
 
 ### Build 注意
 
@@ -224,14 +236,116 @@ STORAGE_DRIVER=local
 - Node：**≥ 20**  
 - Migrate **不要**依賴 Vercel build；改 schema 後在本機／有 direct URL 的環境跑 `npm run db:deploy`  
 
-### 綁網域 `6w7.link`（若尚未完成）
+---
 
-1. Vercel → Project → Domains → 加 `6w7.link`（可選 `www`）  
-2. 網域商依指示設 A／CNAME  
-3. SSL 好了以後更新：  
-   - `AUTH_URL=https://6w7.link`  
-   - `NEXT_PUBLIC_SITE_URL=https://6w7.link`  
-4. Redeploy  
+## 7.1 正式網域 `6w7.link`（從購買到上線 — 實際流程）
+
+> DNS 託管在 **Cloudflare**（與 R2 同一帳號）。  
+> 目標：主站用短網域 `6w7.link`，`www` 導向 apex。
+
+### A. 購買／把網域放進 Cloudflare
+
+1. 買好 `6w7.link`，Nameserver／Zone 進 Cloudflare（DNS 設定顯示「完整」即可）  
+2. 一開始 DNS 記錄可能是 **0 筆**（正常）  
+
+### B. 在 Vercel 加網域
+
+1. Vercel → 專案 **6w7** → **Settings** → **Domains** → **Add**  
+2. **只填一行：** `6w7.link`  
+   - 不要同時再手動加一列 `www`（易出現 *Domain overlaps another row…*）  
+   - **關掉**「Redirect apex domains to www」（我們要以 apex 為主）  
+   - Environment：**Production**  
+   - Redirect：**No Redirect**  
+3. Vercel 可能一併帶出 `www.6w7.link`；先不管 redirect 方向，先把 DNS 補齊  
+
+### C. 依 Vercel 指示加 Cloudflare DNS（以畫面上 Value 為準）
+
+我們實際用的是 **CNAME**（Vercel 新 IP 區間建議），不是舊的 `76.76.21.21` A 記錄：
+
+| 類型 | 名稱 | 內容（範例；以 Vercel「View DNS configuration」為準） | Proxy |
+|------|------|------------------------------------------------------|--------|
+| **CNAME** | `@` | `xxxx.vercel-dns-017.com`（例：`7485f848fb4a9bc4.vercel-dns-017.com`） | **僅 DNS（灰雲）** |
+| **CNAME** | `www` | 同上（與 Vercel 顯示的 www Value 相同） | **僅 DNS（灰雲）** |
+
+重點：
+
+- **Proxy 必須關閉（僅 DNS）**；橘雲接到 Vercel 易 SSL／驗證異常  
+- 若曾加過 **A `@` → 76.76.21.21`**，改成上面 CNAME 後請刪掉衝突的 A  
+- Vercel 會註明：舊的 `cname.vercel-dns.com`／`76.76.21.21` 仍可用，但以它「Recommend」的紀錄為佳  
+- 聯絡信箱：`service@6w7.link`（Gmail 代發／Send mail as）。若 Cloudflare 對 MX／SPF 示警，以實際收信與代發設定為準，勿把代發 Gmail 寫進站台。  
+
+### D. 等 Valid
+
+Vercel Domains 應變成：
+
+- `6w7.link` — **Valid Configuration**  
+- `www.6w7.link` — **Valid Configuration**  
+- `6w7.vercel.app` — Valid（本來就有）  
+
+DNS 傳播可能要幾分鐘。
+
+### E. 調整 Redirect（品牌短網域）
+
+預設有時會是 `6w7.link` **308 → www**。我們改成：
+
+1. 編輯 **`www.6w7.link`**  
+   - **Redirect to Another Domain** → `6w7.link`  
+   - **308 Permanent Redirect**（或 307 也可）  
+2. 編輯 **`6w7.link`**  
+   - **Connect → Production**  
+   - **No Redirect**  
+
+最終列表應為：
+
+```text
+6w7.link          Valid · Production
+www.6w7.link      Valid · 308 → 6w7.link
+6w7.vercel.app    Valid · Production
+```
+
+### F. 改環境變數並 Redeploy（必做）
+
+Vercel → **Settings** → **Environment Variables**（Production）：
+
+```env
+AUTH_URL=https://6w7.link
+NEXT_PUBLIC_SITE_URL=https://6w7.link
+```
+
+然後 **Deployments → 最新一筆 → ⋯ → Redeploy**。  
+（只改 env 不 Redeploy，登入／分享連結可能仍用舊網域。）
+
+本機 `.env` 可繼續用 `http://localhost:3000`（本機開發）。
+
+### G. 網域煙測
+
+- [ ] https://6w7.link 可開  
+- [ ] https://www.6w7.link 跳到 https://6w7.link  
+- [ ] 註冊／登入正常  
+- [ ] Dashboard 短網址顯示 `6w7.link/{username}`  
+- [ ] 公開留言、頭貼、限動分享正常  
+
+---
+
+## 7.2 網域之後：頭貼 CDN（接在 §7.1 後面）
+
+順序建議：先讓 **站台** `6w7.link` 穩定，再接 **CDN** `cdn.6w7.link`（步驟見 §6「R2 自訂網域」）。
+
+完成後正式 env 應包含：
+
+```env
+AUTH_URL=https://6w7.link
+NEXT_PUBLIC_SITE_URL=https://6w7.link
+S3_PUBLIC_BASE_URL=https://cdn.6w7.link
+STORAGE_DRIVER=s3
+# …其餘 Neon／Upstash／S3／CLOUDFLARE_* 不變
+```
+
+頭貼實際路徑範例：
+
+```text
+https://cdn.6w7.link/avatars/{userId}/profile.png?v=…
+```
 
 ---
 
@@ -244,12 +358,13 @@ STORAGE_DRIVER=local
 | `DATABASE_URL` | Neon pooled | 同左 | Neon |
 | `AUTH_SECRET` | 可本機亂數 | **正式專用亂數** | 自己產 |
 | `FINGERPRINT_SALT` | 可本機亂數 | **正式專用亂數** | 自己產 |
-| `AUTH_URL` | `http://localhost:3000` | `https://6w7.vercel.app` 或 `https://6w7.link` | 站台網址 |
-| `NEXT_PUBLIC_SITE_URL` | 同上 | 同上 | 站台網址 |
+| `AUTH_URL` | `http://localhost:3000` | **`https://6w7.link`** | 站台網址 |
+| `NEXT_PUBLIC_SITE_URL` | 同上 | **`https://6w7.link`** | 站台網址 |
 | `UPSTASH_REDIS_REST_URL` | 可填正式或空 | **必填** | Upstash |
 | `UPSTASH_REDIS_REST_TOKEN` | 可填正式或空 | **必填** | Upstash |
-| `STORAGE_DRIVER` | `local` | `s3` | 自己設 |
-| `S3_*`／`CLOUDFLARE_*` | 可空（local） | **必填（頭貼）** | Cloudflare |
+| `STORAGE_DRIVER` | `local` 或 `s3` | `s3` | 自己設 |
+| `S3_PUBLIC_BASE_URL` | 可空（local）或 CDN | **`https://cdn.6w7.link`** | R2 Custom Domain |
+| `S3_*`／`CLOUDFLARE_*` | 用 s3 時必填 | **必填** | Cloudflare |
 | `NEXT_PUBLIC_ADS_*` | 選用 | 選用 | AdSense |
 
 ### 自己產生亂數（PowerShell）
@@ -275,12 +390,18 @@ STORAGE_DRIVER=local
 | 預覽頭貼空白但網址開得出來 | `crossorigin="anonymous"` + R2 未開 CORS → 預覽拿掉 crossOrigin |
 | 手機換頭貼、電腦一直舊圖 | 固定 `?v=userId` 卡快取 → 改 `updatedAt`／上傳時間戳 |
 | iOS 點留言框畫面放大 | input／textarea 字級 &lt; 16px → 改 `text-base` |
+| Add Domains 出現 overlaps | 不要同時手填 apex + www；只加 `6w7.link`，並關掉「apex → www」 |
+| 網域 Invalid Configuration | Cloudflare 尚未加對的 CNAME，或 Proxy 開成橘雲 → 改灰雲 |
+| 站已 Valid 但登入／連結仍舊網域 | 未改 `AUTH_URL`／`NEXT_PUBLIC_SITE_URL` 或未 Redeploy |
+| 想用好看頭貼網址 | R2 Custom Domain `cdn.6w7.link` + 改 `S3_PUBLIC_BASE_URL` |
 
 ---
 
-## 10. 煙測清單（改完基礎設施後）
+## 10. 煙測清單
 
-- [ ] `https://…` 首頁可開，品牌 6w7／樂玩ㄑ  
+### 基礎設施／功能
+
+- [ ] 首頁可開，品牌 6w7／樂玩ㄑ  
 - [ ] 註冊／登入／登出  
 - [ ] Dashboard 短網址正確、可複製  
 - [ ] 上傳頭貼 → 公開頁／設定／分享預覽皆新圖  
@@ -288,6 +409,13 @@ STORAGE_DRIVER=local
 - [ ] Inbox 看得到；關閉收件後無法再送  
 - [ ] 限動分享圖：手機系統分享有 logo＋頭貼  
 - [ ] （可選）連打 API 出現 429  
+
+### 正式網域／CDN（§7.1～7.2）
+
+- [ ] https://6w7.link  
+- [ ] www → 6w7.link  
+- [ ] 分享連結為 `6w7.link/...`  
+- [ ] 頭貼 URL 為 `cdn.6w7.link/avatars/...`（或至少顯示已改寫）  
 
 ---
 
@@ -299,7 +427,8 @@ STORAGE_DRIVER=local
 | 正式所有值 | Vercel → `6w7` → Settings → Environment Variables |
 | DB 連線／重設密碼 | Neon Console → `6w7` → Connection |
 | Redis URL／Token | Upstash Console → `6w7` |
-| R2 金鑰／公開網域 | Cloudflare → R2 → `6w7-avatars`／Manage API Tokens |
+| R2 金鑰／公開網域 | Cloudflare → R2 → `6w7-avatars`／Custom Domains／API Tokens |
+| 站台／www DNS | Cloudflare → DNS → `6w7.link`；Vercel → Domains |
 | 程式要哪些變數名 | [`.env.example`](../.env.example) |
 | 自己抄一份密鑰備忘 | `docs/SECRETS.local.md`（從 example 複製，**勿 commit**） |
 

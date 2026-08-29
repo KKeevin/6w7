@@ -45,9 +45,9 @@ UPSTASH_REDIS_REST_TOKEN=
 ```
 AUTH_SECRET=
 FINGERPRINT_SALT=
-AUTH_URL=https://6w7.vercel.app
-NEXT_PUBLIC_SITE_URL=https://6w7.vercel.app
-# 綁定 6w7.link 後改成 https://6w7.link
+AUTH_URL=https://6w7.link
+NEXT_PUBLIC_SITE_URL=https://6w7.link
+# 本機開發改用 http://localhost:3000
 ```
 
 ### Cloudflare R2
@@ -59,15 +59,24 @@ S3_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
 S3_ACCESS_KEY_ID=
 S3_SECRET_ACCESS_KEY=
 S3_REGION=auto
-S3_PUBLIC_BASE_URL=https://pub-xxxx.r2.dev
+S3_PUBLIC_BASE_URL=https://cdn.6w7.link
 CLOUDFLARE_API_TOKEN=
 CLOUDFLARE_ACCOUNT_ID=
 ```
 
-### 其他備註
+### 網域備註
 
 ```
-# 例如：密碼重設日期、誰有權限、AdSense 等
+# 站台：6w7.link（Production）；www → 308 → 6w7.link
+# 頭貼 CDN：cdn.6w7.link（R2 Custom Domain）
+# 聯絡／寄信顯示：service@6w7.link
+# 忘記密碼 SMTP（Gmail 代發；應用程式密碼勿 commit）
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=
+# SMTP_PASS=
+# MAIL_FROM=6w7 <service@6w7.link>
+# DNS 細節見 docs/INFRA-SETUP.md §7.1～7.2
 ```
 
 ---

@@ -46,7 +46,7 @@ npm run dev
 ### 環境變數
 
 - **必填：** `DATABASE_URL`、`AUTH_SECRET`、`AUTH_URL`、`NEXT_PUBLIC_SITE_URL`、`FINGERPRINT_SALT`
-- **正式另需：** Upstash（`UPSTASH_REDIS_*`）、R2／S3（`STORAGE_DRIVER=s3` 與 `S3_*`）
+- **正式另需：** Upstash（`UPSTASH_REDIS_*`）、R2／S3（`STORAGE_DRIVER=s3` 與 `S3_*`）、寄信（`SMTP_*`／`MAIL_FROM`，Gmail 代發 `service@6w7.link`）
 - **不要提交** `.env`（已在 `.gitignore`）。
 - Google OAuth／AdSense 選用；未設 Redis 時本機用記憶體限流（勿用於正式多實例）。
 
@@ -147,7 +147,7 @@ DNS：6w7.link → Vercel
 
 1. Cloudflare → R2 → 建立 bucket（例：`6w7-avatars`）。
 2. 建立 S3 API Key；正式另建議 **Account API Token（`cfat_`）** 給 `CLOUDFLARE_API_TOKEN`。
-3. 開啟公開讀取：r2.dev 或自訂網域（建議之後 `cdn.6w7.link`）。
+3. 開啟公開讀取：建議 R2 **Custom Domain** `cdn.6w7.link`（詳見 `docs/INFRA-SETUP.md` §6／§7.2）；過渡期可用 r2.dev。
 4. Vercel／正式 env：
 
 ```env
@@ -157,7 +157,7 @@ S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
 S3_ACCESS_KEY_ID=...
 S3_SECRET_ACCESS_KEY=...
 S3_REGION=auto
-S3_PUBLIC_BASE_URL=https://pub-xxxx.r2.dev
+S3_PUBLIC_BASE_URL=https://cdn.6w7.link
 CLOUDFLARE_API_TOKEN=...
 CLOUDFLARE_ACCOUNT_ID=...
 ```
@@ -190,9 +190,16 @@ NEXT_PUBLIC_SITE_URL=https://6w7.link
 
 ### 6. 網域 `6w7.link`
 
-1. Vercel Project → Domains → 新增 `6w7.link`（與可選 `www`）。
-2. 於網域註冊商依 Vercel 指示設定 A／CNAME。
-3. 等待 SSL 簽發；更新 `AUTH_URL`／`NEXT_PUBLIC_SITE_URL` 後 Redeploy。
+完整逐步流程（Vercel Add Domains、Cloudflare CNAME、www→apex、改 env、Redeploy）見：  
+**[`docs/INFRA-SETUP.md` §7.1](./docs/INFRA-SETUP.md)**；頭貼 CDN 見 **§7.2**。
+
+摘要：
+
+1. Vercel Domains 加 `6w7.link`（Production、No Redirect；勿強制 apex→www）。  
+2. Cloudflare DNS：依 Vercel 顯示加 CNAME `@`／`www`，**Proxy = 僅 DNS**。  
+3. `www` → 308 → `6w7.link`。  
+4. 更新 `AUTH_URL`／`NEXT_PUBLIC_SITE_URL` 後 Redeploy。  
+5. （建議）R2 Custom Domain `cdn.6w7.link` → 改 `S3_PUBLIC_BASE_URL` → Redeploy。
 
 ### 7. 上線煙測清單
 

@@ -53,8 +53,6 @@ export function NotificationProvider({
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const prevCountRef = useRef<number | null>(null);
   const prevLatestRef = useRef<string | null>(null);
-  const unreadRef = useRef(summary.unreadCount);
-  unreadRef.current = summary.unreadCount;
 
   const dismissToast = useCallback((id: string) => {
     setToasts((list) => list.filter((t) => t.id !== id));
@@ -203,7 +201,7 @@ export function NotificationProvider({
 
     const applyBadge = () => {
       const base = stripBadge(document.title);
-      const count = unreadRef.current;
+      const count = summary.unreadCount;
       const next = count > 0 ? `(${count}) ${base}` : base;
       if (document.title !== next) document.title = next;
     };

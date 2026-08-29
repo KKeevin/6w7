@@ -1,7 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
+
+const KEY = "6w7-email-nudge";
+const listeners = new Set<() => void>();
+
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  return () => {
+    listeners.delete(onChange);
+  };
+}
+
+function isDismissed() {
+  try {
+    return sessionStorage.getItem(KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** SSR 先當成已關閉，hydrate 後才讀 sessionStorage，避免關過的人看到閃一下 */
+function isDismissedOnServer() {
+  return true;
+}
+
+function dismiss() {
+  try {
+    sessionStorage.setItem(KEY, "1");
+  } catch {
+    /* 無痕模式等情境忽略 */
+  }
+  for (const listener of listeners) listener();
+}
 
 export function EmailNudge({
   welcome = false,
@@ -12,26 +44,13 @@ export function EmailNudge({
   hasEmail: boolean;
   verified: boolean;
 }) {
-  const [hidden, setHidden] = useState(!welcome);
+  const dismissed = useSyncExternalStore(
+    subscribe,
+    isDismissed,
+    isDismissedOnServer,
+  );
 
-  useEffect(() => {
-    if (verified) {
-      setHidden(true);
-      return;
-    }
-    if (welcome) {
-      setHidden(false);
-      return;
-    }
-    setHidden(sessionStorage.getItem("6w7-email-nudge") === "1");
-  }, [welcome, verified]);
-
-  if (verified || hidden) return null;
-
-  function dismiss() {
-    sessionStorage.setItem("6w7-email-nudge", "1");
-    setHidden(true);
-  }
+  if (verified || dismissed) return null;
 
   const title = welcome
     ? "帳號開好了，先去玩吧"

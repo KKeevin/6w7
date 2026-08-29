@@ -56,7 +56,8 @@ export function AdSlot({ format, className = "" }: AdSlotProps) {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
         pushed.current = true;
       } catch {
-        setUnfilled(true);
+        // 交給上面的 observer 收斂狀態，不在 effect 內直接 setState
+        el.setAttribute("data-ad-status", "unfilled");
       }
     }
 

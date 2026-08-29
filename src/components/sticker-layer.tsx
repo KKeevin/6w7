@@ -67,7 +67,10 @@ export function StickerLayer({
     startRot: number;
   } | null>(null);
 
-  stickersRef.current = stickers;
+  // 拖曳中的事件處理器要讀到最新座標，但不能在 render 期間寫 ref
+  useEffect(() => {
+    stickersRef.current = stickers;
+  });
 
   useEffect(() => {
     if (!interactive) return;

@@ -201,7 +201,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
                 id="avatar-crop-title"
                 className="mt-0.5 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight"
               >
-                挑一塊當大頭貼
+                框出你的大頭貼
               </h3>
             </div>
             <button
@@ -309,7 +309,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
               disabled={!ready || working || failed}
               onClick={() => void confirm()}
             >
-              {working ? "處理中…" : "用這一塊"}
+              {working ? "處理中…" : "當作頭貼"}
             </Button>
           </div>
         </div>

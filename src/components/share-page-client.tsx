@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
@@ -20,6 +20,7 @@ import {
   resetDemoIgShareGuideHint,
 } from "@/lib/ig-share-guide-hint";
 import { prepareImageUpload, uploadErrorMessage } from "@/lib/image-upload";
+import { AlertToast } from "@/components/alert-toast";
 
 const ShareStoryDialog = dynamic(
   () =>
@@ -89,6 +90,7 @@ export function SharePageClient({
   const [guideHintOpen, setGuideHintOpen] = useState(false);
   /** 手機：尚未捲到「調整公開頁」時顯示引導 */
   const [showPreviewHint, setShowPreviewHint] = useState(true);
+  const dismissError = useCallback(() => setError(null), []);
 
   async function load() {
     if (demo) return;
@@ -547,11 +549,7 @@ export function SharePageClient({
         onChange={(e) => void onAvatarChange(e.target.files?.[0] || null)}
       />
 
-      {error && (
-        <p className="mb-4 text-sm text-[var(--danger)]" role="alert">
-          {error}
-        </p>
-      )}
+      <AlertToast message={error} onClose={dismissError} />
 
       {/* ── 手機：連結優先 → 操作 → 預覽 ── */}
       <div className="space-y-5 lg:hidden">

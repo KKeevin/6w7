@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { canvasToImageFile } from "@/lib/image-upload";
+import { cn } from "@/lib/utils";
 import { ASK_LIMITS, BRAND } from "@/shared/tools";
 
 const ZOOM_MIN = 1;
@@ -36,6 +37,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [working, setWorking] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   const url = useMemo(() => URL.createObjectURL(file), [file]);
   useEffect(() => () => URL.revokeObjectURL(url), [url]);
@@ -115,6 +117,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
       x: event.clientX,
       y: event.clientY,
     });
+    setDragging(true);
   }
 
   function onPointerMove(event: React.PointerEvent) {
@@ -143,6 +146,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
   function onPointerUp(event: React.PointerEvent) {
     pointers.current.delete(event.pointerId);
     if (pointers.current.size < 2) pinch.current = null;
+    if (pointers.current.size === 0) setDragging(false);
   }
 
   async function confirm() {
@@ -216,7 +220,12 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
 
           <div
             ref={stageRef}
-            className="relative mt-3 aspect-square w-full shrink-0 touch-none overflow-hidden rounded-2xl bg-[var(--ink)] select-none"
+            className={cn(
+              "relative mt-3 aspect-square w-full shrink-0 touch-none overflow-hidden rounded-2xl bg-[var(--ink)] select-none",
+              // 游標要掛在舞台上：拖曳時指標被 setPointerCapture 綁在這層，
+              // 掛在裡面的 <img> 會被忽略而變回預設游標
+              ready && (dragging ? "cursor-grabbing" : "cursor-grab"),
+            )}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -233,7 +242,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
                 setNat({ w: el.naturalWidth, h: el.naturalHeight });
               }}
               onError={() => setFailed(true)}
-              className="absolute left-1/2 top-1/2 max-w-none cursor-grab active:cursor-grabbing"
+              className="absolute left-1/2 top-1/2 max-w-none"
               style={{
                 width: dispW || undefined,
                 height: dispH || undefined,

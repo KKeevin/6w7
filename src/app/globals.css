@@ -24,6 +24,25 @@
   --font-display: var(--font-display);
 }
 
+/* Tailwind v4 的 preflight 把 button 改回 cursor: default；站上可點的元素一律回到手指。
+   拖曳類仍可用 cursor-grab 等 utility 蓋過（utilities layer 在 base 之後）。 */
+@layer base {
+  button:not(:disabled),
+  [role="button"],
+  summary,
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  input[type="file"] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
 html {
   /* 避免有無捲軸時整頁左右跳動 */
   scrollbar-gutter: stable;

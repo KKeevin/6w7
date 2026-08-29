@@ -151,7 +151,7 @@ export function GuideVideoPlayer({ src }: { src: string }) {
       </video>
 
       <div
-        className="absolute inset-0 z-10"
+        className="absolute inset-0 z-10 cursor-pointer"
         aria-hidden
         onClick={togglePlay}
       />

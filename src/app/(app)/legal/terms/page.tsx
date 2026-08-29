@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { SHELL_CONTENT } from "@/shared/shell";
+import { BRAND } from "@/shared/tools";
 
 export const metadata: Metadata = {
   title: "服務條款",
+  description: `${BRAND.en}（${BRAND.zh}）服務條款：帳號與匿名留言的使用規則、禁止內容、檢舉與停權處理方式。`,
+  alternates: { canonical: "/legal/terms" },
 };
 
 export default function TermsPage() {

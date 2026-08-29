@@ -6,6 +6,8 @@ import { BRAND } from "@/shared/tools";
 
 export const metadata: Metadata = {
   title: "隱私權政策",
+  description: `${BRAND.en}（${BRAND.zh}）隱私權政策：我們蒐集哪些資料、匿名留言會保留什麼技術紀錄、保存多久，以及如何刪除帳號。`,
+  alternates: { canonical: "/legal/privacy" },
 };
 
 export default function PrivacyPage() {

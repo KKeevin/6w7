@@ -27,10 +27,44 @@ export const metadata: Metadata = {
     default: BRAND.titleProduct,
     template: `%s | ${BRAND.titleProduct}`,
   },
-  description: BRAND.tagline,
+  description: BRAND.seoDescription,
+  applicationName: BRAND.en,
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
+  // 不在這裡設 openGraph.url／alternates.canonical，否則所有子頁會繼承成首頁網址
+  openGraph: {
+    type: "website",
+    siteName: `${BRAND.en}（${BRAND.zh}）`,
+    locale: "zh_TW",
+    title: BRAND.titleProduct,
+    description: BRAND.seoDescription,
+    images: [
+      {
+        url: BRAND.logoSrc,
+        width: 920,
+        height: 360,
+        alt: `${BRAND.en}（${BRAND.zh}）`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: BRAND.titleProduct,
+    description: BRAND.seoDescription,
+    images: [BRAND.logoSrc],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

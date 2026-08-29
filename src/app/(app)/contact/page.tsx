@@ -8,6 +8,7 @@ import { BRAND } from "@/shared/tools";
 export const metadata: Metadata = {
   title: "聯絡我們",
   description: `如何聯絡 ${BRAND.en}（${BRAND.zh}）：帳號協助、刪除資料、檢舉濫用與合作來信。`,
+  alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {

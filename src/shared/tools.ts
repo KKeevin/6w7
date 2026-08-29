@@ -56,6 +56,10 @@ export const BRAND = {
   tagline: "用你的 IG 帳號，立刻拿到專屬匿名連結。",
   /** 瀏覽器標題後綴／首頁標題 */
   titleProduct: "6w7 匿名問答",
+  titleHome: "6w7 匿名問答",
+  /** meta description／OG 描述 */
+  seoDescription:
+    "6w7 匿名問答：用 IG 帳號註冊就有專屬短連結，貼到限動就能收匿名提問，收件頁面能自由布置貼圖貼紙，亦可製作多種限動圖卡分享至 IG。",
   /** 對外聯絡信箱（聯絡我們頁／頁尾）；請確保此信箱收得到信 */
   contactEmail: "service@6w7.link",
   /** 靜態資源：public/brand/logo.png */

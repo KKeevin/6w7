@@ -8,6 +8,7 @@ import { BRAND } from "@/shared/tools";
 export const metadata: Metadata = {
   title: `關於 ${BRAND.en}`,
   description: `${BRAND.en}（${BRAND.zh}）是開心玩樂去：用專屬短連結收匿名提問；主人可封鎖、檢舉與關閉收件。`,
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

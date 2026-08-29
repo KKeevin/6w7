@@ -6,11 +6,61 @@ import { BrandLogo } from "@/components/brand-logo";
 import { HomeAuthPanel } from "@/components/home-auth-panel";
 import { BRAND } from "@/shared/tools";
 
+const SITE = `https://${BRAND.domain}`;
+
 export const metadata: Metadata = {
   title: {
-    absolute: BRAND.titleProduct,
+    absolute: BRAND.titleHome,
   },
-  description: BRAND.tagline,
+  description: BRAND.seoDescription,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: `${BRAND.en}（${BRAND.zh}）`,
+    locale: "zh_TW",
+    url: "/",
+    title: BRAND.titleHome,
+    description: BRAND.seoDescription,
+    images: [
+      {
+        url: BRAND.logoSrc,
+        width: 920,
+        height: 360,
+        alt: `${BRAND.en}（${BRAND.zh}）`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: BRAND.titleHome,
+    description: BRAND.seoDescription,
+    images: [BRAND.logoSrc],
+  },
+};
+
+/** 讓 Google 認得站名與品牌別名（6w7／樂玩ㄑ），不要每次自己拼一個 */
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE}/#organization`,
+      name: `${BRAND.en}（${BRAND.zh}）`,
+      alternateName: [BRAND.en, BRAND.zh],
+      url: SITE,
+      logo: `${SITE}${BRAND.logoSrc}`,
+      email: BRAND.contactEmail,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE}/#website`,
+      name: `${BRAND.en}（${BRAND.zh}）`,
+      url: SITE,
+      inLanguage: "zh-Hant-TW",
+      description: BRAND.seoDescription,
+      publisher: { "@id": `${SITE}/#organization` },
+    },
+  ],
 };
 
 export default async function HomePage() {
@@ -21,6 +71,10 @@ export default async function HomePage() {
 
   return (
     <main className="flex flex-1 flex-col lg:flex-row">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       {/* 左側品牌區 */}
       <section className="relative flex shrink-0 flex-col justify-center px-6 pb-5 pt-10 sm:px-10 sm:pb-6 sm:pt-12 lg:w-[56%] lg:flex-none lg:px-12 lg:py-6 xl:px-20">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_10%_20%,rgba(49,151,229,0.18),transparent_55%),radial-gradient(ellipse_50%_40%_at_90%_80%,rgba(255,90,60,0.12),transparent_50%)]" />

@@ -93,6 +93,39 @@ function renamed(name: string, type: string) {
   return `${base}.${ext}`;
 }
 
+/** 選檔當下的即時檢查；回傳要顯示的錯誤訊息，沒問題就回 null */
+export function imageSelectionError(file: File): string | null {
+  if (file.type && !file.type.startsWith("image/")) {
+    return "只能上傳圖片檔。";
+  }
+  if (file.size > ASK_LIMITS.imageUploadMaxBytes) {
+    return new ImageTooLargeError(file.size).message;
+  }
+  return null;
+}
+
+/** 把畫布輸出成可直接上傳的檔（裁切結果用） */
+export async function canvasToImageFile(
+  canvas: HTMLCanvasElement,
+  baseName: string,
+  targetBytes = ASK_LIMITS.uploadTargetBytes,
+): Promise<File> {
+  const type = supportsWebp() ? "image/webp" : "image/png";
+  const qualities = type === "image/png" ? [1] : [0.92, 0.82, 0.7];
+
+  let last: Blob | null = null;
+  for (const quality of qualities) {
+    const blob = await toBlob(canvas, type, quality);
+    if (!blob) break;
+    last = blob;
+    if (blob.size <= targetBytes) break;
+  }
+  if (!last || last.size > targetBytes) {
+    throw new Error("圖片處理後仍太大，請改用小一點的圖片。");
+  }
+  return new File([last], renamed(baseName, type), { type });
+}
+
 type PrepareOptions = {
   /** 輸出最長邊（與伺服器輸出尺寸對齊） */
   maxEdge: number;

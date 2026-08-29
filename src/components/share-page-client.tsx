@@ -19,8 +19,9 @@ import {
   isIgShareGuideHintHidden,
   resetDemoIgShareGuideHint,
 } from "@/lib/ig-share-guide-hint";
-import { prepareImageUpload, uploadErrorMessage } from "@/lib/image-upload";
+import { imageSelectionError, uploadErrorMessage } from "@/lib/image-upload";
 import { AlertToast } from "@/components/alert-toast";
+import { AvatarCropDialog } from "@/components/avatar-crop-dialog";
 
 const ShareStoryDialog = dynamic(
   () =>
@@ -90,7 +91,9 @@ export function SharePageClient({
   const [guideHintOpen, setGuideHintOpen] = useState(false);
   /** 手機：尚未捲到「調整公開頁」時顯示引導 */
   const [showPreviewHint, setShowPreviewHint] = useState(true);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const dismissError = useCallback(() => setError(null), []);
+  const cancelCrop = useCallback(() => setCropFile(null), []);
 
   async function load() {
     if (demo) return;
@@ -238,16 +241,26 @@ export function SharePageClient({
     setProfile((p) => (p ? { ...p, link: data.link } : p));
   }
 
-  async function onAvatarChange(file: File | null) {
+  /** 選好檔先進裁切視窗，確定後才上傳 */
+  function onAvatarPick(file: File | null) {
+    if (fileRef.current) fileRef.current.value = "";
     if (demo || !file) return;
+    const problem = imageSelectionError(file);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setError(null);
+    setCropFile(file);
+  }
+
+  async function uploadAvatar(cropped: File) {
+    setCropFile(null);
     setUploading(true);
     setError(null);
     try {
-      const prepared = await prepareImageUpload(file, {
-        maxEdge: ASK_LIMITS.avatarMaxEdge,
-      });
       const form = new FormData();
-      form.append("file", prepared);
+      form.append("file", cropped);
       const res = await fetch("/api/v1/profile/avatar", {
         method: "POST",
         body: form,
@@ -261,7 +274,6 @@ export function SharePageClient({
       setError(err instanceof Error ? err.message : "上傳失敗");
     } finally {
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
@@ -546,10 +558,19 @@ export function SharePageClient({
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) => void onAvatarChange(e.target.files?.[0] || null)}
+        onChange={(e) => onAvatarPick(e.target.files?.[0] || null)}
       />
 
       <AlertToast message={error} onClose={dismissError} />
+
+      {cropFile ? (
+        <AvatarCropDialog
+          key={`${cropFile.name}-${cropFile.size}-${cropFile.lastModified}`}
+          file={cropFile}
+          onCancel={cancelCrop}
+          onConfirm={(cropped) => void uploadAvatar(cropped)}
+        />
+      ) : null}
 
       {/* ── 手機：連結優先 → 操作 → 預覽 ── */}
       <div className="space-y-5 lg:hidden">

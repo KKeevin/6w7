@@ -41,7 +41,7 @@ export function AlertToast({
 
   return createPortal(
     <div
-      className="pointer-events-none fixed inset-x-0 top-[calc(var(--header-h)+0.75rem)] z-[70] flex justify-center px-3 sm:px-6"
+      className="pointer-events-none fixed inset-x-0 top-[calc(var(--header-h)+0.75rem)] z-[80] flex justify-center px-3 sm:px-6"
       role="alert"
       aria-live="assertive"
     >

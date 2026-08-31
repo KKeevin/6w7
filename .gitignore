@@ -69,6 +69,8 @@ Desktop.ini
 .cursor/*
 !.cursor/rules/
 !.cursor/rules/**
+!.cursor/skills/
+!.cursor/skills/**
 
 # —— Prisma 產生檔（若有自訂輸出路徑）——
 src/generated/prisma/

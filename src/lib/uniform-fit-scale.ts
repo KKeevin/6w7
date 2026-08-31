@@ -42,12 +42,14 @@ export function useUniformFitScale(
     let frame = 0;
 
     function apply() {
-      if (!mq.matches) {
+      const slotEl = slotRef.current;
+      const boardEl = boardRef.current;
+      if (!mq.matches || !slotEl || !boardEl) {
         setFit({ scale: 1, width: 0, height: 0 });
         return;
       }
-      const natW = board.offsetWidth;
-      const natH = board.offsetHeight;
+      const natW = boardEl.offsetWidth;
+      const natH = boardEl.offsetHeight;
       if (natW <= 0 || natH <= 0) return;
 
       const footer = document.querySelector("footer");
@@ -56,7 +58,7 @@ export function useUniformFitScale(
       const availW = Math.max(320, window.innerWidth - 32);
       const availH = Math.max(
         240,
-        window.innerHeight - slot.getBoundingClientRect().top - footerH - 8,
+        window.innerHeight - slotEl.getBoundingClientRect().top - footerH - 8,
       );
       const next = Math.min(
         UNIFORM_FIT_MAX,

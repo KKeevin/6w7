@@ -66,7 +66,7 @@
 | 認證 | **Auth.js（NextAuth）** 優先；亦可 **Clerk** | 必須可擴充到 App（見 §2.3） |
 | 限流／快取 | **Upstash Redis**（或同等 Redis） | 匿名留言、登入、API 皆需限流；正式必設 |
 | 物件儲存 | **Cloudflare R2**（S3 相容） | 頭貼；本機可 `STORAGE_DRIVER=local` |
-| 託管（建議） | **Vercel** + **Neon** + **Upstash** + **R2** | 可改，但需同等能力；步驟見 README |
+| 託管（建議） | **Vercel** + **Neon** + **Upstash** + **R2** | 可改，但需同等能力；步驟見 `docs/INFRA-SETUP.md` |
 | 套件管理 | **npm**（鎖定 `package-lock.json`） | 勿混用 pnpm／yarn |
 | 測試（應逐步補） | Vitest + Playwright（建議） | 核心 API／檢舉／限流要有測試 |
 
@@ -417,7 +417,7 @@ POST   /api/v1/stickers                    # 從圖庫加入畫面
 ## 10. Git、環境與品質
 
 - 有意義的 commit；不提交 secrets、`.env`、大型模型檔。
-- `README.md` 必須能讓人 `install → env → migrate → dev`（見「給新加入的開發者」）。
+- `README.md` 必須能讓人 `install → env → migrate → dev`（見「本機啟動」）。
 - 鎖定 **npm** + `package-lock.json`；本機 uploads／`.env` **不進 Git**。
 - PR／變更應說明：行為、風險、是否影響 API 相容。
 - 破壞性 API／slug 路徑變更需更新本檔與 changelog（若有）。

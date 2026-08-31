@@ -13,6 +13,8 @@ export const SHELL = {
   contentMaxClass: "max-w-xl",
   headerH: "h-[var(--header-h)]",
   footerH: "h-[var(--footer-h)]",
+  /** 內容區避開固定 header（與 footer 同一條左右軌道） */
+  padHeader: "pt-[var(--header-h)]",
   /** 內容區避開固定 footer */
   padFooter: "pb-[var(--footer-h)]",
 } as const;

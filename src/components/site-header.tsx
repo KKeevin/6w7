@@ -50,13 +50,13 @@ export async function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-20 h-[var(--header-h)] shrink-0 border-b border-[var(--line)]/70 bg-[var(--bg)]/90 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-20 h-[var(--header-h)] border-b border-[var(--line)]/70 bg-[var(--bg)]/90 backdrop-blur-md">
       <div
-        className={`${SHELL_X} flex h-full items-center justify-between gap-2 sm:gap-3`}
+        className={`${SHELL_X} grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3`}
       >
         <Link
           href={signedIn ? "/dashboard" : "/"}
-          className="group flex min-w-0 shrink-0 items-center gap-2"
+          className="chrome-scale-start group flex min-w-0 items-center gap-2 justify-self-start"
         >
           <BrandLogo height={28} priority className="shrink-0" />
           <span className="hidden truncate text-xs text-[var(--muted)] group-hover:text-[var(--ink)] sm:inline">
@@ -64,12 +64,14 @@ export async function SiteHeader() {
           </span>
         </Link>
 
-        <HeaderNav items={nav} />
+        <div className="chrome-scale-mid min-w-0">
+          <HeaderNav items={nav} />
+        </div>
 
         {signedIn ? (
           <Link
             href={needsEmail ? "/settings#email" : "/settings"}
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--mint)] hover:text-[var(--ink)]"
+            className="chrome-scale-end relative flex h-9 w-9 items-center justify-center justify-self-end rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--mint)] hover:text-[var(--ink)]"
             title={username ? `設定 · @${username}` : "帳號設定"}
             aria-label={username ? `帳號設定，@${username}` : "帳號設定"}
           >
@@ -81,7 +83,7 @@ export async function SiteHeader() {
         ) : (
           <Link
             href="/login"
-            className="inline-flex h-9 shrink-0 items-center rounded-xl border border-[var(--line)] px-3 text-sm font-medium hover:bg-[var(--surface)]"
+            className="chrome-scale-end inline-flex h-9 items-center justify-self-end rounded-xl border border-[var(--line)] px-3 text-sm font-medium hover:bg-[var(--surface)]"
           >
             登入
           </Link>

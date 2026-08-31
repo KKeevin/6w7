@@ -15,7 +15,9 @@ export default async function AppLayout({
 
   return (
     <NotificationProvider enabled={notificationsEnabled}>
-      <div className={`flex min-h-dvh flex-1 flex-col ${SHELL.padFooter}`}>
+      <div
+        className={`flex min-h-dvh flex-1 flex-col ${SHELL.padHeader} ${SHELL.padFooter}`}
+      >
         <SiteHeader />
         {viewer.kind === "demo" ? <DemoBanner /> : null}
         <div className="flex min-h-0 flex-1 flex-col">{children}</div>

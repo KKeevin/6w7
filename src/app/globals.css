@@ -13,8 +13,35 @@
   --ring: #1aa68a;
   --background: var(--bg);
   --foreground: var(--ink);
-  --header-h: 3.5rem;
-  --footer-h: 3rem;
+  --header-h-base: 3.5rem;
+  --footer-h-base: 3rem;
+  --desktop-scale: 1;
+  --header-h: var(--header-h-base);
+  --footer-h: var(--footer-h-base);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --desktop-scale: clamp(0.9, 100dvh / 52rem, 1.18);
+    --header-h: calc(var(--header-h-base) * var(--desktop-scale));
+    --footer-h: calc(var(--footer-h-base) * var(--desktop-scale));
+  }
+}
+
+/* 頂欄／頁尾：左右軌道不縮放（對齊同一條 max-w-6xl），只放大兩端內容 */
+.chrome-scale-start {
+  transform: scale(var(--desktop-scale));
+  transform-origin: left center;
+}
+
+.chrome-scale-mid {
+  transform: scale(var(--desktop-scale));
+  transform-origin: center center;
+}
+
+.chrome-scale-end {
+  transform: scale(var(--desktop-scale));
+  transform-origin: right center;
 }
 
 @theme inline {

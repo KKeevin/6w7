@@ -7,12 +7,12 @@ export function SiteFooter() {
   return (
     <footer className="fixed inset-x-0 bottom-0 z-40 h-[var(--footer-h)] border-t border-[var(--line)]/70 bg-[var(--bg)]/90 shadow-[0_-8px_24px_rgba(20,33,43,0.06)] backdrop-blur-md">
       <div
-        className={`${SHELL_X} flex h-full items-center justify-between gap-4 text-xs text-[var(--muted)]`}
+        className={`${SHELL_X} grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 text-xs text-[var(--muted)]`}
       >
-        <p className="min-w-0 truncate">
+        <p className="chrome-scale-start min-w-0 justify-self-start truncate">
           © {new Date().getFullYear()} {BRAND.domain} 匿名問答
         </p>
-        <div className="flex shrink-0 flex-wrap justify-end gap-3 sm:gap-4">
+        <div className="chrome-scale-end col-start-3 flex shrink-0 flex-wrap justify-end justify-self-end gap-3 sm:gap-4">
           <Link href="/about" className="hover:text-[var(--ink)]">
             關於
           </Link>

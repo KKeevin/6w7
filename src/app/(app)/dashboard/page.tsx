@@ -25,7 +25,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const emailVerified = Boolean(profile.user.emailVerified);
 
   return (
-    <main className="bg-atmosphere flex flex-1 flex-col py-2 sm:py-3">
+    <main className="bg-atmosphere flex flex-1 flex-col py-2 sm:py-3 lg:overflow-x-hidden lg:py-1">
       <AdRailLayout width="wide">
         {viewer.kind === "user" && !emailVerified ? (
           <EmailNudge

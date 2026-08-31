@@ -22,6 +22,7 @@ import {
 import { imageSelectionError, uploadErrorMessage } from "@/lib/image-upload";
 import { AlertToast } from "@/components/alert-toast";
 import { AvatarCropDialog } from "@/components/avatar-crop-dialog";
+import { useUniformFitScale } from "@/lib/uniform-fit-scale";
 
 const ShareStoryDialog = dynamic(
   () =>
@@ -78,6 +79,8 @@ export function SharePageClient({
   const previewEndRef = useRef<HTMLDivElement>(null);
   const mobileGuideRef = useRef<HTMLButtonElement>(null);
   const desktopGuideRef = useRef<HTMLButtonElement>(null);
+  const desktopSlotRef = useRef<HTMLDivElement>(null);
+  const desktopBoardRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<Profile | null>(seeded);
   const [prompt, setPrompt] = useState(seeded?.link.prompt ?? "");
   const [editingPrompt, setEditingPrompt] = useState(false);
@@ -92,6 +95,11 @@ export function SharePageClient({
   /** 手機：尚未捲到「調整公開頁」時顯示引導 */
   const [showPreviewHint, setShowPreviewHint] = useState(true);
   const [cropFile, setCropFile] = useState<File | null>(null);
+  const desktopFit = useUniformFitScale(
+    desktopSlotRef,
+    desktopBoardRef,
+    !loading && Boolean(profile),
+  );
   const dismissError = useCallback(() => setError(null), []);
   const cancelCrop = useCallback(() => setCropFile(null), []);
 
@@ -314,29 +322,34 @@ export function SharePageClient({
   const imageSrc = profile.user.image || null;
   const shortUrl = profile.link.url.replace(/^https?:\/\//, "");
   const accepting = profile.link.acceptingMessages;
+  const publicHref = `/${profile.user.username}`;
+  const dressHref = `${publicHref}?edit=1`;
 
   /** compact：桌機側欄預覽（自然高度，矮螢幕可整頁捲動） */
   const previewPanel = (compact: boolean) => (
-    <div className="relative overflow-hidden rounded-[1.75rem] border border-[var(--line)] bg-white shadow-[0_20px_50px_rgba(20,33,43,0.08)]">
-      <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface)]/70 px-3 py-2 sm:px-4 sm:py-2.5">
+    <div className="relative overflow-hidden rounded-[1.75rem] border border-[var(--line)] bg-white shadow-[0_16px_40px_rgba(20,33,43,0.07)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 sm:px-4">
         <span className="text-xs font-semibold tracking-wide text-[var(--muted)]">
           訪客會看到的樣子
         </span>
-        <span className="flex items-center gap-3">
+        <span className="flex shrink-0 items-center gap-1">
           {!demo ? (
             <Link
-              href={`/${profile.user.username}?edit=1`}
-              className="text-xs font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
+              href={dressHref}
+              className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-semibold text-[var(--ink)] transition hover:bg-white"
             >
               去裝扮
             </Link>
           ) : null}
           <Link
-            href={`/${profile.user.username}`}
+            href={publicHref}
             target="_blank"
-            className="text-xs font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
+            className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-semibold text-[var(--ink)] transition hover:bg-white"
           >
-            開公開頁 ↗
+            開公開頁
+            <span className="ml-0.5" aria-hidden>
+              ↗
+            </span>
           </Link>
         </span>
       </div>
@@ -344,7 +357,7 @@ export function SharePageClient({
       {/* 與公開頁 /[slug] 相同配置；桌機側欄放大頭貼與文字 */}
       <div
         className={`bg-atmosphere relative mx-auto flex w-full max-w-lg flex-col overflow-hidden px-4 sm:px-6 ${
-          compact ? "px-5 py-7 sm:px-6" : "py-10"
+          compact ? "px-5 py-7 sm:px-6" : "py-8 sm:py-10"
         }`}
       >
         <StickerLayer stickers={profile.stickers ?? []} />
@@ -361,7 +374,7 @@ export function SharePageClient({
 
         <div
           className={`flex flex-col items-center text-center ${
-            compact ? "mt-7" : "mt-10"
+            compact ? "mt-7" : "mt-8"
           }`}
         >
           <button
@@ -403,7 +416,7 @@ export function SharePageClient({
               )}
             </div>
             <span
-              className={`absolute inset-0 flex items-center justify-center rounded-full bg-black/45 font-semibold text-white opacity-0 transition group-hover:opacity-100 ${
+              className={`absolute inset-0 flex items-center justify-center rounded-full bg-[var(--ink)]/45 font-semibold text-white opacity-0 transition group-hover:opacity-100 ${
                 compact ? "text-sm" : "text-xs"
               }`}
             >
@@ -412,7 +425,7 @@ export function SharePageClient({
           </button>
 
           <p
-            className={`mt-4 text-[var(--muted)] ${
+            className={`mt-3 text-[var(--muted)] ${
               compact ? "text-base" : "text-sm"
             }`}
           >
@@ -425,7 +438,7 @@ export function SharePageClient({
                 ref={promptRef}
                 value={prompt}
                 maxLength={ASK_LIMITS.promptMax}
-                rows={compact ? 3 : 3}
+                rows={3}
                 disabled={saving}
                 onChange={(e) => setPrompt(e.target.value)}
                 onBlur={() => void savePrompt(prompt)}
@@ -439,9 +452,7 @@ export function SharePageClient({
                     setEditingPrompt(false);
                   }
                 }}
-                className={`w-full resize-none rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-center font-[family-name:var(--font-display)] font-bold leading-tight text-[var(--ink)] outline-none ring-[var(--ring)] focus:ring-2 ${
-                  compact ? "text-2xl" : "text-2xl"
-                }`}
+                className="w-full resize-none rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-center font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-[var(--ink)] outline-none ring-[var(--ring)] focus:ring-2"
                 aria-label="編輯提示文案"
               />
               <span className="mt-1.5 block text-center text-[11px] text-[var(--muted)]">
@@ -451,31 +462,16 @@ export function SharePageClient({
           ) : (
             <button
               type="button"
-              className="group mt-4 w-full rounded-lg px-1 transition hover:bg-black/[0.03]"
+              className="group mt-4 w-full rounded-xl px-2 py-1 transition hover:bg-[var(--ink)]/[0.03]"
               onClick={() => {
                 if (!demo) setEditingPrompt(true);
               }}
             >
-              <h1
-                className={`font-[family-name:var(--font-display)] font-bold leading-tight ${
-                  compact ? "text-2xl" : "text-2xl"
-                }`}
-              >
+              <h2 className="text-balance font-[family-name:var(--font-display)] text-2xl font-bold leading-tight">
                 {saving ? "儲存中…" : prompt}
-              </h1>
-              <span
-                className={`mt-1.5 inline-flex items-center gap-1 font-medium text-[var(--mint)] opacity-80 group-hover:opacity-100 ${
-                  compact ? "text-xs" : "text-[11px]"
-                }`}
-              >
-                {demo ? (
-                  "示範提示"
-                ) : (
-                  <>
-                    <span aria-hidden>✎</span>
-                    點擊修改提示
-                  </>
-                )}
+              </h2>
+              <span className="mt-2 inline-flex items-center rounded-full border border-[var(--line)] bg-white px-2.5 py-0.5 text-[11px] font-semibold text-[var(--muted)] group-hover:border-[var(--mint)] group-hover:text-[var(--mint)]">
+                {demo ? "示範提示" : "點這裡改提示"}
               </span>
             </button>
           )}
@@ -499,7 +495,7 @@ export function SharePageClient({
           </p>
         ) : (
           <div
-            className={`space-y-3 ${compact ? "mt-5 space-y-3.5" : "mt-8 space-y-4"}`}
+            className={`space-y-4 ${compact ? "mt-5" : "mt-8"}`}
             aria-hidden
           >
             {(profile.link.topics?.length ?? 0) > 0 ? (
@@ -511,7 +507,7 @@ export function SharePageClient({
                   {profile.link.topics?.map((topic) => (
                     <span
                       key={topic}
-                      className="rounded-full border border-[var(--line)] px-3 py-1.5 text-sm"
+                      className="rounded-xl border border-[var(--line)] px-3 py-1.5 text-sm"
                     >
                       {topic}
                     </span>
@@ -529,7 +525,7 @@ export function SharePageClient({
                   compact ? "mt-1.5 min-h-[100px] text-base" : ""
                 }`}
               />
-              <p className="mt-1 text-right text-xs text-[var(--muted)]">
+              <p className="mt-1 text-right text-xs tabular-nums text-[var(--muted)]">
                 0/{ASK_LIMITS.bodyMax}
               </p>
             </div>
@@ -540,11 +536,9 @@ export function SharePageClient({
             >
               匿名送出
             </Button>
-            {!compact && (
-              <p className="text-xs text-[var(--muted)]">
-                匿名對主人顯示；系統為防濫用可能保留必要技術資料。請勿發送違法或傷害他人的內容。
-              </p>
-            )}
+            <p className="text-xs leading-relaxed text-[var(--muted)]">
+              匿名對主人顯示；系統為防濫用可能保留必要技術資料。請勿發送違法或傷害他人的內容。
+            </p>
           </div>
         )}
       </div>
@@ -552,7 +546,7 @@ export function SharePageClient({
   );
 
   return (
-    <div className="w-full py-6 lg:origin-top lg:py-7 lg:[zoom:1.03]">
+    <div className="flex w-full flex-1 flex-col py-6 lg:py-1">
       <input
         ref={fileRef}
         type="file"
@@ -678,7 +672,34 @@ export function SharePageClient({
       </div>
 
       {/* ── 桌機：左控制台／右即時預覽（自然高度，矮螢幕可整頁捲動） ── */}
-      <div className="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,440px)] lg:items-start lg:gap-10 xl:gap-12">
+      <div
+        ref={desktopSlotRef}
+        className="hidden lg:flex lg:min-h-[calc(100dvh-var(--header-h)-var(--footer-h)-1rem)] lg:flex-1 lg:items-center lg:justify-center"
+      >
+        <div
+          style={
+            desktopFit.width
+              ? {
+                  width: desktopFit.width * desktopFit.scale,
+                  height: desktopFit.height * desktopFit.scale,
+                  flexShrink: 0,
+                }
+              : { width: "100%" }
+          }
+        >
+          <div
+            ref={desktopBoardRef}
+            className="grid w-full grid-cols-[minmax(0,1fr)_minmax(360px,440px)] items-start gap-10 xl:gap-12"
+            style={
+              desktopFit.width
+                ? {
+                    width: desktopFit.width,
+                    transform: `scale(${desktopFit.scale})`,
+                    transformOrigin: "top left",
+                  }
+                : undefined
+            }
+          >
         <div className="animate-rise space-y-7 xl:space-y-8">
           <header>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--mint)]">
@@ -796,12 +817,14 @@ export function SharePageClient({
           </section>
         </div>
 
-        <aside className="animate-rise-delay lg:sticky lg:top-4">
+        <aside className="animate-rise-delay">
           {previewPanel(true)}
           <p className="mt-2 text-center text-sm text-[var(--muted)]">
             點頭貼換圖，點提示文字就能編輯。貼紙請按「去裝扮」。
           </p>
         </aside>
+          </div>
+        </div>
       </div>
 
       <ShareStoryDialog

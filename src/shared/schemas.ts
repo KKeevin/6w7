@@ -8,8 +8,7 @@ export const usernameSchema = z
   .trim()
   .transform((v) => normalizeUsername(v))
   .refine(isValidUsername, {
-    message:
-      "請輸入有效的 IG 帳號（英數、底線、點；1–30 字，不可開頭結尾為點）",
+    message: "api.invalidUsername",
   });
 
 export const emailSchema = z
@@ -18,12 +17,12 @@ export const emailSchema = z
   .toLowerCase()
   .max(120)
   .refine((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value), {
-    message: "請輸入有效的信箱",
+    message: "api.invalidEmail",
   });
 
 export const registerSchema = z.object({
   username: usernameSchema,
-  password: z.string().min(8, "密碼至少 8 碼").max(72),
+  password: z.string().min(8, "api.passwordMin").max(72),
   name: z.string().trim().min(1).max(40).optional(),
   email: emailSchema.optional(),
 });
@@ -32,13 +31,13 @@ export const forgotPasswordSchema = z.object({
   identifier: z
     .string()
     .trim()
-    .min(1, "請輸入 IG 帳號或信箱")
+    .min(1, "api.identifierRequired")
     .max(120),
 });
 
 export const resetPasswordSchema = z.object({
-  token: z.string().trim().min(16, "重設連結無效或已過期，請重新申請。").max(200),
-  password: z.string().min(8, "密碼至少 8 碼").max(72),
+  token: z.string().trim().min(16, "api.resetExpired").max(200),
+  password: z.string().min(8, "api.passwordMin").max(72),
 });
 
 export const updateEmailSchema = z.object({
@@ -50,7 +49,7 @@ export const updateEmailSchema = z.object({
 
 export const loginSchema = z.object({
   username: usernameSchema,
-  password: z.string().min(8).max(72),
+  password: z.string().min(8, "api.passwordMin").max(72),
 });
 
 /** 更新人設（bio／prompt），覆蓋舊內容 */
@@ -64,8 +63,8 @@ export const createMessageSchema = z.object({
   body: z
     .string()
     .trim()
-    .min(ASK_LIMITS.bodyMin, "請輸入留言內容")
-    .max(ASK_LIMITS.bodyMax, `留言最多 ${ASK_LIMITS.bodyMax} 字`),
+    .min(ASK_LIMITS.bodyMin, "api.bodyRequired")
+    .max(ASK_LIMITS.bodyMax, "api.bodyMax"),
   topic: z.string().trim().min(1).max(20).optional(),
 });
 

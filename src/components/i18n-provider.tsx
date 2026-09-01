@@ -4,12 +4,15 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useTransition,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
 import {
+  isLocale,
   makeTranslator,
   type Locale,
   type Translator,
@@ -34,6 +37,23 @@ export function I18nProvider({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const t = useMemo(() => makeTranslator(locale), [locale]);
+  const synced = useRef(false);
+
+  useEffect(() => {
+    if (synced.current) return;
+    synced.current = true;
+    void (async () => {
+      const res = await fetch("/api/v1/locale");
+      const data = (await res.json().catch(() => null)) as {
+        locale?: string;
+        chosen?: boolean;
+      } | null;
+      if (!data?.chosen || !isLocale(data.locale) || data.locale === locale) {
+        return;
+      }
+      router.refresh();
+    })();
+  }, [locale, router]);
 
   const setLocale = useCallback(
     (next: Locale) => {

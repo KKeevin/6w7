@@ -9,7 +9,7 @@ import {
   saveStickersSchema,
 } from "@/shared/page-stickers";
 import { assertRateLimit } from "@/lib/rate-limit";
-import { AppError } from "@/shared/errors";
+import { AppError, zodAppError } from "@/shared/errors";
 
 export const runtime = "nodejs";
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = addStickerSchema.safeParse(body);
     if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", "請選擇圖庫裡的圖片。", 400);
+      throw new AppError("VALIDATION_ERROR", "api.pickLibraryImage", 400);
     }
     const sticker = await addStickerFromAsset(userId, parsed.data.assetId);
     return jsonOk({ sticker }, { status: 201 });
@@ -58,11 +58,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const parsed = saveStickersSchema.safeParse(body);
     if (!parsed.success) {
-      throw new AppError(
-        "VALIDATION_ERROR",
-        parsed.error.issues[0]?.message || "布局無效",
-        400,
-      );
+      throw zodAppError(parsed.error, "api.invalidLayout");
     }
     const stickers = await saveStickerLayout(userId, parsed.data);
     return jsonOk({ stickers });

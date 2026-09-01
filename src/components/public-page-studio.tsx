@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ASK_LIMITS } from "@/shared/tools";
 import {
   IMAGE_UPLOAD_ACCEPT,
+  formatImageUploadError,
   prepareImageUpload,
   uploadErrorMessage,
 } from "@/lib/image-upload";
@@ -261,7 +262,7 @@ export function PublicPageStudio({
       const form = new FormData();
       form.set("file", prepared);
       const res = await fetch("/api/v1/media", { method: "POST", body: form });
-      if (!res.ok) throw new Error(await uploadErrorMessage(res, t("common.uploadFailed")));
+      if (!res.ok) throw new Error(await uploadErrorMessage(res, t, t("common.uploadFailed")));
       const data = await res.json();
       const asset = data.asset as MediaLibraryItem;
       setLibrary((prev) => [asset, ...prev]);
@@ -271,7 +272,7 @@ export function PublicPageStudio({
         setError(t("studio.full"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.uploadFailed"));
+      setError(formatImageUploadError(err, t, t("common.uploadFailed")));
     } finally {
       setUploading(false);
     }

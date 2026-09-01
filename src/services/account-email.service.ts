@@ -1,32 +1,40 @@
 import { prisma } from "@/lib/db";
+import { localeForMail } from "@/lib/account-locale";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
 import { buildTransactionalMail } from "@/lib/mail-template";
 import { createRawToken, hashToken } from "@/lib/token-hash";
 import { getSiteUrl } from "@/lib/utils";
 import { AppError } from "@/shared/errors";
+import { translate, type Locale, type MessageKey } from "@/shared/i18n";
 import { BRAND } from "@/shared/tools";
 
 const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
 
-function verifyMailCopy(username: string, email: string, url: string) {
+function verifyMailCopy(
+  locale: Locale,
+  username: string,
+  email: string,
+  url: string,
+) {
+  const t = (key: MessageKey, vars?: Record<string, string | number>) =>
+    translate(locale, key, vars);
+  const brand = { brand: BRAND.en, brandZh: BRAND.zh };
   return buildTransactionalMail({
-    subject: `驗證你的 ${BRAND.en} 信箱`,
-    preheader: "24 小時內點一下即可。不是你綁定的話，忽略這封信就好。",
-    title: "驗證這個信箱",
+    locale,
+    subject: t("mail.verify.subject", brand),
+    preheader: t("mail.verify.preheader"),
+    title: t("mail.verify.title"),
     username,
-    paragraphs: [
-      `你在 ${BRAND.en}（${BRAND.zh}）把這個信箱綁到帳號。請在 24 小時內按下面的按鈕完成驗證。`,
-      "驗證後，忘記密碼才能把重設信寄到這裡。現在不驗證也沒關係，其他功能一樣能用。",
-    ],
-    ctaLabel: "驗證信箱",
+    paragraphs: [t("mail.verify.p1", brand), t("mail.verify.p2")],
+    ctaLabel: t("mail.verify.cta"),
     ctaUrl: url,
     specs: [
-      { label: "帳號", value: `@${username}` },
-      { label: "信箱", value: email },
-      { label: "用途", value: "驗證登入信箱" },
-      { label: "有效期限", value: "24 小時（用過或逾期請到設定頁重寄）" },
-      { label: "寄件者", value: BRAND.contactEmail },
-      { label: "網站", value: BRAND.domain },
+      { label: t("mail.specAccount"), value: `@${username}` },
+      { label: t("mail.specEmail"), value: email },
+      { label: t("mail.specPurpose"), value: t("mail.verify.purpose") },
+      { label: t("mail.specExpiry"), value: t("mail.verify.expiry") },
+      { label: t("mail.specFrom"), value: BRAND.contactEmail },
+      { label: t("mail.specSite"), value: BRAND.domain },
     ],
   });
 }
@@ -35,6 +43,8 @@ async function deliverVerifyLink(user: {
   id: string;
   username: string;
   email: string;
+  locale: string | null;
+  localeChosen: boolean;
 }) {
   const rawToken = createRawToken();
   const tokenHash = hashToken(rawToken);
@@ -65,7 +75,11 @@ async function deliverVerifyLink(user: {
   }
 
   try {
-    const copy = verifyMailCopy(user.username, user.email, url);
+    const locale = await localeForMail(user.locale, {
+      chosen: user.localeChosen,
+      fallback: "request",
+    });
+    const copy = verifyMailCopy(locale, user.username, user.email, url);
     await sendMail({
       to: user.email,
       subject: copy.subject,
@@ -90,13 +104,15 @@ export async function updateAccountEmail(userId: string, email: string | null) {
       email: true,
       emailVerified: true,
       username: true,
+      locale: true,
+      localeChosen: true,
     },
   });
   if (!user) {
-    throw new AppError("NOT_FOUND", "找不到使用者。", 404);
+    throw new AppError("NOT_FOUND", "api.userNotFound", 404);
   }
   if (user.isDemo) {
-    throw new AppError("FORBIDDEN", "示範帳號不能改信箱。", 403);
+    throw new AppError("FORBIDDEN", "api.demoNoEmail", 403);
   }
 
   if (email) {
@@ -105,7 +121,7 @@ export async function updateAccountEmail(userId: string, email: string | null) {
       select: { id: true },
     });
     if (taken) {
-      throw new AppError("CONFLICT", "這個信箱已被其他帳號使用。", 409);
+      throw new AppError("CONFLICT", "api.emailTaken", 409);
     }
   }
 
@@ -123,26 +139,32 @@ export async function updateAccountEmail(userId: string, email: string | null) {
       username: true,
       email: true,
       emailVerified: true,
+      locale: true,
+      localeChosen: true,
     },
   });
 
-  let mailed = false;
-  if (email && !unchanged) {
-    const result = await deliverVerifyLink({
-      id: updated.id,
-      username: updated.username,
-      email,
-    });
-    mailed = result.sent;
-  }
+    const { locale, localeChosen, ...publicUser } = updated;
 
-  return {
-    user: {
-      ...updated,
-      emailVerified: Boolean(updated.emailVerified),
-    },
-    mailed,
-  };
+    let mailed = false;
+    if (email && !unchanged) {
+      const result = await deliverVerifyLink({
+        id: updated.id,
+        username: updated.username,
+        email,
+        locale,
+        localeChosen,
+      });
+      mailed = result.sent;
+    }
+
+    return {
+      user: {
+        ...publicUser,
+        emailVerified: Boolean(updated.emailVerified),
+      },
+      mailed,
+    };
 }
 
 export async function requestEmailVerification(userId: string) {
@@ -155,16 +177,18 @@ export async function requestEmailVerification(userId: string) {
       emailVerified: true,
       isDemo: true,
       status: true,
+      locale: true,
+      localeChosen: true,
     },
   });
   if (!user || user.status !== "active") {
-    throw new AppError("NOT_FOUND", "找不到使用者。", 404);
+    throw new AppError("NOT_FOUND", "api.userNotFound", 404);
   }
   if (user.isDemo) {
-    throw new AppError("FORBIDDEN", "示範帳號不需驗證信箱。", 403);
+    throw new AppError("FORBIDDEN", "api.demoNoVerify", 403);
   }
   if (!user.email) {
-    throw new AppError("BAD_REQUEST", "請先填寫信箱再驗證。", 400);
+    throw new AppError("BAD_REQUEST", "api.emailRequired", 400);
   }
   if (user.emailVerified) {
     return { ok: true as const, alreadyVerified: true as const, mailed: false };
@@ -174,6 +198,8 @@ export async function requestEmailVerification(userId: string) {
     id: user.id,
     username: user.username,
     email: user.email,
+    locale: user.locale,
+    localeChosen: user.localeChosen,
   });
   return {
     ok: true as const,
@@ -194,18 +220,14 @@ export async function verifyEmailWithToken(rawToken: string) {
   });
 
   if (!row || row.expiresAt.getTime() <= Date.now()) {
-    throw new AppError(
-      "BAD_REQUEST",
-      "驗證連結無效或已過期，請到設定頁重寄。",
-      400,
-    );
+    throw new AppError("BAD_REQUEST", "api.verifyExpired", 400);
   }
   if (
     row.user.status !== "active" ||
     row.user.isDemo ||
     row.user.email !== row.email
   ) {
-    throw new AppError("BAD_REQUEST", "這個驗證連結已失效，請重新寄一次。", 400);
+    throw new AppError("BAD_REQUEST", "api.verifyInvalid", 400);
   }
 
   await prisma.$transaction([

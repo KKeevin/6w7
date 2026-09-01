@@ -23,11 +23,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
-      throw new AppError(
-        "VALIDATION_ERROR",
-        "驗證連結無效或已過期，請到設定頁重寄。",
-        400,
-      );
+      throw new AppError("VALIDATION_ERROR", "api.verifyExpired", 400);
     }
 
     const result = await verifyEmailWithToken(parsed.data.token);

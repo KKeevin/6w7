@@ -68,14 +68,14 @@ export async function assertRateLimit(options: {
       options.windowLabel,
     ).limit(options.key);
     if (!result.success) {
-      throw new AppError("RATE_LIMITED", "太快了啦，等幾秒再試。", 429);
+      throw new AppError("RATE_LIMITED", "api.rateLimited", 429);
     }
     return;
   }
 
   const result = memoryLimit(options.key, options.limit, options.windowMs);
   if (!result.success) {
-    throw new AppError("RATE_LIMITED", "太快了啦，等幾秒再試。", 429);
+    throw new AppError("RATE_LIMITED", "api.rateLimited", 429);
   }
 }
 

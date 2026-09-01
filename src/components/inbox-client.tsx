@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -449,18 +448,6 @@ export function InboxClient({
           open
           message={selected}
           demo={demo}
-          extra={
-            demo ? (
-              <p className="text-sm">
-                <Link
-                  href={`/inbox/${selected.id}`}
-                  className="font-semibold text-[var(--mint)] hover:underline"
-                >
-                  {t("inbox.openPage")}
-                </Link>
-              </p>
-            ) : null
-          }
           onClose={closeDetail}
           onFeatured={demo ? undefined : () => void toggleFeatured(selected)}
           onArchived={demo ? undefined : () => void toggleArchived(selected)}

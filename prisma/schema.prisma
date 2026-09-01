@@ -39,6 +39,10 @@ model User {
   role          UserRole   @default(user)
   /// 公開示範帳號（真實 User，可登入／登出；全站可辨識）
   isDemo        Boolean    @default(false)
+  /// 最近一次語言（裝置推斷或本人選擇）。信件可用此值。示範帳號不寫。
+  locale        String?
+  /// 使用者曾在頁尾自行切換語言。為 true 時登入必須立刻套用 locale，UI 不再跟裝置。
+  localeChosen  Boolean    @default(false)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 

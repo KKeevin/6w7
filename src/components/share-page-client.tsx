@@ -280,7 +280,7 @@ export function SharePageClient({
   function onAvatarPick(file: File | null) {
     if (fileRef.current) fileRef.current.value = "";
     if (demo || !file) return;
-    const problem = imageSelectionError(file);
+    const problem = imageSelectionError(file, t);
     if (problem) {
       setError(problem);
       return;
@@ -300,7 +300,7 @@ export function SharePageClient({
         method: "POST",
         body: form,
       });
-      if (!res.ok) throw new Error(await uploadErrorMessage(res, t("common.uploadFailed")));
+      if (!res.ok) throw new Error(await uploadErrorMessage(res, t, t("common.uploadFailed")));
       const data = await res.json();
       setProfile((p) =>
         p ? { ...p, user: { ...p.user, image: data.user.image } } : p,

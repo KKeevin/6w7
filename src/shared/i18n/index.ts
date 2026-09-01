@@ -54,3 +54,10 @@ export type Translator = (
 export function makeTranslator(locale: Locale): Translator {
   return (key, vars) => translate(locale, key, vars);
 }
+
+export function isMessageKey(value: string): value is MessageKey {
+  return Object.prototype.hasOwnProperty.call(
+    dictionaries[DEFAULT_LOCALE],
+    value,
+  );
+}

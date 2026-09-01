@@ -4,7 +4,7 @@ import {
   updateProfile,
 } from "@/services/ask-link.service";
 import { updateProfileSchema } from "@/shared/schemas";
-import { AppError } from "@/shared/errors";
+import { zodAppError } from "@/shared/errors";
 
 export async function GET() {
   try {
@@ -22,11 +22,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const parsed = updateProfileSchema.safeParse(body);
     if (!parsed.success) {
-      throw new AppError(
-        "VALIDATION_ERROR",
-        parsed.error.issues[0]?.message || "輸入無效",
-        400,
-      );
+      throw zodAppError(parsed.error);
     }
     const link = await updateProfile(userId, parsed.data);
     return jsonOk({ link });

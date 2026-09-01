@@ -1,7 +1,7 @@
 import { jsonError, jsonOk } from "@/lib/api";
 import { createPublicMessage } from "@/services/message.service";
 import { createMessageSchema } from "@/shared/schemas";
-import { AppError } from "@/shared/errors";
+import { zodAppError } from "@/shared/errors";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { getClientIp, getRequestFingerprintHash } from "@/lib/fingerprint";
 
@@ -38,11 +38,7 @@ export async function POST(request: Request, { params }: Params) {
     const body = await request.json();
     const parsed = createMessageSchema.safeParse(body);
     if (!parsed.success) {
-      throw new AppError(
-        "VALIDATION_ERROR",
-        parsed.error.issues[0]?.message || "輸入無效",
-        400,
-      );
+      throw zodAppError(parsed.error);
     }
 
     const message = await createPublicMessage(

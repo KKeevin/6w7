@@ -3,7 +3,7 @@ import { getClientIp } from "@/lib/fingerprint";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { requestPasswordReset } from "@/services/password-reset.service";
 import { forgotPasswordSchema } from "@/shared/schemas";
-import { AppError } from "@/shared/errors";
+import { zodAppError } from "@/shared/errors";
 
 export async function POST(request: Request) {
   try {
@@ -19,11 +19,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = forgotPasswordSchema.safeParse(body);
     if (!parsed.success) {
-      throw new AppError(
-        "VALIDATION_ERROR",
-        parsed.error.issues[0]?.message || "輸入無效",
-        400,
-      );
+      throw zodAppError(parsed.error);
     }
 
     const identKey = parsed.data.identifier.trim().toLowerCase();

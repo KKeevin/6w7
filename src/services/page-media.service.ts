@@ -64,7 +64,7 @@ async function requireOwnerLink(userId: string) {
     },
   });
   if (!user || user.status !== "active" || !user.askLink) {
-    throw new AppError("NOT_FOUND", "找不到個人連結。", 404);
+    throw new AppError("NOT_FOUND", "api.linkNotFound", 404);
   }
   const sandboxId = user.isDemo ? await getOrCreateDemoSandboxId() : null;
   return { id: user.askLink.id, isDemo: user.isDemo, sandboxId };
@@ -150,11 +150,9 @@ export async function uploadMediaAsset(userId: string, input: Buffer) {
     where: ownerLibraryWhere(userId, owner.sandboxId),
   });
   if (count >= ASK_LIMITS.stickerLibraryMax) {
-    throw new AppError(
-      "VALIDATION_ERROR",
-      `圖片庫最多 ${ASK_LIMITS.stickerLibraryMax} 張，請先刪掉不用的。`,
-      400,
-    );
+    throw new AppError("VALIDATION_ERROR", "api.libraryFull", 400, {
+      max: ASK_LIMITS.stickerLibraryMax,
+    });
   }
 
   let webp: Buffer;
@@ -183,11 +181,7 @@ export async function uploadMediaAsset(userId: string, input: Buffer) {
     webp = await resized.webp({ quality: 82, effort: 4 }).toBuffer();
     outMeta = await sharp(webp).metadata();
   } catch {
-    throw new AppError(
-      "VALIDATION_ERROR",
-      "這張圖打不開，請改用 JPEG、PNG 或 WebP。",
-      400,
-    );
+    throw new AppError("VALIDATION_ERROR", "api.imageUnreadable", 400);
   }
 
   const fileId = randomUUID().replace(/-/g, "").slice(0, 16);
@@ -226,7 +220,7 @@ export async function deleteMediaAsset(userId: string, assetId: string) {
     where: { id: assetId, ...ownerAssetWhere(userId, owner.sandboxId) },
   });
   if (!asset) {
-    throw new AppError("NOT_FOUND", "找不到這張圖片。", 404);
+    throw new AppError("NOT_FOUND", "api.imageNotFound", 404);
   }
   await prisma.mediaAsset.delete({ where: { id: asset.id } });
   if (owner.sandboxId) {
@@ -274,17 +268,15 @@ export async function addStickerFromAsset(userId: string, assetId: string) {
     select: { id: true, url: true },
   });
   if (!asset) {
-    throw new AppError("NOT_FOUND", "找不到這張圖片。", 404);
+    throw new AppError("NOT_FOUND", "api.imageNotFound", 404);
   }
 
   if (link.sandboxId) {
     const overlay = await hydrateDemoSandboxOverlay(userId, link.sandboxId);
     if (overlay.stickers.length >= ASK_LIMITS.stickerCanvasMax) {
-      throw new AppError(
-        "VALIDATION_ERROR",
-        `畫面上最多 ${ASK_LIMITS.stickerCanvasMax} 張，先拿掉幾張再加。`,
-        400,
-      );
+      throw new AppError("VALIDATION_ERROR", "api.canvasFull", 400, {
+        max: ASK_LIMITS.stickerCanvasMax,
+      });
     }
     const jitter = () => (Math.random() - 0.5) * 12;
     const topZ = overlay.stickers.reduce(
@@ -311,11 +303,9 @@ export async function addStickerFromAsset(userId: string, assetId: string) {
     where: { linkId: link.id, asset: liveMediaWhere() },
   });
   if (count >= ASK_LIMITS.stickerCanvasMax) {
-    throw new AppError(
-      "VALIDATION_ERROR",
-      `畫面上最多 ${ASK_LIMITS.stickerCanvasMax} 張，先拿掉幾張再加。`,
-      400,
-    );
+    throw new AppError("VALIDATION_ERROR", "api.canvasFull", 400, {
+      max: ASK_LIMITS.stickerCanvasMax,
+    });
   }
   const top = await prisma.pageSticker.aggregate({
     where: { linkId: link.id, asset: liveMediaWhere() },
@@ -353,7 +343,7 @@ export async function saveStickerLayout(
       select: { id: true, url: true },
     });
     if (owned.length !== assetIds.length) {
-      throw new AppError("FORBIDDEN", "只能使用自己圖庫裡的圖片。", 403);
+      throw new AppError("FORBIDDEN", "api.ownImagesOnly", 403);
     }
 
     if (link.sandboxId) {

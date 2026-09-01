@@ -3,6 +3,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { asTopicList } from "@/lib/topics";
 import { isDemoUsername, getDemoPrompt } from "@/shared/demo-account";
+import { requestLocaleWithoutAccount } from "@/lib/account-locale";
 import { getRequestLocale } from "@/lib/locale";
 import {
   getOrCreateDemoSandboxId,
@@ -39,11 +40,11 @@ export async function registerUser(input: z.infer<typeof registerSchema>) {
   const username = input.username;
   const { DEMO_PROFILE } = await import("@/shared/demo-account");
   if (username === DEMO_PROFILE.username) {
-    throw new AppError("CONFLICT", "這個 IG 帳號已被註冊。", 409);
+    throw new AppError("CONFLICT", "api.usernameTaken", 409);
   }
   const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) {
-    throw new AppError("CONFLICT", "這個 IG 帳號已被註冊。", 409);
+    throw new AppError("CONFLICT", "api.usernameTaken", 409);
   }
 
   if (input.email) {
@@ -52,17 +53,20 @@ export async function registerUser(input: z.infer<typeof registerSchema>) {
       select: { id: true },
     });
     if (emailTaken) {
-      throw new AppError("CONFLICT", "這個信箱已被其他帳號使用。", 409);
+      throw new AppError("CONFLICT", "api.emailTaken", 409);
     }
   }
 
   const passwordHash = await bcrypt.hash(input.password, 12);
+  const locale = await requestLocaleWithoutAccount();
   const user = await prisma.user.create({
     data: {
       username,
       name: input.name || username,
       email: input.email,
       passwordHash,
+      locale,
+      localeChosen: false,
       askLink: {
         create: {
           slug: username,
@@ -119,7 +123,7 @@ export async function getProfileForOwner(
     include: { askLink: true },
   });
   if (!user?.askLink) {
-    throw new AppError("NOT_FOUND", "找不到個人連結。", 404);
+    throw new AppError("NOT_FOUND", "api.linkNotFound", 404);
   }
   const serialized = serializeLink(user.askLink);
   const sandboxId = user.isDemo
@@ -166,7 +170,7 @@ export async function updateProfile(
     include: { user: { select: { isDemo: true } } },
   });
   if (!existing) {
-    throw new AppError("NOT_FOUND", "找不到個人連結。", 404);
+    throw new AppError("NOT_FOUND", "api.linkNotFound", 404);
   }
 
   if (existing.user.isDemo) {
@@ -234,7 +238,7 @@ export const getPublicAskLink = cache(async (slug: string) => {
     },
   });
   if (!link || !link.isActive || link.user.status !== "active") {
-    throw new AppError("NOT_FOUND", "找不到此匿名問答連結。", 404);
+    throw new AppError("NOT_FOUND", "api.publicLinkNotFound", 404);
   }
   const demo = isDemoUsername(link.slug);
   const stickers = demo ? [] : await listStickersForLink(link.id);
@@ -276,11 +280,7 @@ export async function applyDemoSandboxToPublicLink<
 
 // 相容舊 API 匯出名稱
 export async function createAskLink() {
-  throw new AppError(
-    "BAD_REQUEST",
-    "每人僅一條個人連結，請直接更新人設提示。",
-    400,
-  );
+  throw new AppError("BAD_REQUEST", "api.singleLink", 400);
 }
 
 export async function listAskLinks(userId: string) {

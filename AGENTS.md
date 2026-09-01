@@ -268,7 +268,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 - 行動裝置優先（IG 流量為主）。
 - 首屏清楚：這是 **6w7**、這是匿名留言、留言後主人會在收件匣看到。
 - 禁止誤導「對方完全無法追蹤到任何濫用資訊」——可說明「匿名對主人顯示，但系統為防濫用可能保留必要技術資料」。
-- 繁體中文為預設 UI 語言；另提供英文、日文、韓文。語言存在 Cookie（`6w7_locale`），**不**改公開短網址路徑 `/{username}`。郵件與多數 API 錯誤訊息暫仍繁中。
+- 繁體中文為預設 UI 語言；另提供英文、日文、韓文。語言存在 Cookie（`6w7_locale`），**不**改公開短網址路徑 `/{username}`。尚未自行切換時，UI 跟裝置（Cookie／瀏覽器語言）；一般帳號可把該語言記成 `User.locale` 供信件用，但**不鎖定**登入畫面。使用者在頁尾按過切換後標記 `localeChosen`：登入必須立刻套用該語言（同步 Cookie），信件與 API 錯誤以此為準。新留言通知跟主人語言，不跟訪客。示範帳號不寫 `User.locale`（多人共用同一 User）。
 
 ---
 
@@ -349,7 +349,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 ## 8. API 設計準則
 
 - 風格：REST JSON（第一版）；路徑前綴 `/api/v1/...`（建議版本化）。
-- 統一錯誤格式，例如：`{ "error": { "code": "RATE_LIMITED", "message": "..." } }`。
+- 統一錯誤格式，例如：`{ "error": { "code": "RATE_LIMITED", "message": "..." } }`。`code` 維持英文常數；`message` 若帳號曾自行選語言則依 `User.locale`，否則依 Cookie／瀏覽器語言。
 - 成功／失敗 HTTP 狀態碼語意正確（401／403／404／429／400）。
 - 寫入類 API 必有限流與輸入驗證（Zod 等）。
 - **OpenAPI／型別**可選，但 `shared` 型別要與前端一致。
@@ -365,6 +365,8 @@ GET    /api/v1/me
 PATCH  /api/v1/me                     # 綁定／更新登入信箱（會寄驗證信）
 POST   /api/v1/me/email/verify        # 重寄驗證信（需登入）
 POST   /api/v1/auth/verify-email      # 點信件連結完成驗證
+GET    /api/v1/locale                 # 登入後若曾自行選語言，把 Cookie 同步成帳號語言
+POST   /api/v1/locale                 # 自主切換：寫 Cookie；一般帳號寫 User.locale 並標記 localeChosen
 
 POST   /api/v1/ask-links         # 建立連結
 GET    /api/v1/ask-links

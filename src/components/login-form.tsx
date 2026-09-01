@@ -96,6 +96,7 @@ export function LoginForm({
             : t("auth.registerLoginFailed"),
         );
       }
+      await fetch("/api/v1/locale");
       markDeviceHasAccount();
       router.push(mode === "register" ? "/dashboard?welcome=1" : next);
       router.refresh();

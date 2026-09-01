@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AskReadDialog } from "@/components/ask-read-dialog";
@@ -28,7 +28,6 @@ type Props = {
   onClose: () => void;
   message: MessageLite;
   demo?: boolean;
-  extra?: ReactNode;
   onFeatured?: () => void;
   onArchived?: () => void;
   onMarkUnread?: () => void;
@@ -41,7 +40,6 @@ export function StoryCardDialog({
   onClose,
   message,
   demo,
-  extra,
   onFeatured,
   onArchived,
   onMarkUnread,
@@ -229,8 +227,6 @@ export function StoryCardDialog({
           <p className="mt-2 text-center text-[11px] text-[var(--muted)]">
             {t("story.shareHint")}
           </p>
-
-          {extra ? <div className="mt-3">{extra}</div> : null}
 
           {showManage && !demo ? (
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 border-t border-[var(--line)] pt-3 text-sm font-semibold">

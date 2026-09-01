@@ -1,5 +1,11 @@
 import { getSiteUrl } from "@/lib/utils";
 import { BRAND } from "@/shared/tools";
+import {
+  DEFAULT_LOCALE,
+  HTML_LANG,
+  translate,
+  type Locale,
+} from "@/shared/i18n";
 
 const INK = "#14212b";
 const MUTED = "#5b6b78";
@@ -16,6 +22,7 @@ export type MailSpecRow = {
 };
 
 export type TransactionalMailInput = {
+  locale?: Locale;
   subject: string;
   preheader: string;
   title: string;
@@ -97,6 +104,9 @@ function specsTable(specs: MailSpecRow[]) {
 }
 
 export function buildTransactionalMail(input: TransactionalMailInput) {
+  const locale = input.locale ?? DEFAULT_LOCALE;
+  const t = (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) =>
+    translate(locale, key, vars);
   const site = mailSiteOrigin();
   const logoUrl = mailPublicUrl(BRAND.logoSrc);
   const privacyUrl = pageUrl("/legal/privacy");
@@ -104,27 +114,29 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
   const contactUrl = pageUrl("/contact");
   const handle = `@${input.username}`;
   const year = new Date().getFullYear();
+  const hello = t("mail.hello", { handle });
+  const helloPlain = t("mail.helloPlain", { handle });
 
   const text = [
     `${BRAND.en}（${BRAND.zh}）`,
     site,
     "",
-    `${handle} 你好，`,
+    helloPlain,
     "",
     ...input.paragraphs,
     "",
-    `${input.ctaLabel}：`,
+    t("mail.ctaPlain", { label: input.ctaLabel }),
     input.ctaUrl,
     "",
-    "—— 信件規格 ——",
+    t("mail.specsPlain"),
     ...input.specs.map((row) => `${row.label}：${row.value}`),
     "",
-    "這是系統自動寄出的帳號信件，不是廣告。請勿把連結轉傳給別人。",
-    `若按鈕沒反應，請把上面的網址複製到瀏覽器。`,
-    `聯絡：${BRAND.contactEmail}`,
-    `隱私權政策：${privacyUrl}`,
-    `服務條款：${termsUrl}`,
-    `聯絡我們：${contactUrl}`,
+    t("mail.autoPlain"),
+    t("mail.pasteLinkPlain"),
+    t("mail.contactPlain", { email: BRAND.contactEmail }),
+    `${t("mail.privacy")}：${privacyUrl}`,
+    `${t("mail.terms")}：${termsUrl}`,
+    `${t("mail.contact")}：${contactUrl}`,
   ].join("\n");
 
   const paragraphsHtml = input.paragraphs
@@ -135,7 +147,7 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
     .join("");
 
   const html = `<!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="${escapeHtml(HTML_LANG[locale])}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -161,7 +173,7 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
           <tr>
             <td style="background:#ffffff;padding:28px 28px 8px;border-left:1px solid ${LINE};border-right:1px solid ${LINE};">
               <p style="margin:0 0 6px;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:13px;color:${MUTED};">
-                ${escapeHtml(handle)} 你好
+                ${escapeHtml(hello)}
               </p>
               <h1 style="margin:0 0 16px;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:22px;line-height:1.35;color:${INK};">
                 ${escapeHtml(input.title)}
@@ -171,7 +183,7 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
                 ${bulletproofButton(input.ctaLabel, input.ctaUrl)}
               </div>
               <p style="margin:0 0 8px;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:${MUTED};">
-                按鈕沒反應的話，把這個連結複製到瀏覽器：
+                ${escapeHtml(t("mail.pasteLink"))}
               </p>
               <p style="margin:0 0 8px;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;">
                 <a href="${escapeHtml(input.ctaUrl)}" style="color:${MINT};text-decoration:underline;">${escapeHtml(input.ctaUrl)}</a>
@@ -184,7 +196,7 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
                 <tr>
                   <td style="padding:16px 18px 6px;">
                     <p style="margin:0;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;color:${INK};">
-                      信件規格
+                      ${escapeHtml(t("mail.specsTitle"))}
                     </p>
                   </td>
                 </tr>
@@ -195,24 +207,24 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
                 </tr>
               </table>
               <p style="margin:16px 0 0;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:${MUTED};">
-                這是系統自動寄出的帳號信件，不是廣告，也不會要你回覆密碼或下載檔案。請勿把連結轉傳給別人。若不是你本人操作，忽略即可。
+                ${escapeHtml(t("mail.autoNote"))}
               </p>
             </td>
           </tr>
           <tr>
             <td style="background:#ffffff;border:1px solid ${LINE};border-top:0;border-radius:0 0 20px 20px;padding:8px 28px 24px;text-align:center;">
               <p style="margin:0 0 8px;border-top:1px solid ${LINE};padding-top:18px;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:${MUTED};">
-                <a href="${escapeHtml(privacyUrl)}" style="color:${MUTED};text-decoration:underline;">隱私權政策</a>
+                <a href="${escapeHtml(privacyUrl)}" style="color:${MUTED};text-decoration:underline;">${escapeHtml(t("mail.privacy"))}</a>
                 &nbsp;·&nbsp;
-                <a href="${escapeHtml(termsUrl)}" style="color:${MUTED};text-decoration:underline;">服務條款</a>
+                <a href="${escapeHtml(termsUrl)}" style="color:${MUTED};text-decoration:underline;">${escapeHtml(t("mail.terms"))}</a>
                 &nbsp;·&nbsp;
-                <a href="${escapeHtml(contactUrl)}" style="color:${MUTED};text-decoration:underline;">聯絡我們</a>
+                <a href="${escapeHtml(contactUrl)}" style="color:${MUTED};text-decoration:underline;">${escapeHtml(t("mail.contact"))}</a>
               </p>
               <p style="margin:0;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:${MUTED};">
                 © ${year} ${escapeHtml(BRAND.en)}（${escapeHtml(BRAND.zh)}）·
                 <a href="${escapeHtml(site)}" style="color:${MUTED};text-decoration:underline;">${escapeHtml(BRAND.domain)}</a>
                 <br />
-                有問題請來信
+                ${escapeHtml(t("mail.questions"))}
                 <a href="mailto:${escapeHtml(BRAND.contactEmail)}" style="color:${MUTED};text-decoration:underline;">${escapeHtml(BRAND.contactEmail)}</a>
               </p>
             </td>

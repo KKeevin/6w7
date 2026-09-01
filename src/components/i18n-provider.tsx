@@ -57,7 +57,6 @@ export function I18nProvider({
 
   const setLocale = useCallback(
     (next: Locale) => {
-      if (next === locale) return;
       startTransition(() => {
         void (async () => {
           await fetch("/api/v1/locale", {
@@ -65,7 +64,7 @@ export function I18nProvider({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ locale: next }),
           });
-          router.refresh();
+          if (next !== locale) router.refresh();
         })();
       });
     },

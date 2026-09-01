@@ -21,6 +21,7 @@ export const ja = {
   "nav.settingsUser": "設定 · @{username}",
   "nav.settingsAria": "アカウント設定、@{username}",
   "nav.inboxUnread": "{label}、未読 {count} 件",
+  "nav.tour": "案内を始める",
 
   "footer.ask": "匿名Q&A",
   "footer.about": "について",
@@ -396,6 +397,23 @@ export const ja = {
   "guide.mute": "ミュート",
   "guide.hint": "ストーリーズが分からない？ここを押すと一度見せます",
   "guide.dontShow": "次から出さない",
+  "tour.skip": "今はスキップ",
+  "tour.pickLang": "まず言語を確認してね",
+  "tour.pickLangHint": "案内と画面はこの言語で進むよ",
+  "tour.splashTitle": "案内チュートリアル",
+  "tour.splashSoon": "まもなく始まります…",
+  "tour.avatar": "まずアイコンをタップして、自分の写真に変えてね",
+  "tour.prompt": "次に一言をタップして、みんなに聞きたいことを書いてね",
+  "tour.choose": "このあと案内動画を見るか、そのままIGにシェアできるよ",
+  "tour.watchGuide": "案内を見る",
+  "tour.goShareIg": "シェアの手順を案内する",
+  "tour.shareIg": "ここを押してシェア用の絵を開く",
+  "tour.waitVideo": "まずこの案内を見てね。終わったら次のステップへ案内するよ",
+  "tour.guideShareIg": "見終わったら「IGストーリーズにシェア」を押してね",
+  "tour.copyUrl": "先に専用ショートURLをコピーしてね",
+  "tour.shareImage":
+    "「この画像をシェア」を押したら、Instagram → ストーリーズを選んでね",
+  "tour.displayOk": "OK",
 
   "shareStory.copyFailed": "コピーできませんでした。ショートURLを選んで自分でコピーしてください。",
   "shareStory.hint":

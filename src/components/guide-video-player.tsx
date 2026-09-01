@@ -13,13 +13,21 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function GuideVideoPlayer({ src }: { src: string }) {
+export function GuideVideoPlayer({
+  src,
+  onEnded,
+}: {
+  src: string;
+  onEnded?: () => void;
+}) {
   const t = useT();
   const videoRef = useRef<HTMLVideoElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<number | null>(null);
   const dragging = useRef(false);
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
 
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
@@ -74,10 +82,11 @@ export function GuideVideoPlayer({ src }: { src: string }) {
       setPlaying(false);
       setChromeVisible(true);
     };
-    const onEnded = () => {
+    const onEndedPlay = () => {
       setPlaying(false);
       setEnded(true);
       setChromeVisible(true);
+      onEndedRef.current?.();
     };
     const onTime = () => {
       if (!dragging.current) setCurrent(video.currentTime);
@@ -86,7 +95,7 @@ export function GuideVideoPlayer({ src }: { src: string }) {
 
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
-    video.addEventListener("ended", onEnded);
+    video.addEventListener("ended", onEndedPlay);
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("loadedmetadata", onMeta);
     video.addEventListener("durationchange", onMeta);
@@ -98,7 +107,7 @@ export function GuideVideoPlayer({ src }: { src: string }) {
       video.pause();
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
-      video.removeEventListener("ended", onEnded);
+      video.removeEventListener("ended", onEndedPlay);
       video.removeEventListener("timeupdate", onTime);
       video.removeEventListener("loadedmetadata", onMeta);
       video.removeEventListener("durationchange", onMeta);

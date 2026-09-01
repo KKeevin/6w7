@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
+import { Camera } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -18,12 +20,16 @@ import {
   hideIgShareGuideHint,
   isIgShareGuideHintHidden,
   resetDemoIgShareGuideHint,
+  revealIgShareGuideHint,
+  SHARE_TOUR_EVENT,
 } from "@/lib/ig-share-guide-hint";
 import { imageSelectionError, uploadErrorMessage } from "@/lib/image-upload";
 import { AlertToast } from "@/components/alert-toast";
 import { AvatarCropDialog } from "@/components/avatar-crop-dialog";
 import { useUniformFitScale } from "@/lib/uniform-fit-scale";
 import { useI18n } from "@/components/i18n-provider";
+import { LanguagePickDialog } from "@/components/language-switcher";
+import { isLocale, makeTranslator, type Locale } from "@/shared/i18n";
 
 const ShareStoryDialog = dynamic(
   () =>
@@ -38,6 +44,18 @@ const IgShareGuideDialog = dynamic(
     ),
   { ssr: false },
 );
+
+type ShareTourStep =
+  | "locale"
+  | "splash"
+  | "avatar"
+  | "prompt"
+  | "choose"
+  | "shareIg"
+  | "watchGuide"
+  | "guideShareIg"
+  | "copyUrl"
+  | "shareImage";
 
 type Profile = {
   user: {
@@ -63,6 +81,7 @@ export function SharePageClient({
   demo = false,
   isDemoAccount = false,
   forceGuideHint = false,
+  forceTour = false,
   initialProfile,
 }: {
   demo?: boolean;
@@ -70,17 +89,40 @@ export function SharePageClient({
   isDemoAccount?: boolean;
   /** 剛用示範帳號登入，這次要再跳出限動教學提示 */
   forceGuideHint?: boolean;
+  /** 從頂欄導覽鈕進來，強制從頭跑一次教學 */
+  forceTour?: boolean;
   initialProfile?: Profile;
 }) {
-  const { t, locale } = useI18n();
+  const { t, locale, setLocale } = useI18n();
+  const [tourLocale, setTourLocale] = useState<Locale | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = window.sessionStorage.getItem("6w7.shareTour.splashLocale");
+      return isLocale(stored) ? stored : null;
+    } catch {
+      return null;
+    }
+  });
+  const walkT = tourLocale ? makeTranslator(tourLocale) : t;
   const demoProfile = demo ? getDemoShareProfile(locale) : null;
   const seeded = demoProfile ?? initialProfile ?? null;
   const fileRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
+  const skipPromptBlurSave = useRef(false);
   const previewSectionRef = useRef<HTMLElement>(null);
   const previewEndRef = useRef<HTMLDivElement>(null);
   const mobileGuideRef = useRef<HTMLButtonElement>(null);
   const desktopGuideRef = useRef<HTMLButtonElement>(null);
+  const mobileAvatarRef = useRef<HTMLButtonElement>(null);
+  const desktopAvatarRef = useRef<HTMLButtonElement>(null);
+  const mobilePromptRef = useRef<HTMLButtonElement>(null);
+  const desktopPromptRef = useRef<HTMLButtonElement>(null);
+  const mobileShareIgRef = useRef<HTMLButtonElement>(null);
+  const desktopShareIgRef = useRef<HTMLButtonElement>(null);
+  const storyCopyRef = useRef<HTMLButtonElement>(null);
+  const storyShareRef = useRef<HTMLButtonElement>(null);
+  const guidePanelRef = useRef<HTMLDivElement>(null);
+  const guideShareRef = useRef<HTMLButtonElement>(null);
   const desktopSlotRef = useRef<HTMLDivElement>(null);
   const desktopBoardRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<Profile | null>(seeded);
@@ -93,7 +135,7 @@ export function SharePageClient({
   const [copied, setCopied] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
-  const [guideHintOpen, setGuideHintOpen] = useState(false);
+  const [tourStep, setTourStep] = useState<ShareTourStep | null>(null);
   /** 手機：尚未捲到「調整公開頁」時顯示引導 */
   const [showPreviewHint, setShowPreviewHint] = useState(true);
   const [cropFile, setCropFile] = useState<File | null>(null);
@@ -195,17 +237,79 @@ export function SharePageClient({
 
   const hintUserId = profile?.user.id ?? seeded?.user.id;
 
+  const restartTour = useCallback(() => {
+    try {
+      window.sessionStorage.removeItem("6w7.shareTour.localeConfirmed");
+      window.sessionStorage.removeItem("6w7.shareTour.splash");
+      window.sessionStorage.removeItem("6w7.shareTour.splashLocale");
+    } catch {
+      /* private mode */
+    }
+    if (hintUserId) {
+      revealIgShareGuideHint(hintUserId, { demo: isDemoAccount });
+    }
+    setGuideOpen(false);
+    setStoryOpen(false);
+    setEditingPrompt(false);
+    setTourLocale(null);
+    setTourStep("locale");
+  }, [hintUserId, isDemoAccount]);
+
   useEffect(() => {
-    if (!hintUserId) return;
+    function onRequest() {
+      restartTour();
+    }
+    window.addEventListener(SHARE_TOUR_EVENT, onRequest);
+    return () => window.removeEventListener(SHARE_TOUR_EVENT, onRequest);
+  }, [restartTour]);
+
+  useEffect(() => {
+    if (!forceTour || !hintUserId) return;
+    restartTour();
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("tour")) return;
+    url.searchParams.delete("tour");
+    const qs = url.searchParams.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${qs ? `?${qs}` : ""}${url.hash}`,
+    );
+  }, [forceTour, hintUserId, restartTour]);
+
+  useEffect(() => {
+    if (!hintUserId || forceTour) return;
     if (isDemoAccount) {
-      if (forceGuideHint) resetDemoIgShareGuideHint();
+      if (forceGuideHint) {
+        resetDemoIgShareGuideHint();
+        try {
+          window.sessionStorage.removeItem("6w7.shareTour.localeConfirmed");
+          window.sessionStorage.removeItem("6w7.shareTour.splash");
+          window.sessionStorage.removeItem("6w7.shareTour.splashLocale");
+        } catch {
+          /* private mode */
+        }
+      }
       if (isIgShareGuideHintHidden(hintUserId, { demo: true })) return;
     } else if (isIgShareGuideHintHidden(hintUserId)) {
       return;
     }
-    const t = window.setTimeout(() => setGuideHintOpen(true), 400);
+    let start: ShareTourStep = "locale";
+    try {
+      if (window.sessionStorage.getItem("6w7.shareTour.splash") === "1") {
+        start = "splash";
+      } else if (
+        window.sessionStorage.getItem("6w7.shareTour.localeConfirmed") === "1"
+      ) {
+        start = "avatar";
+      }
+    } catch {
+      /* private mode */
+    }
+    const t = window.setTimeout(() => setTourStep(start), 400);
     return () => window.clearTimeout(t);
-  }, [hintUserId, isDemoAccount, forceGuideHint]);
+  }, [hintUserId, isDemoAccount, forceGuideHint, forceTour]);
 
   useEffect(() => {
     if (!forceGuideHint || typeof window === "undefined") return;
@@ -219,6 +323,19 @@ export function SharePageClient({
       `${url.pathname}${qs ? `?${qs}` : ""}${url.hash}`,
     );
   }, [forceGuideHint]);
+
+  useEffect(() => {
+    if (tourStep !== "splash") return;
+    const id = window.setTimeout(() => {
+      try {
+        window.sessionStorage.removeItem("6w7.shareTour.splash");
+      } catch {
+        /* private mode */
+      }
+      setTourStep("avatar");
+    }, 1500);
+    return () => window.clearTimeout(id);
+  }, [tourStep]);
 
   function scrollToPreview() {
     previewSectionRef.current?.scrollIntoView({
@@ -236,6 +353,7 @@ export function SharePageClient({
     if (!trimmed || !profile || trimmed === profile.link.prompt) {
       setPrompt(profile?.link.prompt || "");
       setEditingPrompt(false);
+      setTourStep((step) => (step === "prompt" ? "choose" : step));
       return;
     }
     setSaving(true);
@@ -250,6 +368,7 @@ export function SharePageClient({
       if (!res.ok) throw new Error(data?.error?.message || t("common.saveFailed"));
       setProfile((p) => (p ? { ...p, link: data.link } : p));
       setPrompt(data.link.prompt);
+      setTourStep((step) => (step === "prompt" ? "choose" : step));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.saveFailed"));
       setPrompt(profile.link.prompt);
@@ -305,6 +424,7 @@ export function SharePageClient({
       setProfile((p) =>
         p ? { ...p, user: { ...p.user, image: data.user.image } } : p,
       );
+      setTourStep((step) => (step === "avatar" ? "prompt" : step));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.uploadFailed"));
     } finally {
@@ -319,15 +439,40 @@ export function SharePageClient({
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function openShareStory() {
+    setStoryOpen(true);
+    setTourStep((step) =>
+      step === "choose" ||
+      step === "shareIg" ||
+      step === "watchGuide" ||
+      step === "guideShareIg"
+        ? "copyUrl"
+        : step,
+    );
+  }
+
   function openGuide() {
     setGuideOpen(true);
-    dismissGuideHint();
+    setTourStep((step) => (step === "choose" ? "watchGuide" : step));
   }
 
   function dismissGuideHint() {
     const id = profile?.user.id ?? seeded?.user.id;
     if (id) hideIgShareGuideHint(id, { demo: isDemoAccount });
-    setGuideHintOpen(false);
+    setTourStep(null);
+  }
+
+  function confirmTourLocale(next: Locale) {
+    try {
+      window.sessionStorage.setItem("6w7.shareTour.localeConfirmed", "1");
+      window.sessionStorage.setItem("6w7.shareTour.splash", "1");
+      window.sessionStorage.setItem("6w7.shareTour.splashLocale", next);
+    } catch {
+      /* private mode */
+    }
+    setTourLocale(next);
+    setLocale(next);
+    setTourStep("splash");
   }
 
   if (loading) {
@@ -351,6 +496,10 @@ export function SharePageClient({
   const accepting = profile.link.acceptingMessages;
   const publicHref = `/${profile.user.username}`;
   const dressHref = `${publicHref}?edit=1`;
+  const splashKicker = walkT("share.kicker");
+  const splashKickerLetters = [...splashKicker];
+  const splashKickerCompact =
+    splashKickerLetters.filter((ch) => ch.trim()).length <= 6;
 
   /** compact：桌機側欄預覽（自然高度，矮螢幕可整頁捲動） */
   const previewPanel = (compact: boolean) => (
@@ -405,49 +554,68 @@ export function SharePageClient({
           }`}
         >
           <button
+            ref={compact ? desktopAvatarRef : mobileAvatarRef}
             type="button"
-            className="group relative"
+            className="group"
             onClick={() => {
               if (!demo) fileRef.current?.click();
             }}
             aria-label={demo ? t("demo.avatar") : t("share.uploadAvatar")}
           >
-            <div
-              className={`overflow-hidden rounded-full border-2 border-[var(--line)] bg-[var(--surface)] transition group-hover:border-[var(--mint)] ${
-                compact ? "h-32 w-32 border-[3px]" : "h-24 w-24"
-              }`}
-            >
-              {imageSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imageSrc}
-                  alt=""
-                  width={compact ? 128 : 96}
-                  height={compact ? 128 : 96}
-                  fetchPriority="high"
-                  decoding="async"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div
-                  className={`flex h-full w-full items-center justify-center font-bold text-[var(--muted)] ${
-                    compact ? "text-4xl" : "text-2xl"
-                  }`}
+            <span className="relative inline-flex">
+              <div
+                className={`overflow-hidden rounded-full border-2 border-[var(--line)] bg-[var(--surface)] transition group-hover:border-[var(--mint)] ${
+                  compact ? "h-32 w-32 border-[3px]" : "h-24 w-24"
+                }`}
+              >
+                {imageSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imageSrc}
+                    alt=""
+                    width={compact ? 128 : 96}
+                    height={compact ? 128 : 96}
+                    fetchPriority="high"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className={`flex h-full w-full items-center justify-center font-bold text-[var(--muted)] ${
+                      compact ? "text-4xl" : "text-2xl"
+                    }`}
+                  >
+                    {uploading
+                      ? "…"
+                      : (profile.user.name || profile.user.username)
+                          .slice(0, 1)
+                          .toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <span
+                className={`pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-[var(--ink)]/45 font-semibold text-white transition ${
+                  compact ? "text-sm" : "text-xs"
+                } ${
+                  uploading
+                    ? "opacity-100"
+                    : "opacity-0 md:group-hover:opacity-100"
+                }`}
+              >
+                {demo
+                  ? t("demo.account")
+                  : uploading
+                    ? t("share.uploading")
+                    : t("share.changeAvatar")}
+              </span>
+              {!demo && !uploading ? (
+                <span
+                  className="pointer-events-none absolute -bottom-0.5 -right-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[var(--mint)] text-white shadow-sm"
+                  aria-hidden
                 >
-                  {uploading
-                    ? "…"
-                    : (profile.user.name || profile.user.username)
-                        .slice(0, 1)
-                        .toUpperCase()}
-                </div>
-              )}
-            </div>
-            <span
-              className={`absolute inset-0 flex items-center justify-center rounded-full bg-[var(--ink)]/45 font-semibold text-white opacity-0 transition group-hover:opacity-100 ${
-                compact ? "text-sm" : "text-xs"
-              }`}
-            >
-              {demo ? t("demo.account") : uploading ? t("share.uploading") : t("share.changeAvatar")}
+                  <Camera className="h-4 w-4" strokeWidth={2.4} />
+                </span>
+              ) : null}
             </span>
           </button>
 
@@ -468,7 +636,13 @@ export function SharePageClient({
                 rows={3}
                 disabled={saving}
                 onChange={(e) => setPrompt(e.target.value)}
-                onBlur={() => void savePrompt(prompt)}
+                onBlur={() => {
+                  if (skipPromptBlurSave.current) {
+                    skipPromptBlurSave.current = false;
+                    return;
+                  }
+                  void savePrompt(prompt);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -482,12 +656,39 @@ export function SharePageClient({
                 className="w-full resize-none rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-center font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-[var(--ink)] outline-none ring-[var(--ring)] focus:ring-2"
                 aria-label={t("share.editPrompt")}
               />
-              <span className="mt-1.5 block text-center text-[11px] text-[var(--muted)]">
+              <span className="mt-1.5 hidden text-center text-[11px] text-[var(--muted)] md:block">
                 {t("share.promptKeys")}
               </span>
+              <div className="mt-2 flex items-center justify-center gap-2 md:hidden">
+                <button
+                  type="button"
+                  className="rounded-full border border-[var(--line)] bg-white px-3 py-1 text-[11px] font-semibold text-[var(--muted)]"
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    skipPromptBlurSave.current = true;
+                    setPrompt(profile.link.prompt);
+                    setEditingPrompt(false);
+                  }}
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  className="rounded-full bg-[var(--ink)] px-3 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    skipPromptBlurSave.current = true;
+                    void savePrompt(prompt);
+                  }}
+                >
+                  {saving ? t("common.saving") : t("common.save")}
+                </button>
+              </div>
             </div>
           ) : (
             <button
+              ref={compact ? desktopPromptRef : mobilePromptRef}
               type="button"
               className="group mt-4 w-full rounded-xl px-2 py-1 transition hover:bg-[var(--ink)]/[0.03]"
               onClick={() => {
@@ -627,10 +828,11 @@ export function SharePageClient({
               {copied ? t("common.copiedClipboard") : t("share.copyLink")}
             </Button>
             <Button
+              ref={mobileShareIgRef}
               type="button"
               variant="secondary"
               className="w-full"
-              onClick={() => setStoryOpen(true)}
+              onClick={openShareStory}
             >
               {t("share.shareIg")}
             </Button>
@@ -685,7 +887,7 @@ export function SharePageClient({
           <div ref={previewEndRef} className="h-px w-full" aria-hidden />
         </section>
 
-        {showPreviewHint && !guideHintOpen && (
+        {showPreviewHint && !tourStep && (
           <div className="pointer-events-none fixed inset-x-0 bottom-[4.25rem] z-30 flex justify-center px-4 lg:hidden">
             <button
               type="button"
@@ -797,10 +999,11 @@ export function SharePageClient({
 
             <div className="mt-4 grid grid-cols-2 gap-2.5">
               <Button
+                ref={desktopShareIgRef}
                 type="button"
                 variant="secondary"
                 className="h-12 text-base"
-                onClick={() => setStoryOpen(true)}
+                onClick={openShareStory}
               >
                 {t("share.shareIg")}
               </Button>
@@ -858,34 +1061,189 @@ export function SharePageClient({
 
       <ShareStoryDialog
         open={storyOpen}
-        onClose={() => setStoryOpen(false)}
+        onClose={() => {
+          setStoryOpen(false);
+          setTourStep((step) =>
+            step === "copyUrl" || step === "shareImage" ? "shareIg" : step,
+          );
+        }}
         username={profile.user.username}
         prompt={prompt || profile.link.prompt}
         imageUrl={imageSrc}
         displayName={profile.user.name}
         shortUrl={shortUrl}
+        copyButtonRef={storyCopyRef}
+        shareImageButtonRef={storyShareRef}
         onCopiedLink={() => {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
+          setTourStep((step) => (step === "copyUrl" ? "shareImage" : step));
+        }}
+        onShareImage={() => {
+          if (tourStep === "copyUrl" || tourStep === "shareImage") {
+            dismissGuideHint();
+          }
         }}
         onOpenGuide={openGuide}
       />
 
       <IgShareGuideDialog
         open={guideOpen}
-        onClose={() => setGuideOpen(false)}
+        onClose={() => {
+          setGuideOpen(false);
+          setTourStep((step) =>
+            step === "watchGuide" || step === "guideShareIg" ? "choose" : step,
+          );
+        }}
         copied={copied}
         onCopyLink={() => {
           void copyLink();
         }}
-        onShareStory={() => setStoryOpen(true)}
+        onShareStory={openShareStory}
+        onVideoEnded={() => {
+          setTourStep((step) => (step === "watchGuide" ? "guideShareIg" : step));
+        }}
+        panelRef={guidePanelRef}
+        shareButtonRef={guideShareRef}
       />
 
+      <LanguagePickDialog
+        open={tourStep === "locale"}
+        title={t("tour.pickLang")}
+        hint={t("tour.pickLangHint")}
+        onPick={confirmTourLocale}
+        onClose={() => confirmTourLocale(locale)}
+      />
+
+      {tourStep === "splash"
+        ? createPortal(
+            <div className="bg-atmosphere fixed inset-0 z-[80] flex flex-col items-center justify-center">
+              <div className="animate-rise flex flex-col items-center text-center">
+                <div className="flex flex-col items-center">
+                  <div className="inline-flex flex-col items-stretch">
+                    <div className="inline-flex items-end">
+                      <BrandLogo height={52} priority />
+                      <span className="-ml-0.5 translate-y-[-3px] font-[family-name:var(--font-display)] text-[1.65rem] font-bold leading-none tracking-tight text-[var(--ink)]">
+                        .link
+                      </span>
+                    </div>
+                    {splashKickerCompact ? (
+                      <p className="mt-1.5 flex w-full justify-between pl-1 text-sm font-semibold leading-none text-[var(--muted)]">
+                        {splashKickerLetters.map((ch, i) => (
+                          <span key={`${ch}-${i}`}>{ch}</span>
+                        ))}
+                      </p>
+                    ) : null}
+                  </div>
+                  {splashKickerCompact ? null : (
+                    <p className="mt-3 whitespace-nowrap text-base font-medium tracking-[0.32em] text-[var(--muted)]">
+                      {splashKicker}
+                    </p>
+                  )}
+                </div>
+                <p className="mt-8 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight text-[var(--ink)]">
+                  {walkT("tour.splashTitle")}
+                </p>
+                <p className="mt-2 text-sm font-medium tracking-[0.12em] text-[var(--muted)]">
+                  {walkT("tour.splashSoon")}
+                </p>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
       <IgShareGuideHint
-        open={guideHintOpen && !guideOpen && !storyOpen}
-        mobileRef={mobileGuideRef}
-        desktopRef={desktopGuideRef}
-        onDismiss={dismissGuideHint}
+        open={
+          Boolean(tourStep) &&
+          tourStep !== "locale" &&
+          tourStep !== "splash" &&
+          !cropFile &&
+          !editingPrompt &&
+          !uploading &&
+          !(
+            guideOpen &&
+            tourStep !== "watchGuide" &&
+            tourStep !== "guideShareIg"
+          )
+        }
+        mobileRef={
+          tourStep === "avatar"
+            ? mobileAvatarRef
+            : tourStep === "prompt"
+              ? mobilePromptRef
+              : tourStep === "choose"
+                ? mobileGuideRef
+                : tourStep === "shareIg"
+                  ? mobileShareIgRef
+                  : tourStep === "watchGuide"
+                    ? guidePanelRef
+                    : tourStep === "guideShareIg"
+                      ? guideShareRef
+                      : tourStep === "copyUrl"
+                        ? storyCopyRef
+                        : storyShareRef
+        }
+        desktopRef={
+          tourStep === "avatar"
+            ? desktopAvatarRef
+            : tourStep === "prompt"
+              ? desktopPromptRef
+              : tourStep === "choose"
+                ? desktopGuideRef
+                : tourStep === "shareIg"
+                  ? desktopShareIgRef
+                  : tourStep === "watchGuide"
+                    ? guidePanelRef
+                    : tourStep === "guideShareIg"
+                      ? guideShareRef
+                      : tourStep === "copyUrl"
+                        ? storyCopyRef
+                        : storyShareRef
+        }
+        message={
+          tourStep === "avatar"
+            ? walkT("tour.avatar")
+            : tourStep === "prompt"
+              ? walkT("tour.prompt")
+              : tourStep === "choose"
+                ? walkT("tour.choose")
+                : tourStep === "shareIg"
+                  ? walkT("tour.shareIg")
+                  : tourStep === "watchGuide"
+                    ? walkT("tour.waitVideo")
+                    : tourStep === "guideShareIg"
+                      ? walkT("tour.guideShareIg")
+                      : tourStep === "copyUrl"
+                        ? walkT("tour.copyUrl")
+                        : walkT("tour.shareImage")
+        }
+        placement={tourStep === "watchGuide" ? "aside" : "spotlight"}
+        frameClassName={
+          tourStep === "avatar" ? "rounded-full" : "rounded-[1.15rem]"
+        }
+        actions={
+          tourStep === "avatar"
+            ? [{ label: walkT("tour.skip"), onClick: () => setTourStep("prompt") }]
+            : tourStep === "prompt"
+              ? [{ label: walkT("tour.skip"), onClick: () => setTourStep("choose") }]
+              : tourStep === "choose"
+                ? [
+                    {
+                      label: walkT("tour.goShareIg"),
+                      onClick: () => setTourStep("shareIg"),
+                      primary: true,
+                    },
+                  ]
+                : tourStep === "shareImage"
+                  ? [
+                      {
+                        label: walkT("tour.displayOk"),
+                        onClick: dismissGuideHint,
+                      },
+                    ]
+                  : undefined
+        }
       />
     </div>
   );

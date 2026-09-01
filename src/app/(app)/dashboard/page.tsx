@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("nav.shortUrl") };
 }
 
-type Props = { searchParams: Promise<{ welcome?: string; guideHint?: string }> };
+type Props = { searchParams: Promise<{ welcome?: string; guideHint?: string; tour?: string }> };
 
 export default async function DashboardPage({ searchParams }: Props) {
   const viewer = await getViewer();
@@ -26,7 +26,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     await ensureDemoAccount();
   }
 
-  const { welcome, guideHint } = await searchParams;
+  const { welcome, guideHint, tour } = await searchParams;
   const profile = await getProfileForOwner(viewer.user.id);
   const emailVerified = Boolean(profile.user.emailVerified);
 
@@ -43,6 +43,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <SharePageClient
           isDemoAccount={viewer.kind === "demo"}
           forceGuideHint={viewer.kind === "demo" && guideHint === "1"}
+          forceTour={tour === "1"}
           initialProfile={{
             user: profile.user,
             link: {

@@ -21,6 +21,7 @@ export const ko = {
   "nav.settingsUser": "설정 · @{username}",
   "nav.settingsAria": "계정 설정, @{username}",
   "nav.inboxUnread": "{label}, 읽지 않음 {count}개",
+  "nav.tour": "안내 시작",
 
   "footer.ask": "익명 Q&A",
   "footer.about": "소개",
@@ -395,6 +396,23 @@ export const ko = {
   "guide.mute": "음소거",
   "guide.hint": "스토리가 어려워요? 여기를 누르면 한 번 보여 줄게요",
   "guide.dontShow": "다시 보지 않기",
+  "tour.skip": "일단 건너뛰기",
+  "tour.pickLang": "먼저 언어를 확인해 주세요",
+  "tour.pickLangHint": "안내와 화면은 고른 언어로 진행돼요",
+  "tour.splashTitle": "안내 튜토리얼",
+  "tour.splashSoon": "곧 시작됩니다…",
+  "tour.avatar": "먼저 프로필을 눌러 내 사진으로 바꿔 보세요",
+  "tour.prompt": "그다음 소개 문구를 눌러 묻고 싶은 말을 적어 보세요",
+  "tour.choose": "이어서 스토리 안내를 보거나, 바로 IG에 공유할 수 있어요",
+  "tour.watchGuide": "안내 보기",
+  "tour.goShareIg": "바로 공유하는 법 알려줄게요",
+  "tour.shareIg": "여기를 눌러 공유 카드를 여세요",
+  "tour.waitVideo": "먼저 이 안내를 보세요. 끝나면 다음 단계로 안내할게요",
+  "tour.guideShareIg": "다 봤으면 「IG 스토리에 공유」를 누르세요",
+  "tour.copyUrl": "먼저 내 짧은 링크를 복사하세요",
+  "tour.shareImage":
+    "「이 그림 공유」를 누른 뒤 Instagram, 그다음 스토리를 고르세요",
+  "tour.displayOk": "괜찮아요",
 
   "shareStory.copyFailed": "복사하지 못했어요. 짧은 URL을 직접 골라 복사하세요.",
   "shareStory.hint":

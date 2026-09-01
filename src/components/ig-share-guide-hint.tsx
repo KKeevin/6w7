@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { SHARE_POINT_AT } from "@/shared/share-story-art";
-import { useT } from "@/components/i18n-provider";
 
 type Rect = { top: number; left: number; width: number; height: number };
+
+export type CoachHintAction = {
+  label: string;
+  onClick: () => void;
+  primary?: boolean;
+};
 
 function visibleTarget(
   mobileRef: RefObject<HTMLElement | null>,
@@ -30,19 +35,52 @@ function readRect(el: HTMLElement): Rect {
   };
 }
 
+function placeAside(
+  rect: Rect,
+  tooltipW: number,
+  tooltipH: number,
+): { top: number; left: number } {
+  const gap = 12;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const rightSpace = vw - (rect.left + rect.width);
+  const leftSpace = rect.left;
+  let top = Math.min(
+    Math.max(12, rect.top + (rect.height - tooltipH) / 2),
+    vh - tooltipH - 12,
+  );
+  if (rightSpace >= tooltipW + gap + 12) {
+    return { top, left: rect.left + rect.width + gap };
+  }
+  if (leftSpace >= tooltipW + gap + 12) {
+    return { top, left: rect.left - tooltipW - gap };
+  }
+  const left = Math.min(Math.max(12, (vw - tooltipW) / 2), vw - tooltipW - 12);
+  let stacked = rect.top - tooltipH - gap;
+  if (stacked < 12) stacked = Math.min(rect.top + 12, vh - tooltipH - 12);
+  return { top: Math.max(12, stacked), left };
+}
+
 export function IgShareGuideHint({
   open,
   mobileRef,
   desktopRef,
-  onDismiss,
+  message,
+  frameClassName = "rounded-[1.15rem]",
+  actions,
+  placement = "spotlight",
 }: {
   open: boolean;
   mobileRef: RefObject<HTMLElement | null>;
   desktopRef: RefObject<HTMLElement | null>;
-  onDismiss: () => void;
+  message: string;
+  frameClassName?: string;
+  actions?: CoachHintAction[];
+  placement?: "spotlight" | "aside";
 }) {
-  const t = useT();
   const [rect, setRect] = useState<Rect | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [tooltipH, setTooltipH] = useState(118);
 
   useEffect(() => {
     if (!open) {
@@ -53,6 +91,8 @@ export function IgShareGuideHint({
     function update() {
       const el = visibleTarget(mobileRef, desktopRef);
       setRect(el ? readRect(el) : null);
+      const h = tooltipRef.current?.offsetHeight;
+      if (h && h > 0) setTooltipH(h);
     }
 
     update();
@@ -69,7 +109,13 @@ export function IgShareGuideHint({
       window.visualViewport?.removeEventListener("resize", update);
       window.visualViewport?.removeEventListener("scroll", update);
     };
-  }, [open, mobileRef, desktopRef]);
+  }, [open, mobileRef, desktopRef, message]);
+
+  useEffect(() => {
+    if (!open || placement === "aside") return;
+    const el = visibleTarget(mobileRef, desktopRef);
+    el?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+  }, [open, message, mobileRef, desktopRef, placement]);
 
   if (!open || !rect) return null;
 
@@ -95,38 +141,47 @@ export function IgShareGuideHint({
     Math.max(12, tooltipLeft),
     window.innerWidth - tooltipWidth - 12,
   );
-  if (tooltipTop + 118 > window.innerHeight) {
-    tooltipTop = Math.max(12, rect.top - 118);
+  if (tooltipTop + tooltipH + 12 > window.innerHeight) {
+    tooltipTop = Math.max(12, rect.top - tooltipH - 12);
+  }
+  if (placement === "aside") {
+    const parked = placeAside(rect, tooltipWidth, tooltipH);
+    tooltipTop = parked.top;
+    tooltipLeft = parked.left;
   }
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden">
-      <div
-        className="ig-guide-hint-frame absolute rounded-[1.15rem]"
-        style={{
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-        }}
-      />
+    <div className="pointer-events-none fixed inset-0 z-[70] overflow-hidden">
+      {placement === "spotlight" ? (
+        <>
+          <div
+            className={`ig-guide-hint-frame absolute ${frameClassName}`}
+            style={{
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height,
+            }}
+          />
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={SHARE_POINT_AT.src}
-        alt=""
-        width={Math.round(pointerW)}
-        height={Math.round(pointerH)}
-        className={`ig-guide-hint-pointer absolute ${
-          flip ? "ig-guide-hint-pointer-flip" : ""
-        }`}
-        style={{
-          width: pointerW,
-          height: pointerH,
-          left: imgLeft,
-          top: imgTop,
-        }}
-      />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={SHARE_POINT_AT.src}
+            alt=""
+            width={Math.round(pointerW)}
+            height={Math.round(pointerH)}
+            className={`ig-guide-hint-pointer absolute ${
+              flip ? "ig-guide-hint-pointer-flip" : ""
+            }`}
+            style={{
+              width: pointerW,
+              height: pointerH,
+              left: imgLeft,
+              top: imgTop,
+            }}
+          />
+        </>
+      ) : null}
 
       <div
         className="pointer-events-auto absolute"
@@ -136,17 +191,31 @@ export function IgShareGuideHint({
           width: tooltipWidth,
         }}
       >
-        <div className="animate-rise rounded-2xl border border-[var(--line)] bg-white px-3.5 py-3 shadow-[0_16px_40px_rgba(20,33,43,0.2)]">
+        <div
+          ref={tooltipRef}
+          className="animate-rise rounded-2xl border border-[var(--line)] bg-white px-3.5 py-3 shadow-[0_16px_40px_rgba(20,33,43,0.2)]"
+        >
           <p className="text-sm font-semibold leading-snug text-[var(--ink)]">
-            {t("guide.hint")}
+            {message}
           </p>
-          <button
-            type="button"
-            className="mt-2.5 w-full rounded-xl border border-[var(--line)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
-            onClick={onDismiss}
-          >
-            {t("guide.dontShow")}
-          </button>
+          {actions && actions.length > 0 ? (
+            <div className="mt-2.5 grid gap-2">
+              {actions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  className={
+                    action.primary
+                      ? "w-full rounded-xl bg-[var(--ink)] px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                      : "w-full rounded-xl border border-[var(--line)] px-3 py-2 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--surface)]"
+                  }
+                  onClick={action.onClick}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

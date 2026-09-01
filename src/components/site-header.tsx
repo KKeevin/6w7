@@ -3,6 +3,7 @@ import { getViewer } from "@/lib/viewer";
 import { prisma } from "@/lib/db";
 import { BrandLogo } from "@/components/brand-logo";
 import { HeaderNav } from "@/components/site-header-nav";
+import { HeaderTourButton } from "@/components/header-tour-button";
 import { BRAND } from "@/shared/tools";
 import { SHELL_X } from "@/shared/shell";
 import { getT } from "@/lib/locale";
@@ -71,25 +72,28 @@ export async function SiteHeader() {
         </div>
 
         {signedIn ? (
-          <Link
-            href={needsEmail ? "/settings#email" : "/settings"}
-            className="chrome-scale-end relative flex h-9 w-9 items-center justify-center justify-self-end rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--mint)] hover:text-[var(--ink)]"
-            title={
-              username
-                ? t("nav.settingsUser", { username })
-                : t("nav.settings")
-            }
-            aria-label={
-              username
-                ? t("nav.settingsAria", { username })
-                : t("nav.settings")
-            }
-          >
-            <UserIcon className="h-5 w-5" />
-            {needsEmail ? (
-              <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--bg)]" />
-            ) : null}
-          </Link>
+          <div className="chrome-scale-end flex items-center gap-1.5 justify-self-end">
+            <HeaderTourButton />
+            <Link
+              href={needsEmail ? "/settings#email" : "/settings"}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--mint)] hover:text-[var(--ink)]"
+              title={
+                username
+                  ? t("nav.settingsUser", { username })
+                  : t("nav.settings")
+              }
+              aria-label={
+                username
+                  ? t("nav.settingsAria", { username })
+                  : t("nav.settings")
+              }
+            >
+              <UserIcon className="h-5 w-5" />
+              {needsEmail ? (
+                <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--bg)]" />
+              ) : null}
+            </Link>
+          </div>
         ) : (
           <Link
             href="/login"

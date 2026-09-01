@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ShareStoryCard,
@@ -20,6 +20,9 @@ export type ShareStoryDialogProps = {
   shortUrl: string;
   onCopiedLink?: () => void;
   onOpenGuide?: () => void;
+  onShareImage?: () => void;
+  copyButtonRef?: RefObject<HTMLButtonElement | null>;
+  shareImageButtonRef?: RefObject<HTMLButtonElement | null>;
 };
 
 type Props = ShareStoryDialogProps;
@@ -42,6 +45,9 @@ export function ShareStoryDialog({
   shortUrl,
   onCopiedLink,
   onOpenGuide,
+  onShareImage,
+  copyButtonRef,
+  shareImageButtonRef,
 }: Props) {
   const t = useT();
   const [busy, setBusy] = useState(false);
@@ -161,6 +167,7 @@ export function ShareStoryDialog({
 
         <div className="mt-5 grid gap-2">
           <Button
+            ref={copyButtonRef}
             type="button"
             variant="secondary"
             onClick={() => void copyShortUrl()}
@@ -182,8 +189,12 @@ export function ShareStoryDialog({
               </Button>
             )}
             <Button
+              ref={shareImageButtonRef}
               type="button"
-              onClick={() => void download()}
+              onClick={() => {
+                onShareImage?.();
+                void download();
+              }}
               disabled={busy}
             >
               {busy ? t("story.generating") : t("story.shareImage")}

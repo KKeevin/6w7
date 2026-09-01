@@ -21,6 +21,7 @@ export const en = {
   "nav.settingsUser": "Settings · @{username}",
   "nav.settingsAria": "Account settings, @{username}",
   "nav.inboxUnread": "{label}, {count} unread",
+  "nav.tour": "Start walkthrough",
 
   "footer.ask": "Anonymous Q&A",
   "footer.about": "About",
@@ -395,6 +396,23 @@ export const en = {
   "guide.mute": "Mute",
   "guide.hint": "Not sure about Stories? Tap here and I'll show you once",
   "guide.dontShow": "Don't show again",
+  "tour.skip": "Skip for now",
+  "tour.pickLang": "Confirm your language",
+  "tour.pickLangHint": "The walkthrough and the rest of the site will use this",
+  "tour.splashTitle": "Walkthrough",
+  "tour.splashSoon": "Starting soon…",
+  "tour.avatar": "Tap the avatar first and put in your photo",
+  "tour.prompt": "Then tap the prompt and write what you want people to ask",
+  "tour.choose": "Next, watch the Stories walkthrough, or go share to IG",
+  "tour.watchGuide": "Watch the guide",
+  "tour.goShareIg": "I'll walk you through sharing",
+  "tour.shareIg": "Tap here to open the share card",
+  "tour.waitVideo": "Watch this first — I'll take you to the next step when it ends",
+  "tour.guideShareIg": "That's the demo. Next tap “Share to IG Stories”",
+  "tour.copyUrl": "Copy your short link first",
+  "tour.shareImage":
+    "When you tap “Share this image”, pick Instagram, then Stories",
+  "tour.displayOk": "Got it",
 
   "shareStory.copyFailed": "Couldn't copy. Select the short URL and copy it yourself.",
   "shareStory.hint":

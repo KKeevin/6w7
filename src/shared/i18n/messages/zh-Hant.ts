@@ -19,6 +19,7 @@ export const zhHant = {
   "nav.settingsUser": "設定 · @{username}",
   "nav.settingsAria": "帳號設定，@{username}",
   "nav.inboxUnread": "{label}，{count} 則未讀",
+  "nav.tour": "開啟導覽",
 
   "footer.ask": "匿名問答",
   "footer.about": "關於",
@@ -393,6 +394,23 @@ export const zhHant = {
   "guide.mute": "靜音",
   "guide.hint": "不會發限動？點這裡看我示範一次",
   "guide.dontShow": "不要再顯示",
+  "tour.skip": "先跳過",
+  "tour.pickLang": "先確認語言",
+  "tour.pickLangHint": "之後的教學與畫面都會用你選的語言",
+  "tour.splashTitle": "引導教程",
+  "tour.splashSoon": "即將開始…",
+  "tour.avatar": "先點頭貼，換成你自己的照片",
+  "tour.prompt": "再點提示文字，改成你想問大家的一句話",
+  "tour.choose": "接下來可以看限動教學，或直接去做分享",
+  "tour.watchGuide": "看限動教學",
+  "tour.goShareIg": "直接帶你做分享",
+  "tour.shareIg": "點這裡打開分享圖",
+  "tour.waitVideo": "先看完這段示範，看完我會帶你下一步",
+  "tour.guideShareIg": "看完了，接著按「分享到 IG 限動」",
+  "tour.copyUrl": "先複製你的專屬短網址",
+  "tour.shareImage":
+    "待會按「分享此圖」時，請選 Instagram，再選限時動態",
+  "tour.displayOk": "沒問題",
 
   "shareStory.copyFailed": "複製失敗，請手動選取短網址再複製。",
   "shareStory.hint":

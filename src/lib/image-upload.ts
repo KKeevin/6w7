@@ -55,17 +55,33 @@ type Decoded = {
   release: () => void;
 };
 
-async function decode(file: File): Promise<Decoded> {
+async function decode(file: File, maxEdge?: number): Promise<Decoded> {
   if (typeof createImageBitmap === "function") {
     try {
-      const bitmap = await createImageBitmap(file, {
+      const full = await createImageBitmap(file, {
         imageOrientation: "from-image",
       });
+      const edge = Math.max(full.width, full.height);
+      if (maxEdge && edge > maxEdge) {
+        const scale = maxEdge / edge;
+        const small = await createImageBitmap(full, {
+          resizeWidth: Math.max(1, Math.round(full.width * scale)),
+          resizeHeight: Math.max(1, Math.round(full.height * scale)),
+          resizeQuality: "medium",
+        });
+        full.close();
+        return {
+          source: small,
+          width: small.width,
+          height: small.height,
+          release: () => small.close(),
+        };
+      }
       return {
-        source: bitmap,
-        width: bitmap.width,
-        height: bitmap.height,
-        release: () => bitmap.close(),
+        source: full,
+        width: full.width,
+        height: full.height,
+        release: () => full.close(),
       };
     } catch {
       // 少數瀏覽器對某些格式會失敗，改走 <img>
@@ -111,7 +127,7 @@ function render(decoded: Decoded, scale: number) {
   canvas.height = Math.max(1, Math.round(decoded.height * scale));
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("canvas unavailable");
-  ctx.imageSmoothingQuality = "high";
+  ctx.imageSmoothingQuality = "medium";
   ctx.drawImage(decoded.source, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
@@ -140,7 +156,7 @@ export async function canvasToImageFile(
   targetBytes = ASK_LIMITS.uploadTargetBytes,
 ): Promise<File> {
   const type = supportsWebp() ? "image/webp" : "image/png";
-  const qualities = type === "image/png" ? [1] : [0.92, 0.82, 0.7];
+  const qualities = type === "image/png" ? [1] : [0.82, 0.68];
 
   let last: Blob | null = null;
   for (const quality of qualities) {
@@ -177,7 +193,7 @@ export async function prepareImageUpload(
     throw new ImageTooLargeError(file.size);
   }
 
-  const decoded = await decode(file).catch(() => null);
+  const decoded = await decode(file, maxEdge).catch(() => null);
   if (!decoded) {
     if (file.size > targetBytes) {
       throw new ImageUploadError("upload.unreadable");
@@ -201,14 +217,11 @@ export async function prepareImageUpload(
       type === "image/png"
         ? [
             { scale: fit, quality: 1 },
-            { scale: fit * 0.75, quality: 1 },
-            { scale: fit * 0.5, quality: 1 },
+            { scale: fit * 0.7, quality: 1 },
           ]
         : [
-            { scale: fit, quality: 0.86 },
-            { scale: fit, quality: 0.7 },
-            { scale: fit * 0.75, quality: 0.62 },
-            { scale: fit * 0.55, quality: 0.55 },
+            { scale: fit, quality: 0.8 },
+            { scale: fit * 0.7, quality: 0.62 },
           ];
 
     let last: Blob | null = null;

@@ -145,7 +145,7 @@ export async function listMediaLibrary(userId: string) {
 
 export async function uploadMediaAsset(userId: string, input: Buffer) {
   const owner = await requireOwnerLink(userId);
-  await purgeExpiredDemoMedia();
+  void purgeExpiredDemoMedia();
   const count = await prisma.mediaAsset.count({
     where: ownerLibraryWhere(userId, owner.sandboxId),
   });
@@ -158,7 +158,6 @@ export async function uploadMediaAsset(userId: string, input: Buffer) {
   let webp: Buffer;
   let width: number;
   let height: number;
-  let outMeta: { width?: number; height?: number };
   try {
     const sharp = (await import("sharp")).default;
     const image = sharp(input, {
@@ -166,11 +165,11 @@ export async function uploadMediaAsset(userId: string, input: Buffer) {
       limitInputPixels: MAX_INPUT_PIXELS,
     }).rotate();
     const meta = await image.metadata();
-    width = meta.width || 1;
-    height = meta.height || 1;
+    const srcW = meta.width || 1;
+    const srcH = meta.height || 1;
     const maxEdge = ASK_LIMITS.stickerMaxEdge;
     const resized =
-      width > maxEdge || height > maxEdge
+      srcW > maxEdge || srcH > maxEdge
         ? image.resize({
             width: maxEdge,
             height: maxEdge,
@@ -178,8 +177,12 @@ export async function uploadMediaAsset(userId: string, input: Buffer) {
             withoutEnlargement: true,
           })
         : image;
-    webp = await resized.webp({ quality: 82, effort: 4 }).toBuffer();
-    outMeta = await sharp(webp).metadata();
+    const out = await resized
+      .webp({ quality: 80, effort: 2 })
+      .toBuffer({ resolveWithObject: true });
+    webp = out.data;
+    width = out.info.width || srcW;
+    height = out.info.height || srcH;
   } catch {
     throw new AppError("VALIDATION_ERROR", "api.imageUnreadable", 400);
   }
@@ -193,8 +196,8 @@ export async function uploadMediaAsset(userId: string, input: Buffer) {
       userId,
       objectKey,
       url: publicUrl,
-      width: outMeta.width || width,
-      height: outMeta.height || height,
+      width,
+      height,
       bytes: webp.length,
       sandboxId: owner.sandboxId,
       expiresAt: owner.isDemo ? new Date(Date.now() + DEMO_MEDIA_TTL_MS) : null,

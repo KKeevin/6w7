@@ -5,8 +5,8 @@
 [![Site](https://img.shields.io/badge/site-6w7.link-1aa68a?style=flat-square)](https://6w7.link)
 [![zh-TW](https://img.shields.io/badge/lang-zh--TW-red?style=flat-square)](#)
 [![License](https://img.shields.io/badge/License-Non--Commercial%20Educational-yellow?style=flat-square)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/kkkeevin/6w7?style=flat-square&label=stars)](https://github.com/kkkeevin/6w7/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/kkkeevin/6w7?style=flat-square&label=forks)](https://github.com/kkkeevin/6w7/forks)
+[![GitHub Stars](https://img.shields.io/github/stars/kkeevin/6w7?style=flat-square&label=stars)](https://github.com/kkeevin/6w7/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/kkeevin/6w7?style=flat-square&label=forks)](https://github.com/kkeevin/6w7/forks)
 
 [![Next.js](https://img.shields.io/badge/Next.js-16_App_Router-black?style=flat-square)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square)](https://www.typescriptlang.org)

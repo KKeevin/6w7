@@ -2,6 +2,17 @@ import bcrypt from "bcryptjs";
 import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { asTopicList } from "@/lib/topics";
+import { isDemoUsername, getDemoPrompt } from "@/shared/demo-account";
+import { getRequestLocale } from "@/lib/locale";
+import {
+  getOrCreateDemoSandboxId,
+  readDemoSandboxId,
+} from "@/lib/demo-sandbox";
+import {
+  hydrateDemoSandboxOverlay,
+  patchDemoSandboxOverlay,
+  type DemoSandboxOverlay,
+} from "@/services/demo-sandbox.service";
 import { AppError } from "@/shared/errors";
 import { avatarDisplayUrl } from "@/shared/avatar-url";
 import { askLinkUrl } from "@/lib/utils";
@@ -11,9 +22,10 @@ import type {
   updateProfileSchema,
 } from "@/shared/schemas";
 import { listStickersForLink } from "@/services/page-media.service";
+import { DEFAULT_ASK_TITLE } from "@/shared/ask-title";
+import type { PublicSticker } from "@/shared/page-stickers";
 
 const DEFAULT_PROMPT = "匿名傳訊息給我！";
-const DEFAULT_TITLE = "匿名問我";
 
 function serializeLink<T extends { topics: unknown; slug: string }>(link: T) {
   return {
@@ -54,7 +66,7 @@ export async function registerUser(input: z.infer<typeof registerSchema>) {
       askLink: {
         create: {
           slug: username,
-          title: DEFAULT_TITLE,
+          title: DEFAULT_ASK_TITLE,
           prompt: DEFAULT_PROMPT,
         },
       },
@@ -80,7 +92,28 @@ export async function registerUser(input: z.infer<typeof registerSchema>) {
   };
 }
 
-export async function getProfileForOwner(userId: string) {
+function applyOverlayToLink<
+  T extends {
+    prompt: string;
+    title: string;
+    acceptingMessages: boolean;
+  },
+>(link: T, overlay: DemoSandboxOverlay | null, demoPrompt: string): T {
+  if (!overlay) {
+    return { ...link, prompt: demoPrompt };
+  }
+  return {
+    ...link,
+    prompt: overlay.prompt ?? demoPrompt,
+    title: overlay.title ?? link.title,
+    acceptingMessages: overlay.acceptingMessages ?? link.acceptingMessages,
+  };
+}
+
+export async function getProfileForOwner(
+  userId: string,
+  opts?: { mintSandbox?: boolean },
+) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { askLink: true },
@@ -88,6 +121,26 @@ export async function getProfileForOwner(userId: string) {
   if (!user?.askLink) {
     throw new AppError("NOT_FOUND", "找不到個人連結。", 404);
   }
+  const serialized = serializeLink(user.askLink);
+  const sandboxId = user.isDemo
+    ? opts?.mintSandbox
+      ? await getOrCreateDemoSandboxId()
+      : await readDemoSandboxId()
+    : null;
+  const overlay = sandboxId
+    ? await hydrateDemoSandboxOverlay(user.id, sandboxId)
+    : null;
+  const demoPrompt = user.isDemo
+    ? getDemoPrompt(await getRequestLocale())
+    : serialized.prompt;
+  const link = user.isDemo
+    ? {
+        ...applyOverlayToLink(serialized, overlay, demoPrompt),
+        requireTopic: false,
+        topics: [] as string[],
+      }
+    : serialized;
+
   return {
     user: {
       id: user.id,
@@ -95,10 +148,12 @@ export async function getProfileForOwner(userId: string) {
       name: user.name,
       email: user.email,
       emailVerified: Boolean(user.emailVerified),
-      image: avatarDisplayUrl(user.image, user.updatedAt),
+      image: overlay?.avatarUrl ?? avatarDisplayUrl(user.image, user.updatedAt),
     },
-    link: serializeLink(user.askLink),
-    stickers: await listStickersForLink(user.askLink.id),
+    link,
+    stickers: user.isDemo
+      ? (overlay?.stickers ?? [])
+      : await listStickersForLink(user.askLink.id),
   };
 }
 
@@ -106,9 +161,34 @@ export async function updateProfile(
   userId: string,
   input: z.infer<typeof updateProfileSchema>,
 ) {
-  const existing = await prisma.askLink.findUnique({ where: { userId } });
+  const existing = await prisma.askLink.findUnique({
+    where: { userId },
+    include: { user: { select: { isDemo: true } } },
+  });
   if (!existing) {
     throw new AppError("NOT_FOUND", "找不到個人連結。", 404);
+  }
+
+  if (existing.user.isDemo) {
+    const sandboxId = await getOrCreateDemoSandboxId();
+    const overlay = await patchDemoSandboxOverlay(sandboxId, {
+      ...(input.prompt !== undefined ? { prompt: input.prompt } : {}),
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.acceptingMessages !== undefined
+        ? { acceptingMessages: input.acceptingMessages }
+        : {}),
+    });
+    const { user: _demoUser, ...askLink } = existing;
+    const serialized = serializeLink(askLink);
+    return applyOverlayToLink(
+      {
+        ...serialized,
+        requireTopic: false,
+        topics: [] as string[],
+      },
+      overlay,
+      overlay.prompt ?? getDemoPrompt(await getRequestLocale()),
+    );
   }
 
   const link = await prisma.askLink.update({
@@ -156,19 +236,43 @@ export const getPublicAskLink = cache(async (slug: string) => {
   if (!link || !link.isActive || link.user.status !== "active") {
     throw new AppError("NOT_FOUND", "找不到此匿名問答連結。", 404);
   }
-  const stickers = await listStickersForLink(link.id);
+  const demo = isDemoUsername(link.slug);
+  const stickers = demo ? [] : await listStickersForLink(link.id);
+  const prompt = demo ? getDemoPrompt(await getRequestLocale()) : link.prompt;
   return {
     slug: link.slug,
     title: link.title,
-    prompt: link.prompt,
+    prompt,
     acceptingMessages: link.acceptingMessages,
-    requireTopic: link.requireTopic,
-    topics: asTopicList(link.topics),
+    requireTopic: demo ? false : link.requireTopic,
+    topics: demo ? [] : asTopicList(link.topics),
     image: avatarDisplayUrl(link.user.image, link.user.updatedAt),
     displayName: link.user.name || link.user.username,
     stickers,
   };
 });
+
+export async function applyDemoSandboxToPublicLink<
+  T extends {
+    prompt: string;
+    title: string;
+    acceptingMessages: boolean;
+    image: string | null;
+    stickers: PublicSticker[];
+  },
+>(userId: string, link: T): Promise<T> {
+  const sandboxId = await readDemoSandboxId();
+  if (!sandboxId) return link;
+  const overlay = await hydrateDemoSandboxOverlay(userId, sandboxId);
+  return {
+    ...link,
+    prompt: overlay.prompt ?? link.prompt,
+    title: overlay.title ?? link.title,
+    acceptingMessages: overlay.acceptingMessages ?? link.acceptingMessages,
+    image: overlay.avatarUrl ?? link.image,
+    stickers: overlay.stickers,
+  };
+}
 
 // 相容舊 API 匯出名稱
 export async function createAskLink() {

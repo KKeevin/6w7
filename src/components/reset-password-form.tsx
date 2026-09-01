@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/components/i18n-provider";
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const t = useT();
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -18,7 +20,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
     event.preventDefault();
     setError(null);
     if (password !== confirm) {
-      setError("兩次密碼不一樣");
+      setError(t("reset.mismatch"));
       return;
     }
     setLoading(true);
@@ -30,12 +32,12 @@ export function ResetPasswordForm({ token }: { token: string }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error?.message || "重設失敗");
+        throw new Error(data?.error?.message || t("reset.failed"));
       }
       router.push("/login?mode=login");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
+      setError(err instanceof Error ? err.message : t("common.retry"));
     } finally {
       setLoading(false);
     }
@@ -44,7 +46,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="password">新密碼（至少 8 碼）</Label>
+        <Label htmlFor="password">{t("reset.newPassword")}</Label>
         <Input
           id="password"
           type="password"
@@ -56,7 +58,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         />
       </div>
       <div>
-        <Label htmlFor="confirm">再輸入一次</Label>
+        <Label htmlFor="confirm">{t("reset.confirm")}</Label>
         <Input
           id="confirm"
           type="password"
@@ -69,13 +71,13 @@ export function ResetPasswordForm({ token }: { token: string }) {
       </div>
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "儲存中…" : "重設密碼"}
+        {loading ? t("common.saving") : t("reset.submit")}
       </Button>
       <Link
         href="/forgot-password"
         className="block text-center text-sm text-[var(--muted)] hover:text-[var(--ink)]"
       >
-        連結失效？重新申請
+        {t("reset.retry")}
       </Link>
     </form>
   );

@@ -7,6 +7,9 @@ import { AskReadDialog } from "@/components/ask-read-dialog";
 import { StoryCard, STORY_CARD_SIZE } from "@/components/story-card";
 import { renderInboxStoryPng } from "@/lib/render-story-canvas";
 import { saveImageHint, saveOrSharePng } from "@/lib/save-image";
+import { useI18n } from "@/components/i18n-provider";
+import { DATE_BCP47 } from "@/shared/i18n";
+import { displayAskTitle } from "@/shared/ask-title";
 
 type MessageLite = {
   id: string;
@@ -45,6 +48,7 @@ export function StoryCardDialog({
   onReport,
   onDelete,
 }: Props) {
+  const { t, locale } = useI18n();
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,19 +94,23 @@ export function StoryCardDialog({
         body: message.body,
         reply,
         topic: message.topic,
-        linkTitle: message.link.title,
+        linkTitle: displayAskTitle(message.link.title, t("share.askTitle")),
+        askCaption: t("share.kicker"),
+        topicLabel: message.topic
+          ? t("story.topicPrefix", { topic: message.topic })
+          : displayAskTitle(message.link.title, t("share.askTitle")),
       });
       const result = await saveOrSharePng(
         dataUrl,
         `6w7-story-${message.id.slice(-6)}.png`,
       );
-      setHint(saveImageHint(result));
+      setHint(saveImageHint(result, t));
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         return;
       }
       console.error(err);
-      setError("圖卡產生失敗，請再試一次。");
+      setError(t("story.renderFailed"));
     } finally {
       setBusy(false);
     }
@@ -159,12 +167,12 @@ export function StoryCardDialog({
                 ) : null}
                 {message.isFeatured ? (
                   <span className="inline-flex rounded-full bg-[var(--accent)]/12 px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)]">
-                    精選
+                    {t("inbox.featured")}
                   </span>
                 ) : null}
                 {message.status === "flagged" ? (
                   <span className="inline-flex rounded-full bg-[var(--danger)]/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--danger)]">
-                    已檢舉
+                    {t("inbox.flagged")}
                   </span>
                 ) : null}
               </div>
@@ -172,11 +180,11 @@ export function StoryCardDialog({
                 id="story-card-title"
                 className="mt-1.5 font-[family-name:var(--font-display)] text-lg font-bold"
               >
-                回覆並分享
+                {t("story.replyShare")}
               </h2>
               {message.createdAt ? (
                 <time className="mt-0.5 block text-xs text-[var(--muted)]">
-                  {new Date(message.createdAt).toLocaleString("zh-TW")}
+                  {new Date(message.createdAt).toLocaleString(DATE_BCP47[locale])}
                 </time>
               ) : null}
             </div>
@@ -184,7 +192,7 @@ export function StoryCardDialog({
               type="button"
               onClick={onClose}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
-              aria-label="關閉"
+              aria-label={t("common.close")}
             >
               ✕
             </button>
@@ -195,8 +203,8 @@ export function StoryCardDialog({
             value={reply}
             onChange={(e) => setReply(e.target.value)}
             maxLength={200}
-            aria-label="你的回覆，會印在圖卡上"
-            placeholder="寫句回覆，會印在圖卡上"
+            aria-label={t("story.replyAria")}
+            placeholder={t("story.replyPlaceholder")}
             className="mt-3 min-h-[72px]"
           />
           <p className="mt-1 text-right text-[11px] text-[var(--muted)]">
@@ -216,10 +224,10 @@ export function StoryCardDialog({
             onClick={() => void download()}
             disabled={busy}
           >
-            {busy ? "產生中…" : "分享此圖"}
+            {busy ? t("story.generating") : t("story.shareImage")}
           </Button>
           <p className="mt-2 text-center text-[11px] text-[var(--muted)]">
-            手機選 Instagram → 限動 · 電腦會下載 PNG
+            {t("story.shareHint")}
           </p>
 
           {extra ? <div className="mt-3">{extra}</div> : null}
@@ -232,7 +240,7 @@ export function StoryCardDialog({
                   onClick={onFeatured}
                   className="text-[var(--muted)] transition hover:text-[var(--ink)]"
                 >
-                  {message.isFeatured ? "取消精選" : "精選"}
+                  {message.isFeatured ? t("story.unfeature") : t("inbox.featured")}
                 </button>
               ) : null}
               {onArchived ? (
@@ -241,7 +249,7 @@ export function StoryCardDialog({
                   onClick={onArchived}
                   className="text-[var(--muted)] transition hover:text-[var(--ink)]"
                 >
-                  {message.isArchived ? "取消封存" : "封存"}
+                  {message.isArchived ? t("story.unarchive") : t("story.archive")}
                 </button>
               ) : null}
               {onMarkUnread && message.isRead !== false ? (
@@ -250,7 +258,7 @@ export function StoryCardDialog({
                   onClick={onMarkUnread}
                   className="text-[var(--muted)] transition hover:text-[var(--ink)]"
                 >
-                  標成未讀
+                  {t("story.markUnread")}
                 </button>
               ) : null}
               {onReport ? (
@@ -259,7 +267,7 @@ export function StoryCardDialog({
                   onClick={onReport}
                   className="text-[var(--muted)] transition hover:text-[var(--ink)]"
                 >
-                  檢舉
+                  {t("story.report")}
                 </button>
               ) : null}
               {onDelete ? (
@@ -268,7 +276,7 @@ export function StoryCardDialog({
                   onClick={onDelete}
                   className="text-[var(--danger)] transition hover:brightness-90"
                 >
-                  刪除
+                  {t("common.delete")}
                 </button>
               ) : null}
             </div>

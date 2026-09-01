@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { GuideVideoPlayer } from "@/components/guide-video-player";
 import { BRAND } from "@/shared/tools";
+import { useT } from "@/components/i18n-provider";
 
 type Props = {
   open: boolean;
@@ -20,6 +21,7 @@ export function IgShareGuideDialog({
   onCopyLink,
   onShareStory,
 }: Props) {
+  const t = useT();
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -54,14 +56,14 @@ export function IgShareGuideDialog({
                 id="ig-share-guide-title"
                 className="mt-0.5 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight"
               >
-                怎麼發到 IG 限動
+                {t("guide.title")}
               </h3>
             </div>
             <button
               type="button"
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
               onClick={onClose}
-              aria-label="關閉"
+              aria-label={t("common.close")}
             >
               ✕
             </button>
@@ -75,7 +77,7 @@ export function IgShareGuideDialog({
 
           <div className="mt-4 grid shrink-0 grid-cols-2 gap-2 border-t border-[var(--line)] pt-4">
             <Button type="button" variant="outline" onClick={onCopyLink}>
-              {copied ? "已複製網址" : "複製短網址"}
+              {copied ? t("guide.copiedUrl") : t("guide.copyShort")}
             </Button>
             <Button
               type="button"
@@ -84,7 +86,7 @@ export function IgShareGuideDialog({
                 onShareStory();
               }}
             >
-              分享到 IG 限動
+              {t("share.shareIg")}
             </Button>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { HeaderNav } from "@/components/site-header-nav";
 import { BRAND } from "@/shared/tools";
 import { SHELL_X } from "@/shared/shell";
+import { getT } from "@/lib/locale";
 
 function UserIcon({ className }: { className?: string }) {
   return (
@@ -26,12 +27,13 @@ function UserIcon({ className }: { className?: string }) {
 
 export async function SiteHeader() {
   const viewer = await getViewer();
+  const t = await getT();
   const signedIn = viewer.kind === "user" || viewer.kind === "demo";
 
   const nav = signedIn
     ? [
-        { href: "/dashboard", label: "短網址" },
-        { href: "/inbox", label: "收件匣" },
+        { href: "/dashboard", label: t("nav.shortUrl") },
+        { href: "/inbox", label: t("nav.inbox") },
       ]
     : [];
 
@@ -56,15 +58,15 @@ export async function SiteHeader() {
       >
         <Link
           href={signedIn ? "/dashboard" : "/"}
-          className="chrome-scale-start group flex min-w-0 items-center gap-2 justify-self-start"
+          className="chrome-scale-start group flex min-w-0 items-end gap-0 justify-self-start"
         >
           <BrandLogo height={28} priority className="shrink-0" />
-          <span className="hidden truncate text-xs text-[var(--muted)] group-hover:text-[var(--ink)] sm:inline">
+          <span className="hidden overflow-visible pb-1 text-xs leading-none text-[var(--muted)] group-hover:text-[var(--ink)] sm:inline">
             {BRAND.zh}
           </span>
         </Link>
 
-        <div className="chrome-scale-mid min-w-0">
+        <div className="chrome-scale-mid w-fit max-w-full min-w-0 justify-self-center">
           <HeaderNav items={nav} />
         </div>
 
@@ -72,8 +74,16 @@ export async function SiteHeader() {
           <Link
             href={needsEmail ? "/settings#email" : "/settings"}
             className="chrome-scale-end relative flex h-9 w-9 items-center justify-center justify-self-end rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition hover:border-[var(--mint)] hover:text-[var(--ink)]"
-            title={username ? `設定 · @${username}` : "帳號設定"}
-            aria-label={username ? `帳號設定，@${username}` : "帳號設定"}
+            title={
+              username
+                ? t("nav.settingsUser", { username })
+                : t("nav.settings")
+            }
+            aria-label={
+              username
+                ? t("nav.settingsAria", { username })
+                : t("nav.settings")
+            }
           >
             <UserIcon className="h-5 w-5" />
             {needsEmail ? (
@@ -85,7 +95,7 @@ export async function SiteHeader() {
             href="/login"
             className="chrome-scale-end inline-flex h-9 items-center justify-self-end rounded-xl border border-[var(--line)] px-3 text-sm font-medium hover:bg-[var(--surface)]"
           >
-            登入
+            {t("nav.login")}
           </Link>
         )}
       </div>

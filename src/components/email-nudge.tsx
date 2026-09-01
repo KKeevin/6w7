@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useT } from "@/components/i18n-provider";
 
 const KEY = "6w7-email-nudge";
 const listeners = new Set<() => void>();
@@ -44,6 +45,7 @@ export function EmailNudge({
   hasEmail: boolean;
   verified: boolean;
 }) {
+  const t = useT();
   const dismissed = useSyncExternalStore(
     subscribe,
     isDismissed,
@@ -53,15 +55,15 @@ export function EmailNudge({
   if (verified || dismissed) return null;
 
   const title = welcome
-    ? "帳號開好了，先去玩吧"
+    ? t("nudge.welcomeTitle")
     : hasEmail
-      ? "信箱還沒驗證"
-      : "建議設定信箱";
+      ? t("nudge.unverifiedTitle")
+      : t("nudge.noEmailTitle");
   const body = welcome
-    ? "之後可以到設定頁填信箱並完成驗證。忘記密碼與新留言通知，都會寄到那裡。"
+    ? t("nudge.welcomeBody")
     : hasEmail
-      ? "請到信箱點開驗證連結，或到設定頁重寄一封。沒驗證的話，忘記密碼與新留言通知都寄不出去。"
-      : "到設定頁完成信箱驗證，以免忘記密碼時救不回帳號，也收不到新留言通知。現在不設也沒關係，功能亦可完整使用。";
+      ? t("nudge.unverifiedBody")
+      : t("nudge.noEmailBody");
 
   return (
     <aside className="animate-rise mb-4 overflow-hidden rounded-3xl border border-[var(--accent)]/20 bg-white shadow-[0_16px_40px_rgba(20,33,43,0.06)] sm:mb-5">
@@ -93,14 +95,14 @@ export function EmailNudge({
               href="/settings#email"
               className="inline-flex h-9 items-center rounded-xl bg-[var(--ink)] px-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.98]"
             >
-              去設定並驗證信箱
+              {t("nudge.goSettings")}
             </Link>
             <button
               type="button"
               onClick={dismiss}
               className="inline-flex h-9 items-center rounded-xl px-3 text-sm font-medium text-[var(--muted)] hover:text-[var(--ink)]"
             >
-              之後再說
+              {t("nudge.later")}
             </button>
           </div>
         </div>

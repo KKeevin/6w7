@@ -1,5 +1,8 @@
 import { jsonError, jsonOk, requireUserId } from "@/lib/api";
+import { prisma } from "@/lib/db";
 import { saveProfileAvatar } from "@/lib/storage/avatar";
+import { getOrCreateDemoSandboxId } from "@/lib/demo-sandbox";
+import { saveDemoSandboxAvatar } from "@/services/demo-sandbox.service";
 import { setUserImage } from "@/services/ask-link.service";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { AppError } from "@/shared/errors";
@@ -31,6 +34,35 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    const account = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isDemo: true, username: true },
+    });
+    if (!account) {
+      throw new AppError("UNAUTHORIZED", "請先登入。", 401);
+    }
+
+    if (account.isDemo) {
+      try {
+        const sandboxId = await getOrCreateDemoSandboxId();
+        const { publicPath } = await saveDemoSandboxAvatar(
+          userId,
+          sandboxId,
+          buffer,
+        );
+        return jsonOk({
+          user: {
+            id: userId,
+            username: account.username,
+            image: publicPath,
+          },
+        });
+      } catch (storageError) {
+        console.error("avatar storage failed", storageError);
+        throw new AppError("INTERNAL", "頭貼上傳失敗，請稍後再試。", 500);
+      }
+    }
+
     let publicPath: string;
     try {
       ({ publicPath } = await saveProfileAvatar(userId, buffer));

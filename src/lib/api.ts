@@ -32,12 +32,3 @@ export async function requireUserId() {
   }
   return session.user.id;
 }
-
-export async function requireRealUserId() {
-  const userId = await requireUserId();
-  const session = await auth();
-  if (session?.user?.isDemo) {
-    throw new AppError("FORBIDDEN", "示範帳號不能改公開頁裝扮。", 403);
-  }
-  return userId;
-}

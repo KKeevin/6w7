@@ -7,7 +7,7 @@ import { AppError } from "@/shared/errors";
 export async function GET() {
   try {
     const userId = await requireUserId();
-    const profile = await getProfileForOwner(userId);
+    const profile = await getProfileForOwner(userId, { mintSandbox: true });
     return jsonOk({ links: [profile.link], profile });
   } catch (error) {
     return jsonError(error);

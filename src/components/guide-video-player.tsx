@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/shared/tools";
+import { useT } from "@/components/i18n-provider";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -13,6 +14,7 @@ function formatTime(seconds: number) {
 }
 
 export function GuideVideoPlayer({ src }: { src: string }) {
+  const t = useT();
   const videoRef = useRef<HTMLVideoElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -111,7 +113,7 @@ export function GuideVideoPlayer({ src }: { src: string }) {
       ref={rootRef}
       className="absolute inset-0 select-none outline-none"
       role="region"
-      aria-label="限動教學影片"
+      aria-label={t("guide.videoAria")}
       tabIndex={0}
       onMouseMove={() => revealChrome()}
       onKeyDown={(e) => {
@@ -147,7 +149,7 @@ export function GuideVideoPlayer({ src }: { src: string }) {
         onContextMenu={(e) => e.preventDefault()}
       >
         <source src={src} type="video/mp4" />
-        無法播放教學影片。
+        {t("guide.cannotPlay")}
       </video>
 
       <div
@@ -184,7 +186,7 @@ export function GuideVideoPlayer({ src }: { src: string }) {
           ref={trackRef}
           className="group relative flex h-5 cursor-pointer items-center"
           role="slider"
-          aria-label="播放進度"
+          aria-label={t("guide.progress")}
           aria-valuemin={0}
           aria-valuemax={Math.round(duration)}
           aria-valuenow={Math.round(current)}
@@ -236,7 +238,7 @@ export function GuideVideoPlayer({ src }: { src: string }) {
           <button
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mint)]"
-            aria-label={playing ? "暫停" : ended ? "重播" : "播放"}
+            aria-label={playing ? t("guide.pause") : ended ? t("guide.replay") : t("guide.play")}
             onClick={togglePlay}
           >
             {ended ? (
@@ -260,7 +262,7 @@ export function GuideVideoPlayer({ src }: { src: string }) {
           <button
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mint)]"
-            aria-label={muted ? "取消靜音" : "靜音"}
+            aria-label={muted ? t("guide.unmute") : t("guide.mute")}
             onClick={() => {
               setMuted((m) => !m);
               revealChrome();

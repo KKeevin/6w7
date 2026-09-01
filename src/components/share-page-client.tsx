@@ -23,6 +23,7 @@ import { imageSelectionError, uploadErrorMessage } from "@/lib/image-upload";
 import { AlertToast } from "@/components/alert-toast";
 import { AvatarCropDialog } from "@/components/avatar-crop-dialog";
 import { useUniformFitScale } from "@/lib/uniform-fit-scale";
+import { useI18n } from "@/components/i18n-provider";
 
 const ShareStoryDialog = dynamic(
   () =>
@@ -71,7 +72,8 @@ export function SharePageClient({
   forceGuideHint?: boolean;
   initialProfile?: Profile;
 }) {
-  const demoProfile = demo ? getDemoShareProfile() : null;
+  const { t, locale } = useI18n();
+  const demoProfile = demo ? getDemoShareProfile(locale) : null;
   const seeded = demoProfile ?? initialProfile ?? null;
   const fileRef = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
@@ -110,13 +112,25 @@ export function SharePageClient({
     try {
       const res = await fetch("/api/v1/profile");
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "載入失敗");
+      if (!res.ok) throw new Error(data?.error?.message || t("common.loadFailed"));
       setProfile(data);
       setPrompt(data.link.prompt);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "載入失敗");
+      setError(err instanceof Error ? err.message : t("common.loadFailed"));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadDemoOverlay() {
+    try {
+      const res = await fetch("/api/v1/profile");
+      const data = await res.json();
+      if (!res.ok) return;
+      setProfile(data);
+      setPrompt(data.link.prompt);
+    } catch {
+      /* 沙盒 overlay 載入失敗時維持官方示範 */
     }
   }
 
@@ -125,6 +139,19 @@ export function SharePageClient({
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demo]);
+
+  useEffect(() => {
+    if (demo || !isDemoAccount) return;
+    void loadDemoOverlay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demo, isDemoAccount, locale]);
+
+  useEffect(() => {
+    if (isDemoAccount) return;
+    if (!seeded) return;
+    setProfile(seeded);
+    setPrompt(seeded.link.prompt);
+  }, [isDemoAccount, locale, seeded?.link.prompt]);
 
   useEffect(() => {
     if (editingPrompt && promptRef.current) {
@@ -220,11 +247,11 @@ export function SharePageClient({
         body: JSON.stringify({ prompt: trimmed }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "儲存失敗");
+      if (!res.ok) throw new Error(data?.error?.message || t("common.saveFailed"));
       setProfile((p) => (p ? { ...p, link: data.link } : p));
       setPrompt(data.link.prompt);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "儲存失敗");
+      setError(err instanceof Error ? err.message : t("common.saveFailed"));
       setPrompt(profile.link.prompt);
     } finally {
       setSaving(false);
@@ -243,7 +270,7 @@ export function SharePageClient({
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data?.error?.message || "更新失敗");
+      setError(data?.error?.message || t("common.updateFailed"));
       return;
     }
     setProfile((p) => (p ? { ...p, link: data.link } : p));
@@ -273,13 +300,13 @@ export function SharePageClient({
         method: "POST",
         body: form,
       });
-      if (!res.ok) throw new Error(await uploadErrorMessage(res, "上傳失敗"));
+      if (!res.ok) throw new Error(await uploadErrorMessage(res, t("common.uploadFailed")));
       const data = await res.json();
       setProfile((p) =>
         p ? { ...p, user: { ...p.user, image: data.user.image } } : p,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "上傳失敗");
+      setError(err instanceof Error ? err.message : t("common.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -306,7 +333,7 @@ export function SharePageClient({
   if (loading) {
     return (
       <div className="flex w-full flex-1 py-16">
-        <p className="text-sm text-[var(--muted)]">載入中…</p>
+        <p className="text-sm text-[var(--muted)]">{t("common.loading")}</p>
       </div>
     );
   }
@@ -314,7 +341,7 @@ export function SharePageClient({
   if (!profile) {
     return (
       <div className="flex w-full flex-1 py-16">
-        <p className="text-sm text-[var(--danger)]">{error || "無法載入"}</p>
+        <p className="text-sm text-[var(--danger)]">{error || t("common.cannotLoad")}</p>
       </div>
     );
   }
@@ -330,7 +357,7 @@ export function SharePageClient({
     <div className="relative overflow-hidden rounded-[1.75rem] border border-[var(--line)] bg-white shadow-[0_16px_40px_rgba(20,33,43,0.07)]">
       <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 sm:px-4">
         <span className="text-xs font-semibold tracking-wide text-[var(--muted)]">
-          訪客會看到的樣子
+          {t("share.visitorSee")}
         </span>
         <span className="flex shrink-0 items-center gap-1">
           {!demo ? (
@@ -338,7 +365,7 @@ export function SharePageClient({
               href={dressHref}
               className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-semibold text-[var(--ink)] transition hover:bg-white"
             >
-              去裝扮
+              {t("share.goDecorate")}
             </Link>
           ) : null}
           <Link
@@ -346,7 +373,7 @@ export function SharePageClient({
             target="_blank"
             className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-semibold text-[var(--ink)] transition hover:bg-white"
           >
-            開公開頁
+            {t("common.openPublic")}
             <span className="ml-0.5" aria-hidden>
               ↗
             </span>
@@ -383,7 +410,7 @@ export function SharePageClient({
             onClick={() => {
               if (!demo) fileRef.current?.click();
             }}
-            aria-label={demo ? "示範頭貼" : "上傳大頭貼"}
+            aria-label={demo ? t("demo.avatar") : t("share.uploadAvatar")}
           >
             <div
               className={`overflow-hidden rounded-full border-2 border-[var(--line)] bg-[var(--surface)] transition group-hover:border-[var(--mint)] ${
@@ -420,7 +447,7 @@ export function SharePageClient({
                 compact ? "text-sm" : "text-xs"
               }`}
             >
-              {demo ? "示範帳號" : uploading ? "上傳中…" : "更換頭貼"}
+              {demo ? t("demo.account") : uploading ? t("share.uploading") : t("share.changeAvatar")}
             </span>
           </button>
 
@@ -453,10 +480,10 @@ export function SharePageClient({
                   }
                 }}
                 className="w-full resize-none rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-center font-[family-name:var(--font-display)] text-2xl font-bold leading-tight text-[var(--ink)] outline-none ring-[var(--ring)] focus:ring-2"
-                aria-label="編輯提示文案"
+                aria-label={t("share.editPrompt")}
               />
               <span className="mt-1.5 block text-center text-[11px] text-[var(--muted)]">
-                Enter 儲存 · Esc 取消
+                {t("share.promptKeys")}
               </span>
             </div>
           ) : (
@@ -468,10 +495,10 @@ export function SharePageClient({
               }}
             >
               <h2 className="text-balance font-[family-name:var(--font-display)] text-2xl font-bold leading-tight">
-                {saving ? "儲存中…" : prompt}
+                {saving ? t("common.saving") : prompt}
               </h2>
               <span className="mt-2 inline-flex items-center rounded-full border border-[var(--line)] bg-white px-2.5 py-0.5 text-[11px] font-semibold text-[var(--muted)] group-hover:border-[var(--mint)] group-hover:text-[var(--mint)]">
-                {demo ? "示範提示" : "點這裡改提示"}
+                {demo ? t("demo.prompt") : t("share.clickPrompt")}
               </span>
             </button>
           )}
@@ -482,7 +509,7 @@ export function SharePageClient({
             compact ? "text-sm" : "text-xs"
           }`}
         >
-          採完全匿名提問，請放心問答！
+          {t("share.anonReassure")}
         </p>
 
         {!accepting ? (
@@ -491,7 +518,7 @@ export function SharePageClient({
               compact ? "mt-5 py-5" : "mt-8 py-6"
             }`}
           >
-            此連結目前不接受留言。主人可能暫時關閉了收件。
+            {t("share.closed")}
           </p>
         ) : (
           <div
@@ -501,7 +528,10 @@ export function SharePageClient({
             {(profile.link.topics?.length ?? 0) > 0 ? (
               <div>
                 <Label className={compact ? "text-sm" : undefined}>
-                  主題{profile.link.requireTopic ? "（必選）" : "（選填）"}
+                  {t("share.topic")}
+                  {profile.link.requireTopic
+                    ? t("common.required")
+                    : t("common.optional")}
                 </Label>
                 <div className="mt-2 flex flex-wrap justify-center gap-2">
                   {profile.link.topics?.map((topic) => (
@@ -516,11 +546,11 @@ export function SharePageClient({
               </div>
             ) : null}
             <div>
-              <Label className={compact ? "text-sm" : undefined}>匿名留言</Label>
+              <Label className={compact ? "text-sm" : undefined}>{t("share.anonMessage")}</Label>
               <Textarea
                 disabled
                 tabIndex={-1}
-                placeholder="輸入你的提問 ⁶🤷🏻‍♀️⁷"
+                placeholder={t("share.placeholder")}
                 className={`pointer-events-none ${
                   compact ? "mt-1.5 min-h-[100px] text-base" : ""
                 }`}
@@ -534,10 +564,10 @@ export function SharePageClient({
               className={`w-full ${compact ? "h-12 text-base" : ""}`}
               disabled
             >
-              匿名送出
+              {t("share.sendAnon")}
             </Button>
             <p className="text-xs leading-relaxed text-[var(--muted)]">
-              匿名對主人顯示；系統為防濫用可能保留必要技術資料。請勿發送違法或傷害他人的內容。
+              {t("share.anonNote")}
             </p>
           </div>
         )}
@@ -570,19 +600,19 @@ export function SharePageClient({
       <div className="space-y-5 lg:hidden">
         <header className="animate-rise">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--mint)]">
-            {BRAND.en} · 匿名問答
+            {t("share.brandAsk", { brand: BRAND.en })}
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold tracking-tight">
-            你的專屬連結
+            {t("share.yourLink")}
           </h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            複製短網址，或用分享圖一鍵丟到 IG 限動。
+            {t("share.mobileHint")}
           </p>
         </header>
 
         <section className="animate-rise-delay overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-sm">
           <div className="border-b border-[var(--line)] bg-[var(--ink)] px-4 py-3 text-white">
-            <p className="text-[11px] font-medium text-white/60">短網址</p>
+            <p className="text-[11px] font-medium text-white/60">{t("share.shortUrlLabel")}</p>
             <p className="mt-0.5 break-all font-mono text-sm font-semibold tracking-wide">
               {shortUrl}
             </p>
@@ -594,7 +624,7 @@ export function SharePageClient({
               size="lg"
               onClick={() => void copyLink()}
             >
-              {copied ? "已複製到剪貼簿" : "複製連結"}
+              {copied ? t("common.copiedClipboard") : t("share.copyLink")}
             </Button>
             <Button
               type="button"
@@ -602,7 +632,7 @@ export function SharePageClient({
               className="w-full"
               onClick={() => setStoryOpen(true)}
             >
-              分享到 IG 限動
+              {t("share.shareIg")}
             </Button>
             <Button
               ref={mobileGuideRef}
@@ -611,16 +641,16 @@ export function SharePageClient({
               className="w-full"
               onClick={openGuide}
             >
-              怎麼發到 IG 限動？
+              {t("share.howIg")}
             </Button>
           </div>
         </section>
 
         <div className="flex items-center justify-between rounded-xl border border-[var(--line)] bg-white px-4 py-3">
           <div>
-            <p className="text-sm font-semibold">收件狀態</p>
+            <p className="text-sm font-semibold">{t("share.acceptingTitle")}</p>
             <p className="text-xs text-[var(--muted)]">
-              {accepting ? "目前開放匿名留言" : "已暫停收件"}
+              {accepting ? t("share.acceptingOn") : t("share.acceptingOff")}
             </p>
           </div>
           <button
@@ -646,10 +676,10 @@ export function SharePageClient({
           className="scroll-mt-20"
         >
           <h2 className="mb-3 text-sm font-semibold text-[var(--ink)]">
-            調整公開頁樣貌
+            {t("share.adjustLook")}
           </h2>
           <p className="mb-3 text-xs text-[var(--muted)]">
-            頭貼與提示在這裡改；圖片貼紙請到公開頁按「裝扮此頁」，可拖曳、縮放與旋轉。
+            {t("share.adjustHint")}
           </p>
           {previewPanel(false)}
           <div ref={previewEndRef} className="h-px w-full" aria-hidden />
@@ -662,7 +692,7 @@ export function SharePageClient({
               onClick={scrollToPreview}
               className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition active:scale-[0.98]"
             >
-              往下調整公開頁內容
+              {t("share.scrollCue")}
               <span className="animate-scroll-cue" aria-hidden>
                 ↓
               </span>
@@ -703,25 +733,24 @@ export function SharePageClient({
         <div className="animate-rise space-y-7 xl:space-y-8">
           <header>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--mint)]">
-              匿名問答
+              {t("share.kicker")}
             </p>
             <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl font-bold tracking-tight xl:text-[2.75rem] xl:leading-tight">
-              把連結分享出去，
+              {t("share.title1")}
               <br />
-              看看多少人會跟你悄悄話！
+              {t("share.title2")}
             </h1>
             <p className="mt-3 max-w-lg text-lg text-[var(--muted)]">
-              可以更改頭貼、提示字及裝扮貼紙，佈置完喜好後，複製短網址，再按「分享到
-              IG 限動」，等大家來問。
+              {t("share.lead")}
             </p>
           </header>
 
           <section className="rounded-3xl border border-[var(--line)] bg-white p-7 shadow-[0_16px_40px_rgba(20,33,43,0.06)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-base font-semibold">專屬短網址</p>
+                <p className="text-base font-semibold">{t("share.cardTitle")}</p>
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                  跟你的 IG 帳號同名，之後都不會變
+                  {t("share.cardHint")}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
@@ -730,11 +759,9 @@ export function SharePageClient({
                   role="switch"
                   aria-checked={accepting}
                   aria-label={
-                    accepting
-                      ? "收件中，點一下可關閉收件"
-                      : "已關閉，點一下可重新開放收件"
+                    accepting ? t("share.toggleOn") : t("share.toggleOff")
                   }
-                  title="點一下可切換收件"
+                  title={t("share.toggleTitle")}
                   size="sm"
                   variant={accepting ? "default" : "outline"}
                   onClick={() => void toggleAccepting()}
@@ -744,10 +771,12 @@ export function SharePageClient({
                       : "animate-closed-hint text-[var(--muted)]"
                   }
                 >
-                  {accepting ? "收件中" : "已關閉"}
+                  {accepting
+                    ? t("share.acceptingShortOn")
+                    : t("share.acceptingShortOff")}
                 </Button>
                 <span className="text-[10px] font-medium text-[var(--muted)]">
-                  點一下可切換
+                  {t("share.toggleHint")}
                 </span>
               </div>
             </div>
@@ -762,7 +791,7 @@ export function SharePageClient({
                 className="h-12 shrink-0 px-7 text-base"
                 onClick={() => void copyLink()}
               >
-                {copied ? "已複製" : "複製"}
+                {copied ? t("common.copied") : t("common.copy")}
               </Button>
             </div>
 
@@ -773,7 +802,7 @@ export function SharePageClient({
                 className="h-12 text-base"
                 onClick={() => setStoryOpen(true)}
               >
-                分享到 IG 限動
+                {t("share.shareIg")}
               </Button>
               <Button
                 ref={desktopGuideRef}
@@ -782,7 +811,7 @@ export function SharePageClient({
                 className="h-12 text-base"
                 onClick={openGuide}
               >
-                限動教學
+                {t("share.igGuide")}
               </Button>
             </div>
             <Link
@@ -790,28 +819,28 @@ export function SharePageClient({
               target="_blank"
               className="mt-2.5 inline-flex h-12 w-full items-center justify-center rounded-xl border border-[var(--line)] bg-transparent text-base font-semibold text-[var(--ink)] transition-all hover:bg-[var(--surface)] active:scale-[0.98]"
             >
-              預覽公開頁
+              {t("share.previewPublic")}
             </Link>
           </section>
 
           <section className="rounded-3xl border border-dashed border-[var(--line)] bg-white/60 px-7 py-6">
-            <h2 className="text-base font-semibold">建議分享方式</h2>
+            <h2 className="text-base font-semibold">{t("share.howToTitle")}</h2>
             <ol className="mt-3 space-y-2.5 text-base text-[var(--muted)]">
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">01</span>
-                按「分享到 IG 限動」
+                {t("share.step1")}
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">02</span>
-                點選「複製專屬短網址」，再按「分享此圖」→ 選 Instagram → 限動
+                {t("share.step2")}
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">03</span>
-                加上「連結」貼紙，並貼上短網址，按下發佈
+                {t("share.step3")}
               </li>
               <li className="flex gap-3">
                 <span className="font-mono text-[var(--accent)]">04</span>
-                有人提問，收件匣都會顯示未讀問題數量～立刻點入查看吧！
+                {t("share.step4")}
               </li>
             </ol>
           </section>
@@ -820,7 +849,7 @@ export function SharePageClient({
         <aside className="animate-rise-delay">
           {previewPanel(true)}
           <p className="mt-2 text-center text-sm text-[var(--muted)]">
-            點頭貼換圖，點提示文字就能編輯。貼紙請按「去裝扮」。
+            {t("share.previewFoot")}
           </p>
         </aside>
           </div>

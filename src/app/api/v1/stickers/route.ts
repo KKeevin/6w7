@@ -1,4 +1,4 @@
-import { jsonError, jsonOk, requireRealUserId } from "@/lib/api";
+import { jsonError, jsonOk, requireUserId } from "@/lib/api";
 import {
   addStickerFromAsset,
   listOwnerStickers,
@@ -15,7 +15,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const userId = await requireRealUserId();
+    const userId = await requireUserId();
     const data = await listOwnerStickers(userId);
     return jsonOk(data);
   } catch (error) {
@@ -25,7 +25,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const userId = await requireRealUserId();
+    const userId = await requireUserId();
     await assertRateLimit({
       key: `sticker-add:${userId}`,
       limit: 40,
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const userId = await requireRealUserId();
+    const userId = await requireUserId();
     await assertRateLimit({
       key: `sticker-save:${userId}`,
       limit: 80,

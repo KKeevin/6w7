@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { signOut } from "@/lib/auth";
 import { getViewer } from "@/lib/viewer";
+import { getT } from "@/lib/locale";
 import { loginPath } from "@/shared/paths";
 import { Button } from "@/components/ui/button";
 import { CopyLinkButton } from "@/components/copy-link-button";
@@ -11,9 +12,10 @@ import { SettingsEmailForm } from "@/components/settings-email-form";
 import { getProfileForOwner } from "@/services/ask-link.service";
 import { SHELL_CONTENT } from "@/shared/shell";
 
-export const metadata: Metadata = {
-  title: "設定",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("settings.title") };
+}
 
 function UserIcon({ className }: { className?: string }) {
   return (
@@ -48,13 +50,14 @@ export default async function SettingsPage() {
   const imageSrc = profile.user.image || null;
   const accepting = profile.link.acceptingMessages;
   const demo = viewer.kind === "demo";
+  const t = await getT();
 
   return (
     <main className="bg-atmosphere flex flex-1 flex-col py-8 sm:py-10 lg:py-12">
       <div className={`${SHELL_CONTENT} w-full`}>
         <header className="mb-6 sm:mb-8">
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight lg:text-4xl">
-            帳號設定
+            {t("settings.heading")}
           </h1>
         </header>
 
@@ -80,14 +83,14 @@ export default async function SettingsPage() {
                   @{username}
                 </p>
                 <p className="mt-1 text-sm text-[var(--muted)] lg:text-base">
-                  {accepting ? "目前開放收件" : "已暫停收件"}
-                  {demo ? " · 示範帳號" : ""}
+                  {accepting ? t("settings.acceptingOn") : t("settings.acceptingOff")}
+                  {demo ? ` · ${t("demo.account")}` : ""}
                 </p>
                 <Link
                   href="/dashboard"
                   className="mt-3 inline-flex text-sm font-semibold text-[var(--mint)] underline-offset-2 hover:underline lg:text-base"
                 >
-                  去短網址頁調整樣貌 →
+                  {t("settings.goShare")}
                 </Link>
               </div>
             </div>
@@ -97,7 +100,7 @@ export default async function SettingsPage() {
             <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
               <div className="min-w-0">
                 <p className="text-xs font-semibold tracking-wide text-[var(--muted)]">
-                  專屬短網址
+                  {t("share.cardTitle")}
                 </p>
                 <p className="mt-1 break-all font-mono text-sm font-semibold text-[var(--ink)]">
                   {shortUrl}
@@ -110,7 +113,7 @@ export default async function SettingsPage() {
                   target="_blank"
                   className="inline-flex h-9 items-center justify-center rounded-xl bg-[var(--ink)] px-3 text-xs font-semibold text-[var(--bg)] transition hover:opacity-90 active:scale-[0.98]"
                 >
-                  開公開頁
+                  {t("common.openPublic")}
                 </Link>
               </div>
             </div>
@@ -118,10 +121,10 @@ export default async function SettingsPage() {
             <div className="flex items-center justify-between gap-3 px-5 py-4 sm:px-8">
               <div>
                 <p className="text-xs font-semibold tracking-wide text-[var(--muted)]">
-                  收件狀態
+                  {t("share.acceptingTitle")}
                 </p>
                 <p className="mt-1 text-sm font-medium text-[var(--ink)]">
-                  {accepting ? "開放中" : "已關閉"}
+                  {accepting ? t("settings.openOn") : t("settings.openOff")}
                 </p>
               </div>
               <span
@@ -142,17 +145,15 @@ export default async function SettingsPage() {
           className="mt-6 scroll-mt-24 overflow-hidden rounded-3xl border border-[var(--line)] bg-white shadow-[0_16px_40px_rgba(20,33,43,0.06)]"
         >
           <div className="border-b border-[var(--line)] px-5 py-4 sm:px-8">
-            <p className="text-sm font-semibold text-[var(--ink)]">信箱與密碼救援</p>
+            <p className="text-sm font-semibold text-[var(--ink)]">{t("settings.emailRescue")}</p>
             <p className="mt-1 text-xs text-[var(--muted)]">
-              {demo
-                ? "示範帳號不開放改信箱。"
-                : "綁一個信箱並驗證，密碼忘了才救得回來，有新留言也會通知你。"}
+              {demo ? t("settings.emailDemo") : t("settings.emailHint")}
             </p>
           </div>
           <div className="px-5 py-5 sm:px-8">
             <Suspense
               fallback={
-                <p className="text-sm text-[var(--muted)]">載入信箱設定…</p>
+                <p className="text-sm text-[var(--muted)]">{t("settings.emailLoading")}</p>
               }
             >
               <SettingsEmailForm
@@ -166,12 +167,10 @@ export default async function SettingsPage() {
 
         <section className="mt-6 rounded-2xl border border-[var(--line)] bg-white px-5 py-5 sm:px-8">
           <p className="text-sm font-semibold text-[var(--ink)]">
-            {demo ? "登出示範帳號" : "登出此裝置"}
+            {demo ? t("settings.logoutDemoTitle") : t("settings.logoutTitle")}
           </p>
           <p className="mt-1 text-xs text-[var(--muted)]">
-            {demo
-              ? "登出後會回到首頁。這是公開示範帳號，其他人也可以再登入來看。"
-              : "登出後要再使用短網址與收件匣，需重新登入。"}
+            {demo ? t("settings.logoutDemoHint") : t("settings.logoutHint")}
           </p>
           <form
             className="mt-4"
@@ -181,7 +180,7 @@ export default async function SettingsPage() {
             }}
           >
             <Button type="submit" variant="outline" className="w-full sm:w-auto">
-              登出
+              {t("settings.logout")}
             </Button>
           </form>
         </section>

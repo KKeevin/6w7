@@ -187,11 +187,17 @@ model MediaAsset {
   height    Int
   bytes     Int
   createdAt DateTime @default(now())
+  /// 示範帳號裝扮圖到期時間；一般帳號為 null（不過期）
+  expiresAt DateTime?
+  /// 示範沙盒（cookie `6w7_demo_sandbox`）；一般帳號為 null
+  sandboxId String?
 
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   stickers  PageSticker[]
 
   @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@index([userId, sandboxId])
 }
 
 /// 貼在公開頁上的一張圖（同一媒體可出現多次）

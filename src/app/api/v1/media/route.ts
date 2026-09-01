@@ -1,4 +1,4 @@
-import { jsonError, jsonOk, requireRealUserId } from "@/lib/api";
+import { jsonError, jsonOk, requireUserId } from "@/lib/api";
 import {
   listMediaLibrary,
   uploadMediaAsset,
@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const userId = await requireRealUserId();
+    const userId = await requireUserId();
     const library = await listMediaLibrary(userId);
     return jsonOk({ library });
   } catch (error) {
@@ -21,7 +21,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const userId = await requireRealUserId();
+    const userId = await requireUserId();
     await assertRateLimit({
       key: `media-up:${userId}`,
       limit: 20,

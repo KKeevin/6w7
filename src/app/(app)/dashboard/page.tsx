@@ -2,15 +2,17 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { EmailNudge } from "@/components/email-nudge";
-import { LoggedInPublisherNote } from "@/components/ads/logged-in-publisher-note";
 import { SharePageClient } from "@/components/share-page-client";
 import { getViewer } from "@/lib/viewer";
+import { getT } from "@/lib/locale";
 import { loginPath } from "@/shared/paths";
 import { getProfileForOwner } from "@/services/ask-link.service";
+import { ensureDemoAccount } from "@/services/demo-account.service";
 
-export const metadata: Metadata = {
-  title: "短網址",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("nav.shortUrl") };
+}
 
 type Props = { searchParams: Promise<{ welcome?: string; guideHint?: string }> };
 
@@ -18,6 +20,10 @@ export default async function DashboardPage({ searchParams }: Props) {
   const viewer = await getViewer();
   if (viewer.kind === "guest") {
     redirect(loginPath("/dashboard"));
+  }
+
+  if (viewer.kind === "demo") {
+    await ensureDemoAccount();
   }
 
   const { welcome, guideHint } = await searchParams;
@@ -52,11 +58,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             stickers: profile.stickers,
           }}
         />
-        {viewer.kind === "demo" ? (
-          <LoggedInPublisherNote page="dashboard" />
-        ) : null}
       </AdRailLayout>
     </main>
   );
 }
-

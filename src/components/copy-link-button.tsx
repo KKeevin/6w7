@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n-provider";
 
 export function CopyLinkButton({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
+  const t = useT();
 
   async function copy() {
     await navigator.clipboard.writeText(url);
@@ -14,7 +16,7 @@ export function CopyLinkButton({ url }: { url: string }) {
 
   return (
     <Button type="button" size="sm" variant="outline" onClick={() => void copy()}>
-      {copied ? "已複製" : "複製"}
+      {copied ? t("common.copied") : t("common.copy")}
     </Button>
   );
 }

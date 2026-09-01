@@ -27,9 +27,11 @@ import {
   type PublicSticker,
 } from "@/shared/page-stickers";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n-provider";
 
 type Props = {
   canEdit: boolean;
+  demoMediaTtl?: boolean;
   initialEdit?: boolean;
   initialStickers: PublicSticker[];
   children: React.ReactNode;
@@ -37,10 +39,12 @@ type Props = {
 
 export function PublicPageStudio({
   canEdit,
+  demoMediaTtl = false,
   initialEdit = false,
   initialStickers,
   children,
 }: Props) {
+  const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
   const saveTimer = useRef<number | null>(null);
   const stickersRef = useRef<PublicSticker[]>(initialStickers);
@@ -66,7 +70,7 @@ export function PublicPageStudio({
     fetch("/api/v1/stickers")
       .then(async (res) => {
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.error?.message || "載入失敗");
+        if (!res.ok) throw new Error(data?.error?.message || t("common.loadFailed"));
         if (cancelled) return;
         setLibrary(data.library ?? []);
         if (Array.isArray(data.stickers)) {
@@ -76,7 +80,7 @@ export function PublicPageStudio({
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "載入失敗");
+          setError(err instanceof Error ? err.message : t("common.loadFailed"));
         }
       })
       .finally(() => {
@@ -182,7 +186,7 @@ export function PublicPageStudio({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "儲存失敗");
+      if (!res.ok) throw new Error(data?.error?.message || t("common.saveFailed"));
       if (Array.isArray(data.stickers)) {
         stickersRef.current = data.stickers;
         setStickers(data.stickers);
@@ -190,7 +194,7 @@ export function PublicPageStudio({
       setSavedFlash(true);
       window.setTimeout(() => setSavedFlash(false), 1200);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "儲存失敗");
+      setError(err instanceof Error ? err.message : t("common.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -232,7 +236,7 @@ export function PublicPageStudio({
         body: JSON.stringify({ assetId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "加入失敗");
+      if (!res.ok) throw new Error(data?.error?.message || t("studio.addFailed"));
       const sticker = data.sticker as PublicSticker;
       setStickers((prev) => {
         const next = [...prev, sticker];
@@ -241,7 +245,7 @@ export function PublicPageStudio({
       });
       setSelectedId(sticker.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "加入失敗");
+      setError(err instanceof Error ? err.message : t("studio.addFailed"));
     }
   }
 
@@ -257,17 +261,17 @@ export function PublicPageStudio({
       const form = new FormData();
       form.set("file", prepared);
       const res = await fetch("/api/v1/media", { method: "POST", body: form });
-      if (!res.ok) throw new Error(await uploadErrorMessage(res, "上傳失敗"));
+      if (!res.ok) throw new Error(await uploadErrorMessage(res, t("common.uploadFailed")));
       const data = await res.json();
       const asset = data.asset as MediaLibraryItem;
       setLibrary((prev) => [asset, ...prev]);
       if (stickersRef.current.length < ASK_LIMITS.stickerCanvasMax) {
         await addFromLibrary(asset.id);
       } else {
-        setError("圖存好了，但畫面已經放滿，先移掉一張再加。");
+        setError(t("studio.full"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "上傳失敗");
+      setError(err instanceof Error ? err.message : t("common.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -280,7 +284,7 @@ export function PublicPageStudio({
     try {
       const res = await fetch(`/api/v1/media/${assetId}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "刪除失敗");
+      if (!res.ok) throw new Error(data?.error?.message || t("common.deleteFailed"));
       setLibrary((prev) => prev.filter((item) => item.id !== assetId));
       setStickers((prev) => {
         const next = prev.filter((item) => item.assetId !== assetId);
@@ -293,7 +297,7 @@ export function PublicPageStudio({
       });
       setConfirmDeleteId(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "刪除失敗");
+      setError(err instanceof Error ? err.message : t("common.deleteFailed"));
     }
   }
 
@@ -361,7 +365,7 @@ export function PublicPageStudio({
             className="pointer-events-auto shadow-md"
             onClick={() => setEditing(true)}
           >
-            裝扮此頁
+            {t("studio.decorate")}
           </Button>
         </div>
       ) : null}
@@ -371,12 +375,12 @@ export function PublicPageStudio({
           <div className="pointer-events-none absolute inset-x-3 top-3 z-40 flex items-start justify-between gap-2 sm:inset-x-4">
             <p className="max-w-[70%] rounded-2xl bg-[var(--ink)]/88 px-3 py-1.5 text-xs font-medium leading-snug text-white shadow">
               {saving
-                ? "儲存中…"
+                ? t("common.saving")
                 : savedFlash
-                  ? "已儲存"
+                  ? t("common.saved")
                   : selected
-                    ? "拖曳移動 · 角落拉縮放 · 上方圓鈕旋轉"
-                    : "從下方點圖片放到頁上，再拖到喜歡的位置"}
+                    ? t("studio.hintEdit")
+                    : t("studio.hintEmpty")}
             </p>
             <Button
               type="button"
@@ -386,7 +390,7 @@ export function PublicPageStudio({
               onClick={finishEditing}
             >
               <Check className="h-4 w-4" />
-              完成
+              {t("studio.done")}
             </Button>
           </div>
 
@@ -394,7 +398,7 @@ export function PublicPageStudio({
             <div className="pointer-events-auto fixed inset-x-3 bottom-[calc(var(--footer-h)+8.25rem)] z-40 flex justify-center sm:inset-x-4">
               <div className="flex items-center gap-0.5 rounded-2xl border border-[var(--line)] bg-white/95 p-1 shadow-lg backdrop-blur">
                 <ToolBtn
-                  label="縮小"
+                  label={t("common.zoomOut")}
                   onClick={() =>
                     updateSticker(selected.id, {
                       scale: clampStickerScale(selected.scale - 0.12),
@@ -407,7 +411,7 @@ export function PublicPageStudio({
                   {Math.round(selected.scale * 100)}%
                 </span>
                 <ToolBtn
-                  label="放大"
+                  label={t("common.zoomIn")}
                   onClick={() =>
                     updateSticker(selected.id, {
                       scale: clampStickerScale(selected.scale + 0.12),
@@ -418,7 +422,7 @@ export function PublicPageStudio({
                 </ToolBtn>
                 <span className="mx-0.5 h-5 w-px bg-[var(--line)]" aria-hidden />
                 <ToolBtn
-                  label="左轉 15°"
+                  label={t("studio.rotateLeft")}
                   onClick={() =>
                     updateSticker(selected.id, {
                       rotation: wrapRotation(selected.rotation - 15),
@@ -428,7 +432,7 @@ export function PublicPageStudio({
                   <RotateCcw className="h-4 w-4" />
                 </ToolBtn>
                 <ToolBtn
-                  label="右轉 15°"
+                  label={t("studio.rotateRight")}
                   onClick={() =>
                     updateSticker(selected.id, {
                       rotation: wrapRotation(selected.rotation + 15),
@@ -439,7 +443,7 @@ export function PublicPageStudio({
                 </ToolBtn>
                 <span className="mx-0.5 h-5 w-px bg-[var(--line)]" aria-hidden />
                 <ToolBtn
-                  label="從畫面拿掉（圖庫還在）"
+                  label={t("studio.removeFromPage")}
                   danger
                   onClick={() => removeFromCanvas(selected.id)}
                 >
@@ -464,24 +468,31 @@ export function PublicPageStudio({
                 ) : (
                   <ImagePlus className="h-5 w-5" />
                 )}
-                <span className="mt-1 text-[10px] font-bold">匯入</span>
+                <span className="mt-1 text-[10px] font-bold">{t("studio.import")}</span>
               </button>
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <p className="text-[11px] font-semibold tracking-wide text-[var(--muted)]">
-                    媒體列
+                    {t("studio.mediaBar")}
                   </p>
                   <p className="text-[10px] text-[var(--muted)]">
-                    {library.length}/{ASK_LIMITS.stickerLibraryMax} · 點一下加入 ·
-                    X 刪檔
+                    {t("studio.mediaHint", {
+                      used: library.length,
+                      max: ASK_LIMITS.stickerLibraryMax,
+                    })}
                   </p>
                 </div>
+                {demoMediaTtl ? (
+                  <p className="mb-1 text-[10px] leading-snug text-[var(--muted)]">
+                    {t("studio.demoTtl")}
+                  </p>
+                ) : null}
                 <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {loadingLib ? (
-                    <p className="py-4 text-xs text-[var(--muted)]">載入圖庫…</p>
+                    <p className="py-4 text-xs text-[var(--muted)]">{t("studio.loadingLib")}</p>
                   ) : library.length === 0 ? (
                     <p className="py-4 text-xs text-[var(--muted)]">
-                      還沒有圖片。點左側匯入，再擺到頁面上。
+                      {t("studio.emptyLib")}
                     </p>
                   ) : (
                     library.map((item) => (
@@ -501,7 +512,7 @@ export function PublicPageStudio({
                         {confirmDeleteId === item.id ? (
                           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-[var(--ink)]/82 p-1 text-center">
                             <p className="text-[9px] font-semibold leading-tight text-white">
-                              是否刪除？
+                              {t("studio.confirmDelete")}
                             </p>
                             <div className="mt-1 flex gap-1">
                               <button
@@ -509,21 +520,21 @@ export function PublicPageStudio({
                                 className="rounded bg-[var(--danger)] px-1.5 py-0.5 text-[9px] font-bold text-white"
                                 onClick={() => void deleteAsset(item.id)}
                               >
-                                刪
+                                {t("studio.deleteYes")}
                               </button>
                               <button
                                 type="button"
                                 className="rounded bg-white/90 px-1.5 py-0.5 text-[9px] font-bold"
                                 onClick={() => setConfirmDeleteId(null)}
                               >
-                                否
+                                {t("common.no")}
                               </button>
                             </div>
                           </div>
                         ) : (
                           <button
                             type="button"
-                            aria-label="刪除這張圖（含儲存檔）"
+                            aria-label={t("studio.deleteAria")}
                             className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--ink)] text-white shadow"
                             onClick={(event) => {
                               event.stopPropagation();

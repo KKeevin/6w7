@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n-provider";
 
 export function SettingsEmailForm({
   initialEmail,
@@ -19,14 +20,13 @@ export function SettingsEmailForm({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState(initialEmail ?? "");
   const [verified, setVerified] = useState(initialVerified);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(
-    searchParams.get("verified") === "1" ? "信箱已驗證，忘記密碼可以用了。" : null,
-  );
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [savedEmail, setSavedEmail] = useState(initialEmail ?? "");
@@ -64,7 +64,7 @@ export function SettingsEmailForm({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error?.message || "儲存失敗");
+        throw new Error(data?.error?.message || t("common.saveFailed"));
       }
       const nextEmail = data.user?.email ?? email.trim() ?? "";
       const nextVerified = Boolean(data.user?.emailVerified);
@@ -73,19 +73,17 @@ export function SettingsEmailForm({
       setVerified(nextVerified);
       setEditing(false);
       if (!nextEmail) {
-        setMessage("已移除信箱。");
+        setMessage(t("settings.emailRemoved"));
       } else if (nextVerified) {
-        setMessage("這個信箱已經驗證過了。");
+        setMessage(t("settings.alreadyVerified"));
       } else {
         setMessage(
-          data.mailed
-            ? "驗證信已寄出，請在 24 小時內到信箱點連結。"
-            : "信箱已儲存。若沒收到信，請稍後按「重寄驗證信」。",
+          data.mailed ? t("settings.verifySent") : t("settings.emailSaved"),
         );
       }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
+      setError(err instanceof Error ? err.message : t("common.retry"));
     } finally {
       setLoading(false);
     }
@@ -99,20 +97,18 @@ export function SettingsEmailForm({
       const res = await fetch("/api/v1/me/email/verify", { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error?.message || "寄送失敗");
+        throw new Error(data?.error?.message || t("settings.sendFailed"));
       }
       if (data.alreadyVerified) {
         setVerified(true);
-        setMessage("這個信箱已經驗證過了。");
+        setMessage(t("settings.alreadyVerified"));
       } else {
         setMessage(
-          data.mailed
-            ? "驗證信已再寄一次，請到信箱點連結。"
-            : "已建立驗證連結。本機請看伺服器終端機。",
+          data.mailed ? t("settings.verifyResent") : t("settings.verifyLocal"),
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
+      setError(err instanceof Error ? err.message : t("common.retry"));
     } finally {
       setResending(false);
     }
@@ -122,7 +118,7 @@ export function SettingsEmailForm({
     <form id="email" onSubmit={onSubmit} className="scroll-mt-24 space-y-4">
       <div>
         <div className="flex items-center justify-between gap-3">
-          <Label htmlFor="account-email">信箱</Label>
+          <Label htmlFor="account-email">{t("settings.emailLabel")}</Label>
           {email ? (
             <span
               className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
@@ -131,11 +127,11 @@ export function SettingsEmailForm({
                   : "bg-[var(--accent)]/12 text-[var(--accent)]"
               }`}
             >
-              {showVerified ? "已驗證" : "未驗證"}
+              {showVerified ? t("settings.verified") : t("settings.unverified")}
             </span>
           ) : (
             <span className="inline-flex rounded-full bg-[var(--surface)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--muted)]">
-              尚未設定
+              {t("settings.notSet")}
             </span>
           )}
         </div>
@@ -167,24 +163,26 @@ export function SettingsEmailForm({
               onClick={startEdit}
             >
               <Pencil className="h-3 w-3" aria-hidden />
-              更改信箱
+              {t("settings.changeEmail")}
             </button>
           ) : null}
         </div>
         <p className="mt-1 text-xs text-[var(--muted)]">
           {showVerified
-            ? "不會顯示在公開留言頁。驗證後可用忘記密碼，有新留言時也會寄通知。"
-            : "儲存後會寄出驗證信，請到信箱點連結完成驗證。信箱不會顯示在公開留言頁。"}
+            ? t("settings.emailHelpVerified")
+            : t("settings.emailHelpUnverified")}
         </p>
       </div>
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-      {message && !error && (
-        <p className="text-sm text-[var(--mint)]">{message}</p>
+      {(message || searchParams.get("verified") === "1") && !error && (
+        <p className="text-sm text-[var(--mint)]">
+          {message ?? t("settings.verifiedOk")}
+        </p>
       )}
       {locked ? null : (
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={loading || disabled}>
-            {loading ? "儲存中…" : "儲存"}
+            {loading ? t("common.saving") : t("common.save")}
           </Button>
           {editing ? (
             <Button
@@ -193,7 +191,7 @@ export function SettingsEmailForm({
               disabled={loading || disabled}
               onClick={cancelEdit}
             >
-              取消
+              {t("common.cancel")}
             </Button>
           ) : null}
           {savedPending ? (
@@ -203,7 +201,7 @@ export function SettingsEmailForm({
               disabled={resending || disabled}
               onClick={() => void resend()}
             >
-              {resending ? "寄送中…" : "重寄驗證信"}
+              {resending ? t("settings.sending") : t("settings.resend")}
             </Button>
           ) : null}
         </div>

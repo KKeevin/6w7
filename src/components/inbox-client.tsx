@@ -6,7 +6,10 @@ import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useNotifications } from "@/components/notifications/notification-provider";
+import { useI18n } from "@/components/i18n-provider";
+import { DATE_BCP47 } from "@/shared/i18n";
 import { ASK_LIMITS, BRAND } from "@/shared/tools";
+import { toInboxDemoMessages } from "@/shared/demo-account";
 
 const StoryCardDialog = dynamic(
   () =>
@@ -45,6 +48,7 @@ export function InboxClient({
 }) {
   const demo = Boolean(demoMessages?.length);
   const seeded = demoMessages ?? initialMessages;
+  const { t, locale } = useI18n();
   const { refresh: refreshNotifications } = useNotifications();
   const listTopRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>(seeded ?? []);
@@ -67,7 +71,7 @@ export function InboxClient({
     opts?: { quiet?: boolean },
   ) {
     if (demo) {
-      const source = demoMessages ?? [];
+      const source = toInboxDemoMessages(locale);
       const filtered =
         nextFilter === "unread"
           ? source.filter((m) => !m.isRead && !m.isArchived)
@@ -95,13 +99,13 @@ export function InboxClient({
         `/api/v1/inbox?filter=${nextFilter}&page=${nextPage}`,
       );
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "載入失敗");
+      if (!res.ok) throw new Error(data?.error?.message || t("common.loadFailed"));
       setMessages(data.messages);
       setPage(data.page ?? nextPage);
       setTotal(data.total ?? data.messages.length);
       setTotalPages(data.totalPages ?? 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "載入失敗");
+      setError(err instanceof Error ? err.message : t("common.loadFailed"));
     } finally {
       if (!opts?.quiet) setLoading(false);
     }
@@ -112,7 +116,7 @@ export function InboxClient({
       quiet: Boolean(seeded) && filter === "all" && page === initialPage,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, page]);
+  }, [filter, page, locale]);
 
   useEffect(() => {
     const onRefresh = () => {
@@ -121,7 +125,7 @@ export function InboxClient({
     window.addEventListener("6w7:inbox-refresh", onRefresh);
     return () => window.removeEventListener("6w7:inbox-refresh", onRefresh);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, page]);
+  }, [filter, page, locale]);
 
   useEffect(() => {
     if (loading || !highlightId) return;
@@ -138,7 +142,7 @@ export function InboxClient({
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data?.error?.message || "更新失敗");
+      setError(data?.error?.message || t("common.updateFailed"));
       return false;
     }
     const updated = data.message as Message | undefined;
@@ -204,7 +208,7 @@ export function InboxClient({
     const res = await fetch(`/api/v1/messages/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
-      setError(data?.error?.message || "刪除失敗");
+      setError(data?.error?.message || t("common.deleteFailed"));
       return;
     }
     setStoryMessage(null);
@@ -214,7 +218,7 @@ export function InboxClient({
 
   async function report(id: string) {
     if (demo) return;
-    const reason = window.prompt("請簡述檢舉原因");
+    const reason = window.prompt(t("inbox.reportPrompt"));
     if (!reason) return;
     const res = await fetch(`/api/v1/messages/${id}/report`, {
       method: "POST",
@@ -223,7 +227,7 @@ export function InboxClient({
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data?.error?.message || "檢舉失敗");
+      setError(data?.error?.message || t("inbox.reportFailed"));
       return;
     }
     await load();
@@ -237,10 +241,10 @@ export function InboxClient({
   }
 
   const filters: { id: Filter; label: string }[] = [
-    { id: "all", label: "全部" },
-    { id: "unread", label: "未讀" },
-    { id: "featured", label: "精選" },
-    { id: "archived", label: "已封存" },
+    { id: "all", label: t("inbox.all") },
+    { id: "unread", label: t("inbox.unread") },
+    { id: "featured", label: t("inbox.featured") },
+    { id: "archived", label: t("inbox.archived") },
   ];
 
   const selected = storyMessage
@@ -271,7 +275,7 @@ export function InboxClient({
         </div>
         {total > 0 ? (
           <p className="text-xs tabular-nums text-[var(--muted)]">
-            共 {total} 則
+            {t("inbox.total", { total })}
           </p>
         ) : null}
       </div>
@@ -279,12 +283,12 @@ export function InboxClient({
       <div ref={listTopRef} className="scroll-mt-[calc(var(--header-h)+0.75rem)]">
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
       {loading ? (
-        <p className="text-sm text-[var(--muted)]">載入中…</p>
+        <p className="text-sm text-[var(--muted)]">{t("common.loading")}</p>
       ) : messages.length === 0 ? (
         <div className="relative mx-auto flex w-full max-w-sm justify-center pt-2">
           <div className="relative w-[min(100%,16.5rem)]">
             <p className="pointer-events-none absolute inset-x-0 top-2 z-10 text-center font-[family-name:var(--font-display)] text-lg font-bold leading-tight text-[var(--ink)] drop-shadow-[0_2px_0_rgba(255,255,255,0.92)] sm:top-3 sm:text-xl">
-              空空如也
+              {t("inbox.empty")}
             </p>
             <Image
               src={BRAND.inboxEmptySrc}
@@ -304,10 +308,10 @@ export function InboxClient({
                 ? { key: "topic", label: m.topic, tone: "neutral" as const }
                 : null,
               m.isFeatured
-                ? { key: "featured", label: "精選", tone: "accent" as const }
+                ? { key: "featured", label: t("inbox.featured"), tone: "accent" as const }
                 : null,
               m.status === "flagged"
-                ? { key: "flagged", label: "已檢舉", tone: "danger" as const }
+                ? { key: "flagged", label: t("inbox.flagged"), tone: "danger" as const }
                 : null,
             ].filter(Boolean) as {
               key: string;
@@ -367,15 +371,15 @@ export function InboxClient({
                       ) : (
                         <span className="flex min-w-0 flex-wrap items-center gap-2">
                           <span className="inline-flex shrink-0 items-center rounded-md bg-[var(--mint)] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
-                            未讀
+                            {t("inbox.unread")}
                           </span>
                           <span className="text-[15px] font-medium text-[var(--muted)]">
-                            點開查看內容
+                            {t("inbox.openToRead")}
                           </span>
                         </span>
                       )}
                       <time className="shrink-0 pt-0.5 text-[11px] tabular-nums text-[var(--muted)]">
-                        {new Date(m.createdAt).toLocaleString("zh-TW", {
+                        {new Date(m.createdAt).toLocaleString(DATE_BCP47[locale], {
                           month: "numeric",
                           day: "numeric",
                           hour: "2-digit",
@@ -413,7 +417,7 @@ export function InboxClient({
       {totalPages > 1 ? (
         <nav
           className="flex items-center justify-center gap-2"
-          aria-label="收件匣分頁"
+          aria-label={t("inbox.pagesAria")}
         >
           <button
             type="button"
@@ -422,10 +426,10 @@ export function InboxClient({
             className="inline-flex h-10 items-center gap-1 rounded-xl border border-[var(--line)] px-3 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--surface)] disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
-            上一頁
+            {t("inbox.prev")}
           </button>
           <p className="min-w-[7.5rem] text-center text-sm tabular-nums text-[var(--muted)]">
-            第 {page} / {totalPages} 頁
+            {t("inbox.pageOf", { page, totalPages })}
           </p>
           <button
             type="button"
@@ -433,7 +437,7 @@ export function InboxClient({
             onClick={() => goToPage(page + 1)}
             className="inline-flex h-10 items-center gap-1 rounded-xl border border-[var(--line)] px-3 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--surface)] disabled:pointer-events-none disabled:opacity-40"
           >
-            下一頁
+            {t("inbox.next")}
             <ChevronRight className="h-4 w-4" aria-hidden />
           </button>
         </nav>
@@ -452,7 +456,7 @@ export function InboxClient({
                   href={`/inbox/${selected.id}`}
                   className="font-semibold text-[var(--mint)] hover:underline"
                 >
-                  開獨立頁 →
+                  {t("inbox.openPage")}
                 </Link>
               </p>
             ) : null

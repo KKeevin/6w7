@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type RefObject } from "react";
 import { SHARE_POINT_AT } from "@/shared/share-story-art";
+import { useT } from "@/components/i18n-provider";
 
 type Rect = { top: number; left: number; width: number; height: number };
 
@@ -40,6 +41,7 @@ export function IgShareGuideHint({
   desktopRef: RefObject<HTMLElement | null>;
   onDismiss: () => void;
 }) {
+  const t = useT();
   const [rect, setRect] = useState<Rect | null>(null);
 
   useEffect(() => {
@@ -136,14 +138,14 @@ export function IgShareGuideHint({
       >
         <div className="animate-rise rounded-2xl border border-[var(--line)] bg-white px-3.5 py-3 shadow-[0_16px_40px_rgba(20,33,43,0.2)]">
           <p className="text-sm font-semibold leading-snug text-[var(--ink)]">
-            不會發限動？點這裡看我示範一次
+            {t("guide.hint")}
           </p>
           <button
             type="button"
             className="mt-2.5 w-full rounded-xl border border-[var(--line)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
             onClick={onDismiss}
           >
-            不要再顯示
+            {t("guide.dontShow")}
           </button>
         </div>
       </div>

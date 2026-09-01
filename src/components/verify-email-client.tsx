@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/i18n-provider";
 
 export function VerifyEmailClient({ token }: { token: string }) {
+  const t = useT();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -20,7 +22,7 @@ export function VerifyEmailClient({ token }: { token: string }) {
         });
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data?.error?.message || "驗證失敗");
+          throw new Error(data?.error?.message || t("verify.failed"));
         }
         if (!cancelled) {
           setDone(true);
@@ -28,7 +30,7 @@ export function VerifyEmailClient({ token }: { token: string }) {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "驗證失敗");
+          setError(err instanceof Error ? err.message : t("verify.failed"));
         }
       }
     }
@@ -36,19 +38,19 @@ export function VerifyEmailClient({ token }: { token: string }) {
     return () => {
       cancelled = true;
     };
-  }, [token, router]);
+  }, [token, router, t]);
 
   if (done) {
     return (
       <div className="space-y-4">
         <p className="text-sm leading-relaxed text-[var(--ink)]">
-          信箱已驗證。之後忘記密碼，重設信會寄到這個信箱。
+          {t("verify.ok")}
         </p>
         <Link
           href="/settings?verified=1#email"
           className="inline-flex h-10 items-center rounded-xl bg-[var(--ink)] px-4 text-sm font-semibold text-white"
         >
-          回到設定
+          {t("verify.backSettings")}
         </Link>
       </div>
     );
@@ -62,11 +64,11 @@ export function VerifyEmailClient({ token }: { token: string }) {
           href="/settings#email"
           className="inline-flex text-sm font-semibold text-[var(--mint)] underline-offset-2 hover:underline"
         >
-          去設定頁重寄驗證信
+          {t("verify.resend")}
         </Link>
       </div>
     );
   }
 
-  return <p className="text-sm text-[var(--muted)]">正在驗證信箱…</p>;
+  return <p className="text-sm text-[var(--muted)]">{t("verify.working")}</p>;
 }

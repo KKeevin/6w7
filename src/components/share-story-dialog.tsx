@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ShareStoryCard,
@@ -8,6 +8,7 @@ import {
 } from "@/components/share-story-card";
 import { renderShareStoryPng } from "@/lib/render-story-canvas";
 import { saveOrSharePng } from "@/lib/save-image";
+import { useT } from "@/components/i18n-provider";
 
 export type ShareStoryDialogProps = {
   open: boolean;
@@ -19,6 +20,9 @@ export type ShareStoryDialogProps = {
   shortUrl: string;
   onCopiedLink?: () => void;
   onOpenGuide?: () => void;
+  onShareImage?: () => void;
+  copyButtonRef?: RefObject<HTMLButtonElement | null>;
+  shareImageButtonRef?: RefObject<HTMLButtonElement | null>;
 };
 
 type Props = ShareStoryDialogProps;
@@ -41,7 +45,11 @@ export function ShareStoryDialog({
   shortUrl,
   onCopiedLink,
   onOpenGuide,
+  onShareImage,
+  copyButtonRef,
+  shareImageButtonRef,
 }: Props) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -60,7 +68,7 @@ export function ShareStoryDialog({
       onCopiedLink?.();
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError("複製失敗，請手動選取短網址再複製。");
+      setError(t("shareStory.copyFailed"));
     }
   }
 
@@ -74,6 +82,8 @@ export function ShareStoryDialog({
         prompt,
         imageUrl: previewSrc,
         displayName,
+        askCaption: t("share.kicker"),
+        linkHint: t("shareStory.linkHint"),
       });
 
       await saveOrSharePng(dataUrl, `6w7-share-${username}.png`);
@@ -90,7 +100,7 @@ export function ShareStoryDialog({
         return;
       }
       console.error(err);
-      setError("圖卡產生失敗，請再試一次。");
+      setError(t("story.renderFailed"));
     } finally {
       setBusy(false);
     }
@@ -113,18 +123,17 @@ export function ShareStoryDialog({
               id="share-story-title"
               className="font-[family-name:var(--font-display)] text-xl font-bold"
             >
-              分享到 IG 限動
+              {t("share.shareIg")}
             </h2>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              手機按「分享此圖」→ 選 Instagram →
-              限動，圖會直接進編輯。記得加一個「連結」貼紙貼上你的短網址，即可發佈。
+              {t("shareStory.hint")}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
-            aria-label="關閉"
+            aria-label={t("common.close")}
           >
             ✕
           </button>
@@ -158,11 +167,12 @@ export function ShareStoryDialog({
 
         <div className="mt-5 grid gap-2">
           <Button
+            ref={copyButtonRef}
             type="button"
             variant="secondary"
             onClick={() => void copyShortUrl()}
           >
-            {copied ? "已複製短網址" : "複製專屬短網址"}
+            {copied ? t("shareStory.copiedShort") : t("shareStory.copyExclusive")}
           </Button>
           <div className="grid grid-cols-2 gap-2">
             {onOpenGuide ? (
@@ -171,19 +181,23 @@ export function ShareStoryDialog({
                 className="border border-[var(--mint)]/20 bg-[var(--mint)]/12 font-bold text-[color-mix(in_srgb,var(--mint)_55%,var(--ink))] shadow-none hover:bg-[var(--mint)]/20 hover:brightness-100"
                 onClick={onOpenGuide}
               >
-                看教學
+                {t("shareStory.seeGuide")}
               </Button>
             ) : (
               <Button type="button" variant="outline" onClick={onClose}>
-                關閉
+                {t("common.close")}
               </Button>
             )}
             <Button
+              ref={shareImageButtonRef}
               type="button"
-              onClick={() => void download()}
+              onClick={() => {
+                onShareImage?.();
+                void download();
+              }}
               disabled={busy}
             >
-              {busy ? "產生中…" : "分享此圖"}
+              {busy ? t("story.generating") : t("story.shareImage")}
             </Button>
           </div>
         </div>

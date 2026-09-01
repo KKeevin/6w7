@@ -5,69 +5,77 @@ import { getViewer } from "@/lib/viewer";
 import { BrandLogo } from "@/components/brand-logo";
 import { HomeAuthPanel } from "@/components/home-auth-panel";
 import { BRAND } from "@/shared/tools";
+import { getRequestLocale, getT } from "@/lib/locale";
+import { HTML_LANG, OG_LOCALE } from "@/shared/i18n";
 
 const SITE = `https://${BRAND.domain}`;
 
-export const metadata: Metadata = {
-  title: {
-    absolute: BRAND.titleHome,
-  },
-  description: BRAND.seoDescription,
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    siteName: `${BRAND.en}（${BRAND.zh}）`,
-    locale: "zh_TW",
-    url: "/",
-    title: BRAND.titleHome,
-    description: BRAND.seoDescription,
-    images: [
-      {
-        url: BRAND.logoSrc,
-        width: 920,
-        height: 360,
-        alt: `${BRAND.en}（${BRAND.zh}）`,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: BRAND.titleHome,
-    description: BRAND.seoDescription,
-    images: [BRAND.logoSrc],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  const locale = await getRequestLocale();
+  return {
+    title: {
+      absolute: t("meta.productTitle"),
+    },
+    description: t("meta.seoDescription"),
+    alternates: { canonical: "/" },
+    openGraph: {
+      type: "website",
+      siteName: `${BRAND.en}（${BRAND.zh}）`,
+      locale: OG_LOCALE[locale],
+      url: "/",
+      title: t("meta.productTitle"),
+      description: t("meta.seoDescription"),
+      images: [
+        {
+          url: BRAND.logoSrc,
+          width: 920,
+          height: 360,
+          alt: `${BRAND.en}（${BRAND.zh}）`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("meta.productTitle"),
+      description: t("meta.seoDescription"),
+      images: [BRAND.logoSrc],
+    },
+  };
+}
 
 /** 讓 Google 認得站名與品牌別名（6w7／樂玩ㄑ），不要每次自己拼一個 */
-const structuredData = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      "@id": `${SITE}/#organization`,
-      name: `${BRAND.en}（${BRAND.zh}）`,
-      alternateName: [BRAND.en, BRAND.zh],
-      url: SITE,
-      logo: `${SITE}${BRAND.logoSrc}`,
-      email: BRAND.contactEmail,
-    },
-    {
-      "@type": "WebSite",
-      "@id": `${SITE}/#website`,
-      name: `${BRAND.en}（${BRAND.zh}）`,
-      url: SITE,
-      inLanguage: "zh-Hant-TW",
-      description: BRAND.seoDescription,
-      publisher: { "@id": `${SITE}/#organization` },
-    },
-  ],
-};
-
 export default async function HomePage() {
   const viewer = await getViewer();
   if (viewer.kind === "user" || viewer.kind === "demo") {
     redirect("/dashboard");
   }
+
+  const t = await getT();
+  const locale = await getRequestLocale();
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE}/#organization`,
+        name: `${BRAND.en}（${BRAND.zh}）`,
+        alternateName: [BRAND.en, BRAND.zh],
+        url: SITE,
+        logo: `${SITE}${BRAND.logoSrc}`,
+        email: BRAND.contactEmail,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE}/#website`,
+        name: `${BRAND.en}（${BRAND.zh}）`,
+        url: SITE,
+        inLanguage: HTML_LANG[locale],
+        description: t("meta.seoDescription"),
+        publisher: { "@id": `${SITE}/#organization` },
+      },
+    ],
+  };
 
   return (
     <main className="flex flex-1 flex-col lg:flex-row">
@@ -86,12 +94,12 @@ export default async function HomePage() {
           </div>
 
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-2xl font-extrabold leading-tight tracking-tight text-[var(--ink)] sm:text-3xl lg:mt-8 lg:text-5xl lg:leading-[1.12] [@media(max-height:740px)]:lg:mt-4 [@media(max-height:740px)]:lg:text-3xl">
-            用連結收下
-            <span className="text-[#3197e5]">匿名訊息</span>
-            。
+            {t("home.heroBefore")}
+            <span className="text-[#3197e5]">{t("home.heroAccent")}</span>
+            {t("home.heroAfter")}
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)] sm:text-base lg:mx-0 lg:mt-4 lg:max-w-lg lg:text-lg [@media(max-height:740px)]:lg:mt-2 [@media(max-height:740px)]:lg:text-sm">
-            {BRAND.tagline}
+            {t("meta.tagline")}
           </p>
         </div>
       </section>
@@ -100,7 +108,7 @@ export default async function HomePage() {
       <section className="flex flex-1 items-start justify-center px-4 pt-4 pb-8 sm:px-8 sm:pt-5 lg:w-[44%] lg:flex-none lg:items-center lg:bg-white lg:px-10 lg:py-6 lg:shadow-[-12px_0_32px_rgba(20,33,43,0.04)]">
         <div className="w-full max-w-[380px] rounded-2xl border border-[var(--line)] bg-white p-5 shadow-sm sm:p-7 lg:border-0 lg:p-0 lg:shadow-none">
           <Suspense
-            fallback={<p className="text-sm text-[var(--muted)]">載入中…</p>}
+            fallback={<p className="text-sm text-[var(--muted)]">{t("common.loading")}</p>}
           >
             <HomeAuthPanel />
           </Suspense>

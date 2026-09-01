@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NotificationSummary } from "@/shared/notifications";
+import { useT } from "@/components/i18n-provider";
 
 type ToastItem = {
   id: string;
@@ -49,6 +50,7 @@ export function NotificationProvider({
   enabled?: boolean;
 }) {
   const pathname = usePathname();
+  const tx = useT();
   const [summary, setSummary] = useState<NotificationSummary>(EMPTY);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const prevCountRef = useRef<number | null>(null);
@@ -61,17 +63,17 @@ export function NotificationProvider({
   const pushToast = useCallback(
     (summaryNext: NotificationSummary) => {
       const id = summaryNext.latestId || `t-${Date.now()}`;
-      const title = "新的匿名留言";
+      const title = tx("notify.title");
       const body = summaryNext.latestTopic
-        ? `主題「${summaryNext.latestTopic}」· 點開收件匣查看`
-        : "剛剛有人偷偷丟了一句話給你";
+        ? tx("notify.withTopic", { topic: summaryNext.latestTopic })
+        : tx("notify.plain");
       setToasts((list) => {
         const next = [{ id, title, body }, ...list.filter((t) => t.id !== id)];
         return next.slice(0, 3);
       });
       window.setTimeout(() => dismissToast(id), 6500);
     },
-    [dismissToast],
+    [dismissToast, tx],
   );
 
   const applySummary = useCallback(
@@ -270,14 +272,14 @@ export function NotificationProvider({
                     onClick={() => dismissToast(toast.id)}
                     className="inline-flex h-8 items-center rounded-lg bg-[var(--mint)] px-3 text-xs font-semibold text-white"
                   >
-                    打開收件匣
+                    {tx("notify.openInbox")}
                   </Link>
                   <button
                     type="button"
                     onClick={() => dismissToast(toast.id)}
                     className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-medium text-white/60 hover:text-white"
                   >
-                    等等再看
+                    {tx("notify.later")}
                   </button>
                 </div>
               </div>

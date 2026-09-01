@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { AdSenseScript } from "@/components/ads/adsense-script";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { ADS, adsMobileReady, adsSideReady } from "@/shared/ads";
+import { getT } from "@/lib/locale";
 
 type AdRailLayoutProps = {
   children: ReactNode;
@@ -15,12 +16,13 @@ type AdRailLayoutProps = {
  * 主內容永遠置中並左右留白。廣告有播出才出現在側邊留白／內容下方，不擠壓主欄。
  * 登入／註冊／忘記密碼／重設密碼／驗證信箱／設定／404 不要包這層。
  */
-export function AdRailLayout({
+export async function AdRailLayout({
   children,
   width = "narrow",
   mobileAd = true,
   className = "",
 }: AdRailLayoutProps) {
+  const t = await getT();
   const centerMax = width === "wide" ? "max-w-6xl" : "max-w-lg sm:max-w-xl";
   const stickyTop = "top-[calc(var(--header-h)+0.75rem)]";
   const sideLive = ADS.enabled && adsSideReady();
@@ -44,7 +46,7 @@ export function AdRailLayout({
         {sideLive ? (
           <aside
             className={`pointer-events-none absolute top-0 left-full ml-4 hidden w-[160px] ${sideVisible} 2xl:ml-6 2xl:w-[180px]`}
-            aria-label="贊助"
+            aria-label={t("ads.sponsor")}
           >
             <div
               className={`pointer-events-auto sticky ${stickyTop} flex flex-col gap-4`}

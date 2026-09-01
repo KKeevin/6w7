@@ -39,6 +39,10 @@ model User {
   role          UserRole   @default(user)
   /// 公開示範帳號（真實 User，可登入／登出；全站可辨識）
   isDemo        Boolean    @default(false)
+  /// 最近一次語言（裝置推斷或本人選擇）。信件可用此值。示範帳號不寫。
+  locale        String?
+  /// 使用者曾在頁尾自行切換語言。為 true 時登入必須立刻套用 locale，UI 不再跟裝置。
+  localeChosen  Boolean    @default(false)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -187,11 +191,17 @@ model MediaAsset {
   height    Int
   bytes     Int
   createdAt DateTime @default(now())
+  /// 示範帳號裝扮圖到期時間；一般帳號為 null（不過期）
+  expiresAt DateTime?
+  /// 示範沙盒（cookie `6w7_demo_sandbox`）；一般帳號為 null
+  sandboxId String?
 
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   stickers  PageSticker[]
 
   @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@index([userId, sandboxId])
 }
 
 /// 貼在公開頁上的一張圖（同一媒體可出現多次）

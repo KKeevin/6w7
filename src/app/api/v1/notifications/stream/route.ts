@@ -1,6 +1,7 @@
 import { requireUserId } from "@/lib/api";
 import { getNotificationSummary } from "@/services/notification.service";
 import { errorBody, AppError } from "@/shared/errors";
+import { getRequestLocale } from "@/lib/locale";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -102,11 +103,12 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    const locale = await getRequestLocale();
     if (error instanceof AppError) {
-      return Response.json(errorBody(error), { status: error.status });
+      return Response.json(errorBody(error, locale), { status: error.status });
     }
     return Response.json(
-      errorBody(new AppError("INTERNAL", "串流失敗", 500)),
+      errorBody(new AppError("INTERNAL", "api.streamFailed", 500), locale),
       { status: 500 },
     );
   }

@@ -41,3 +41,26 @@ export function resetDemoIgShareGuideHint() {
     /* private mode／禁用儲存 */
   }
 }
+
+export const SHARE_TOUR_EVENT = "6w7:start-share-tour";
+
+/** 讓已關掉的教學可以再跑一次（頂欄導覽鈕） */
+export function revealIgShareGuideHint(
+  userId: string,
+  opts?: { demo?: boolean },
+) {
+  try {
+    if (opts?.demo) {
+      window.sessionStorage.removeItem(DEMO_SESSION_KEY);
+      return;
+    }
+    window.localStorage.removeItem(userKey(userId));
+  } catch {
+    /* private mode／禁用儲存 */
+  }
+}
+
+export function requestShareTour() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(SHARE_TOUR_EVENT));
+}

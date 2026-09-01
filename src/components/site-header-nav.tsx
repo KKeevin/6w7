@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useNotifications } from "@/components/notifications/notification-provider";
+import { useT } from "@/components/i18n-provider";
 
 export type HeaderNavItem = {
   href: string;
@@ -33,12 +34,13 @@ function UnreadBadge({ count }: { count: number }) {
 export function HeaderNav({ items }: { items: HeaderNavItem[] }) {
   const pathname = usePathname();
   const { unreadCount } = useNotifications();
+  const t = useT();
   if (items.length === 0) return null;
 
   return (
     <nav
-      className="flex min-w-0 flex-1 items-center justify-center gap-1 sm:gap-1.5"
-      aria-label="主要功能"
+      className="flex min-w-0 items-center justify-center gap-1 sm:gap-1.5"
+      aria-label={t("nav.inbox")}
     >
       {items.map((item) => {
         const active = isActive(pathname, item.href);
@@ -49,7 +51,10 @@ export function HeaderNav({ items }: { items: HeaderNavItem[] }) {
             href={item.href}
             aria-label={
               isInbox && unreadCount > 0
-                ? `${item.label}，${unreadCount} 則未讀`
+                ? t("nav.inboxUnread", {
+                    label: item.label,
+                    count: unreadCount,
+                  })
                 : undefined
             }
             className={`relative rounded-lg px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition sm:px-3 sm:text-sm ${

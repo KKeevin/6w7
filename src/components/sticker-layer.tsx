@@ -7,6 +7,7 @@ import {
   wrapRotation,
 } from "@/shared/page-stickers";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n-provider";
 
 const BASE_WIDTH = 28;
 
@@ -55,6 +56,7 @@ export function StickerLayer({
   onScale?: (id: string, scale: number) => void;
   onRotate?: (id: string, rotation: number) => void;
 }) {
+  const t = useT();
   const stageRef = useRef<HTMLDivElement>(null);
   const stickersRef = useRef(stickers);
   const dragRef = useRef<DragState | null>(null);
@@ -277,7 +279,7 @@ export function StickerLayer({
               <>
                 <button
                   type="button"
-                  aria-label="旋轉"
+                  aria-label={t("studio.rotate")}
                   className="absolute left-1/2 top-0 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-[2.15rem] items-center justify-center rounded-full border border-[var(--line)] bg-white text-[var(--ink)] shadow-md"
                   onPointerDown={(event) => {
                     event.stopPropagation();
@@ -319,7 +321,7 @@ export function StickerLayer({
                 </button>
                 <button
                   type="button"
-                  aria-label="縮放"
+                  aria-label={t("common.zoom")}
                   className="absolute right-0 bottom-0 z-10 h-8 w-8 translate-x-1/3 translate-y-1/3 cursor-nwse-resize"
                   onPointerDown={(event) => {
                     event.stopPropagation();

@@ -6,6 +6,7 @@ import type { Provider } from "next-auth/providers";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { rememberInferredLocale } from "@/lib/account-locale";
 import { normalizeUsername } from "@/shared/slug";
 
 const credentialsSchema = z.object({
@@ -96,6 +97,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (token.picture) session.user.image = token.picture as string;
       }
       return session;
+    },
+  },
+  events: {
+    async signIn({ user }) {
+      if (user.id) await rememberInferredLocale(user.id);
     },
   },
   trustHost: true,

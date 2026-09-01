@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { canvasToImageFile } from "@/lib/image-upload";
 import { cn } from "@/lib/utils";
 import { ASK_LIMITS, BRAND } from "@/shared/tools";
+import { useT } from "@/components/i18n-provider";
 
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 4;
@@ -26,6 +27,7 @@ function clamp(value: number, min: number, max: number) {
  * 輸出正方形，最長邊 {@link ASK_LIMITS.avatarMaxEdge}，伺服器再轉成 512px PNG。
  */
 export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
+  const t = useT();
   const stageRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -205,13 +207,13 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
                 id="avatar-crop-title"
                 className="mt-0.5 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight"
               >
-                框出你的大頭貼
+                {t("crop.title")}
               </h3>
             </div>
             <button
               type="button"
               onClick={onCancel}
-              aria-label="取消裁切"
+              aria-label={t("crop.cancelAria")}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
             >
               ✕
@@ -270,7 +272,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
           <div className="mt-3 flex shrink-0 items-center gap-2">
             <button
               type="button"
-              aria-label="縮小"
+              aria-label={t("common.zoomOut")}
               onClick={() => applyZoom(zoom - 0.2)}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--line)] text-[var(--ink)] transition hover:bg-[var(--surface)]"
             >
@@ -282,13 +284,13 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
               max={ZOOM_MAX}
               step={0.01}
               value={zoom}
-              aria-label="縮放"
+              aria-label={t("common.zoom")}
               onChange={(event) => applyZoom(Number(event.target.value))}
               className="h-1.5 min-w-0 flex-1 cursor-pointer appearance-none rounded-full bg-[var(--surface)] accent-[var(--mint)]"
             />
             <button
               type="button"
-              aria-label="放大"
+              aria-label={t("common.zoomIn")}
               onClick={() => applyZoom(zoom + 0.2)}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--line)] text-[var(--ink)] transition hover:bg-[var(--surface)]"
             >
@@ -297,7 +299,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
           </div>
 
           <p className="mt-2 shrink-0 text-center text-[11px] leading-relaxed text-[var(--muted)]">
-            拖曳移動，兩指或滾輪縮放。圓圈內是別人會看到的範圍。
+            {t("crop.hint")}
           </p>
 
           {failed ? (
@@ -305,20 +307,20 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
               className="mt-2 shrink-0 text-center text-xs font-medium text-[var(--danger)]"
               role="alert"
             >
-              這張圖處理不了，請改用 JPEG、PNG 或 WebP。
+              {t("crop.failed")}
             </p>
           ) : null}
 
           <div className="mt-4 grid shrink-0 grid-cols-2 gap-2 border-t border-[var(--line)] pt-4">
             <Button type="button" variant="outline" onClick={onCancel}>
-              取消
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
               disabled={!ready || working || failed}
               onClick={() => void confirm()}
             >
-              {working ? "處理中…" : "當作頭貼"}
+              {working ? t("common.processing") : t("crop.use")}
             </Button>
           </div>
         </div>

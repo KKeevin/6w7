@@ -4,20 +4,22 @@ import { useState } from "react";
 import Link from "next/link";
 import { LoginForm } from "@/components/login-form";
 import { BRAND } from "@/shared/tools";
+import { useT } from "@/components/i18n-provider";
 
 /** 首頁右側：依本機是否用過帳號，預設登入或註冊，標題跟著切 */
 export function HomeAuthPanel() {
   const [mode, setMode] = useState<"login" | "register">("register");
+  const t = useT();
 
   return (
     <>
       <h2 className="text-xl font-bold text-[var(--ink)]">
-        {mode === "login" ? `歡迎回來` : `開始使用 ${BRAND.en}`}
+        {mode === "login"
+          ? t("home.welcomeBack")
+          : t("home.startUsing", { brand: BRAND.en })}
       </h2>
       <p className="mt-1 text-sm text-[var(--muted)]">
-        {mode === "login"
-          ? "登入產生屬於自己的專屬連結，還有查看匿名訊息。"
-          : "用 IG 帳號註冊，馬上拿到專屬連結。"}
+        {mode === "login" ? t("home.loginHint") : t("home.registerHint")}
       </p>
       <div className="mt-5">
         <LoginForm
@@ -28,16 +30,16 @@ export function HomeAuthPanel() {
         />
       </div>
       <p className="mt-5 text-center text-[11px] leading-relaxed text-[var(--muted)]">
-        繼續即表示你同意{" "}
+        {t("home.agreePrefix")}{" "}
         <Link href="/legal/terms" className="underline hover:text-[var(--ink)]">
-          服務條款
+          {t("footer.terms")}
         </Link>{" "}
-        與{" "}
+        {t("home.agreeAnd")}{" "}
         <Link
           href="/legal/privacy"
           className="underline hover:text-[var(--ink)]"
         >
-          隱私權政策
+          {t("footer.privacy")}
         </Link>
         。
       </p>

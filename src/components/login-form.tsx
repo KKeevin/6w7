@@ -14,6 +14,7 @@ import {
   resolveAuthMode,
 } from "@/lib/device-auth-hint";
 import { resetDemoIgShareGuideHint } from "@/lib/ig-share-guide-hint";
+import { useT } from "@/components/i18n-provider";
 
 type AuthMode = "login" | "register";
 
@@ -34,6 +35,7 @@ export function LoginForm({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useT();
   const modeParam = searchParams.get("mode");
   const next = safeInternalPath(searchParams.get("next") || redirectTo);
 
@@ -78,7 +80,7 @@ export function LoginForm({
         });
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data?.error?.message || "註冊失敗");
+          throw new Error(data?.error?.message || t("auth.registerFailed"));
         }
       }
 
@@ -90,15 +92,16 @@ export function LoginForm({
       if (result?.error) {
         throw new Error(
           mode === "login"
-            ? "帳號或密碼錯誤"
-            : "註冊成功但登入失敗，請再試一次",
+            ? t("auth.badCredentials")
+            : t("auth.registerLoginFailed"),
         );
       }
+      await fetch("/api/v1/locale");
       markDeviceHasAccount();
       router.push(mode === "register" ? "/dashboard?welcome=1" : next);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "怪怪的，再試一次");
+      setError(err instanceof Error ? err.message : t("common.retry"));
     } finally {
       setLoading(false);
     }
@@ -107,7 +110,7 @@ export function LoginForm({
   return (
     <form onSubmit={onSubmit} className={compact ? "space-y-3" : "space-y-4"}>
       <div>
-        <Label htmlFor="username">IG 帳號</Label>
+        <Label htmlFor="username">{t("auth.igId")}</Label>
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--muted)]">
             @
@@ -125,19 +128,19 @@ export function LoginForm({
         </div>
         {!compact && mode === "register" && (
           <p className="mt-1 text-xs text-[var(--muted)]">
-            專屬連結會是 6w7.link/{username || "your.ig.id"}
+            {t("auth.linkWillBe", { username: username || "your.ig.id" })}
           </p>
         )}
       </div>
       <div>
         <div className="flex items-end justify-between gap-3">
-          <Label htmlFor="password">密碼（至少 8 碼）</Label>
+          <Label htmlFor="password">{t("auth.password")}</Label>
           {mode === "login" ? (
             <Link
               href="/forgot-password"
               className="mb-0.5 text-xs font-medium text-[var(--muted)] hover:text-[var(--ink)]"
             >
-              忘記密碼？
+              {t("auth.forgot")}
             </Link>
           ) : null}
         </div>
@@ -154,21 +157,21 @@ export function LoginForm({
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading
-          ? "處理中…"
+          ? t("common.processing")
           : mode === "login"
-            ? "登入"
-            : "註冊並開始"}
+            ? t("auth.login")
+            : t("auth.registerStart")}
       </Button>
       <button
         type="button"
         className="w-full text-center text-sm text-[var(--muted)] hover:text-[var(--ink)]"
         onClick={() => switchMode(mode === "login" ? "register" : "login")}
       >
-        {mode === "login" ? "還沒有帳號？註冊" : "已有帳號？登入"}
+        {mode === "login" ? t("auth.noAccount") : t("auth.hasAccount")}
       </button>
       <div className="relative py-1 text-center">
         <span className="bg-[var(--bg)] px-2 text-xs text-[var(--muted)] lg:bg-white">
-          或
+          {t("common.or")}
         </span>
       </div>
       <a
@@ -177,10 +180,10 @@ export function LoginForm({
         className={cn(buttonVariants({ variant: "outline" }), "w-full")}
         onClick={() => resetDemoIgShareGuideHint()}
       >
-        用示範帳號登入
+        {t("auth.demoLogin")}
       </a>
       <p className="text-center text-[11px] leading-relaxed text-[var(--muted)]">
-        快使用示範帳號體驗匿名問答網站的魅力吧！
+        {t("auth.demoHint")}
       </p>
     </form>
   );

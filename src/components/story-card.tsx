@@ -1,6 +1,10 @@
+"use client";
+
 import { BRAND } from "@/shared/tools";
 import { getSiteUrl } from "@/lib/utils";
 import { StoryBrandLockup } from "@/components/story-brand-lockup";
+import { useT } from "@/components/i18n-provider";
+import { displayAskTitle } from "@/shared/ask-title";
 
 const W = 1080;
 const H = 1920;
@@ -35,6 +39,7 @@ export function StoryCard({
   logoSrc,
   onBodyClick,
 }: StoryCardProps) {
+  const t = useT();
   const resolvedLogo = logoSrc || logoUrl();
   return (
     <div
@@ -163,7 +168,9 @@ export function StoryCard({
                   color: "#1aa68a",
                 }}
               >
-                {topic ? `主題｜${topic}` : linkTitle || "匿名留言"}
+                {topic
+                  ? t("story.topicPrefix", { topic })
+                  : displayAskTitle(linkTitle, t("share.askTitle"))}
               </div>
               <div
                 style={{
@@ -190,7 +197,7 @@ export function StoryCard({
           {onBodyClick ? (
             <>
               <span className="story-read-hint-box" aria-hidden />
-              <span className="story-read-hint-label">點一下看清楚</span>
+              <span className="story-read-hint-label">{t("story.readHint")}</span>
             </>
           ) : null}
           </div>
@@ -227,7 +234,7 @@ export function StoryCard({
                   fontWeight: 500,
                 }}
               >
-                （你的回覆會出現在這裡）
+                {t("story.replyPreview")}
               </p>
             )}
           </div>

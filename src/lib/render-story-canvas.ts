@@ -122,6 +122,7 @@ function drawBrandLockup(
   logo: HTMLImageElement | null,
   centerX: number,
   topY: number,
+  caption = "匿名問答",
 ) {
   ctx.font = `700 ${LOCKUP_LINK_SIZE}px ${FONT}`;
   const linkLabel = ".link";
@@ -160,7 +161,6 @@ function drawBrandLockup(
   ctx.fillStyle = "rgba(255,248,246,0.7)";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  const caption = "匿名問答";
   const chars = [...caption];
   const charWs = chars.map((ch) => ctx.measureText(ch).width);
   const glyphW = charWs.reduce((sum, w) => sum + w, 0);
@@ -204,6 +204,8 @@ export type ShareStoryRenderInput = {
   prompt: string;
   imageUrl?: string | null;
   displayName?: string | null;
+  askCaption?: string;
+  linkHint?: string;
 };
 
 /** 分享頁限動底圖 → PNG data URL */
@@ -332,7 +334,7 @@ export async function renderShareStoryPng(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(
-    "連結貼紙可放這裡",
+    input.linkHint ?? "連結貼紙可放這裡",
     boxX + boxW / 2,
     boxY + boxH / 2,
   );
@@ -348,7 +350,7 @@ export async function renderShareStoryPng(
     );
   }
 
-  drawBrandLockup(ctx, logo, avatarCx, lockupTop);
+  drawBrandLockup(ctx, logo, avatarCx, lockupTop, input.askCaption);
 
   ctx.textAlign = "left";
   return canvas.toDataURL("image/png");
@@ -360,6 +362,8 @@ export type InboxStoryRenderInput = {
   topic?: string | null;
   linkTitle?: string;
   shareHost?: string;
+  askCaption?: string;
+  topicLabel?: string;
 };
 
 /** 收件匣回覆限動圖卡 → PNG data URL（版型對齊 `StoryCard` 預覽） */
@@ -500,9 +504,9 @@ export async function renderInboxStoryPng(
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 
-  const label = input.topic
-    ? `主題｜${input.topic}`
-    : input.linkTitle || "匿名留言";
+  const label =
+    input.topicLabel ??
+    (input.topic ? `主題｜${input.topic}` : input.linkTitle || "匿名問我");
   ctx.fillStyle = "#1aa68a";
   ctx.font = `700 ${labelSize}px ${FONT}`;
   ctx.fillText(label, textX, cardY + innerPadTop);
@@ -538,7 +542,7 @@ export async function renderInboxStoryPng(
     }
   }
 
-  drawBrandLockup(ctx, logo, W / 2, footerTop);
+  drawBrandLockup(ctx, logo, W / 2, footerTop, input.askCaption);
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";

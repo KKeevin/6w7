@@ -2,17 +2,19 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { EmailNudge } from "@/components/email-nudge";
-import { LoggedInPublisherNote } from "@/components/ads/logged-in-publisher-note";
 import { SharePageClient } from "@/components/share-page-client";
 import { getViewer } from "@/lib/viewer";
+import { getT } from "@/lib/locale";
 import { loginPath } from "@/shared/paths";
 import { getProfileForOwner } from "@/services/ask-link.service";
+import { ensureDemoAccount } from "@/services/demo-account.service";
 
-export const metadata: Metadata = {
-  title: "短網址",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("nav.shortUrl") };
+}
 
-type Props = { searchParams: Promise<{ welcome?: string; guideHint?: string }> };
+type Props = { searchParams: Promise<{ welcome?: string; guideHint?: string; tour?: string }> };
 
 export default async function DashboardPage({ searchParams }: Props) {
   const viewer = await getViewer();
@@ -20,7 +22,11 @@ export default async function DashboardPage({ searchParams }: Props) {
     redirect(loginPath("/dashboard"));
   }
 
-  const { welcome, guideHint } = await searchParams;
+  if (viewer.kind === "demo") {
+    await ensureDemoAccount();
+  }
+
+  const { welcome, guideHint, tour } = await searchParams;
   const profile = await getProfileForOwner(viewer.user.id);
   const emailVerified = Boolean(profile.user.emailVerified);
 
@@ -37,6 +43,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         <SharePageClient
           isDemoAccount={viewer.kind === "demo"}
           forceGuideHint={viewer.kind === "demo" && guideHint === "1"}
+          forceTour={tour === "1"}
           initialProfile={{
             user: profile.user,
             link: {
@@ -52,11 +59,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             stickers: profile.stickers,
           }}
         />
-        {viewer.kind === "demo" ? (
-          <LoggedInPublisherNote page="dashboard" />
-        ) : null}
       </AdRailLayout>
     </main>
   );
 }
-

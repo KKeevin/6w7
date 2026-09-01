@@ -4,15 +4,15 @@ import { notFound } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { BrandLogo } from "@/components/brand-logo";
 import { PublicAskForm } from "@/components/public-ask-form";
-import { PublicAskExplainer } from "@/components/public-ask-explainer";
 import { PublicPageStudio } from "@/components/public-page-studio";
-import { getPublicAskLink } from "@/services/ask-link.service";
+import { getPublicAskLink, applyDemoSandboxToPublicLink } from "@/services/ask-link.service";
 import { ensureDemoAccountIfMissing } from "@/services/demo-account.service";
 import { getViewer } from "@/lib/viewer";
 import { AppError } from "@/shared/errors";
 import { isValidSlugFormat, isReservedSlug } from "@/shared/slug";
 import { isDemoUsername } from "@/shared/demo-account";
 import { BRAND } from "@/shared/tools";
+import { getT } from "@/lib/locale";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -21,6 +21,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const t = await getT();
   if (isDemoUsername(slug)) {
     try {
       await ensureDemoAccountIfMissing();
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
   if (isReservedSlug(slug) || !isValidSlugFormat(slug)) {
-    return { title: "匿名留言" };
+    return { title: t("meta.anonymousAsk") };
   }
   try {
     const link = await getPublicAskLink(slug);
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: link.prompt,
     };
   } catch {
-    return { title: "匿名留言" };
+    return { title: t("meta.anonymousAsk") };
   }
 }
 
@@ -65,8 +66,15 @@ export default async function PublicAskPage({ params, searchParams }: Props) {
   }
 
   const viewer = await getViewer();
+  const t = await getT();
+  if (
+    viewer.kind === "demo" &&
+    viewer.user.username.toLowerCase() === slug.toLowerCase()
+  ) {
+    link = await applyDemoSandboxToPublicLink(viewer.user.id, link);
+  }
   const canEdit =
-    viewer.kind === "user" &&
+    (viewer.kind === "user" || viewer.kind === "demo") &&
     viewer.user.username.toLowerCase() === slug.toLowerCase();
 
   return (
@@ -74,6 +82,7 @@ export default async function PublicAskPage({ params, searchParams }: Props) {
       <div className="bg-atmosphere flex w-full flex-1 flex-col rounded-3xl">
         <PublicPageStudio
           canEdit={canEdit}
+          demoMediaTtl={viewer.kind === "demo"}
           initialEdit={canEdit && edit === "1"}
           initialStickers={link.stickers ?? []}
         >
@@ -111,15 +120,12 @@ export default async function PublicAskPage({ params, searchParams }: Props) {
             </div>
 
             <p className="mt-4 text-center text-xs text-[var(--muted)]">
-              採完全匿名提問，請放心問答！
+              {t("share.anonReassure")}
             </p>
 
             <PublicAskForm link={link} />
           </div>
         </PublicPageStudio>
-        <div className="px-4 pb-8 sm:px-6 sm:pb-10">
-          <PublicAskExplainer />
-        </div>
       </div>
     </AdRailLayout>
   );

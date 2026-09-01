@@ -3,7 +3,10 @@
 
 # 6w7（樂玩ㄑ）- 匿名問答
 [![Site](https://img.shields.io/badge/site-6w7.link-1aa68a?style=flat-square)](https://6w7.link)
-[![zh-TW](https://img.shields.io/badge/lang-zh--TW-red?style=flat-square)](#)
+[![zh-Hant](https://img.shields.io/badge/zh--Hant-繁體中文-red?style=flat-square)](#)
+[![en](https://img.shields.io/badge/en-English-1aa68a?style=flat-square)](#)
+[![ja](https://img.shields.io/badge/ja-日本語-3178C6?style=flat-square)](#)
+[![ko](https://img.shields.io/badge/ko-한국어-F38020?style=flat-square)](#)
 [![License](https://img.shields.io/badge/License-Non--Commercial%20Educational-yellow?style=flat-square)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/kkeevin/6w7?style=flat-square&label=stars)](https://github.com/kkeevin/6w7/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/kkeevin/6w7?style=flat-square&label=forks)](https://github.com/kkeevin/6w7/forks)
@@ -25,6 +28,8 @@
 Next.js 專案，由 Vercel 託管並綁定付費網域；資料庫用 Neon，物件存在 Cloudflare R2。
 
 產生專屬短連結，產生圖卡於限動分享後收匿名提問。(以及更多功能，[詳閱文件](AGENTS.md))
+
+介面支援 **繁體中文**（預設）、**English**、**日本語**、**한국어**；頁尾可切換。
 </div>
 
 ## 本機啟動

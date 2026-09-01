@@ -3,7 +3,10 @@ import { Figtree, Syne } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { MemeDrift } from "@/components/meme-drift";
+import { I18nProvider } from "@/components/i18n-provider";
+import { getRequestLocale, getT } from "@/lib/locale";
 import { BRAND } from "@/shared/tools";
+import { HTML_LANG, OG_LOCALE } from "@/shared/i18n";
 import "./globals.css";
 
 const display = Syne({
@@ -22,66 +25,71 @@ const body = Figtree({
   fallback: ["system-ui", "sans-serif"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: BRAND.titleProduct,
-    template: `%s | ${BRAND.titleProduct}`,
-  },
-  description: BRAND.seoDescription,
-  applicationName: BRAND.en,
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  ),
-  // 不在這裡設 openGraph.url／alternates.canonical，否則所有子頁會繼承成首頁網址
-  openGraph: {
-    type: "website",
-    siteName: `${BRAND.en}（${BRAND.zh}）`,
-    locale: "zh_TW",
-    title: BRAND.titleProduct,
-    description: BRAND.seoDescription,
-    images: [
-      {
-        url: BRAND.logoSrc,
-        width: 920,
-        height: 360,
-        alt: `${BRAND.en}（${BRAND.zh}）`,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: BRAND.titleProduct,
-    description: BRAND.seoDescription,
-    images: [BRAND.logoSrc],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  const locale = await getRequestLocale();
+  return {
+    title: {
+      default: t("meta.productTitle"),
+      template: `%s | ${t("meta.productTitle")}`,
+    },
+    description: t("meta.seoDescription"),
+    applicationName: BRAND.en,
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+    ),
+    openGraph: {
+      type: "website",
+      siteName: `${BRAND.en}（${BRAND.zh}）`,
+      locale: OG_LOCALE[locale],
+      title: t("meta.productTitle"),
+      description: t("meta.seoDescription"),
+      images: [
+        {
+          url: BRAND.logoSrc,
+          width: 920,
+          height: 360,
+          alt: `${BRAND.en}（${BRAND.zh}）`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("meta.productTitle"),
+      description: t("meta.seoDescription"),
+      images: [BRAND.logoSrc],
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-snippet": -1,
-      "max-image-preview": "large",
-      "max-video-preview": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-snippet": -1,
+        "max-image-preview": "large",
+        "max-video-preview": -1,
+      },
     },
-  },
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.png", type: "image/png", sizes: "32x32" },
-    ],
-    apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
-  },
-};
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/icon.png", type: "image/png", sizes: "32x32" },
+      ],
+      apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
+    },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getRequestLocale();
+
   return (
     <html
-      lang="zh-Hant"
+      lang={HTML_LANG[locale]}
       className={`${display.variable} ${body.variable} min-h-full`}
       suppressHydrationWarning
     >
@@ -94,8 +102,10 @@ export default function RootLayout({
         className="flex min-h-dvh flex-col antialiased"
         suppressHydrationWarning
       >
-        {children}
-        <MemeDrift />
+        <I18nProvider locale={locale}>
+          {children}
+          <MemeDrift />
+        </I18nProvider>
         <Analytics />
         <SpeedInsights />
       </body>

@@ -1,4 +1,4 @@
-import { jsonError, jsonOk, requireRealUserId } from "@/lib/api";
+import { jsonError, jsonOk, requireUserId } from "@/lib/api";
 import { deleteMediaAsset } from "@/services/page-media.service";
 import { assertRateLimit } from "@/lib/rate-limit";
 
@@ -8,7 +8,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function DELETE(_request: Request, { params }: Params) {
   try {
-    const userId = await requireRealUserId();
+    const userId = await requireUserId();
     const { id } = await params;
     await assertRateLimit({
       key: `media-del:${userId}`,

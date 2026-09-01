@@ -146,15 +146,14 @@ export async function saveOrSharePng(
   }
 }
 
-export function saveImageHint(result: SaveImageResult): string | null {
-  if (result.method === "new-tab") {
-    return "已開啟圖片分頁：長按圖片 → 儲存後，再到 IG 開限動上傳；或用分享選單選 Instagram → 限動。";
-  }
-  if (result.method === "share") {
-    return "在分享選單選 Instagram → 限動，圖會直接進編輯；也可選「儲存圖像」存到照片。";
-  }
-  if (result.method === "download") {
-    return "已下載 PNG。上傳到 IG 限動後，記得再加「連結」貼紙貼上短網址。";
-  }
+import type { Translator } from "@/shared/i18n";
+
+export function saveImageHint(
+  result: SaveImageResult,
+  t: Translator,
+): string | null {
+  if (result.method === "new-tab") return t("save.newTab");
+  if (result.method === "share") return t("save.share");
+  if (result.method === "download") return t("save.download");
   return null;
 }

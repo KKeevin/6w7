@@ -210,7 +210,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 - PageSticker：貼在公開頁上的實例（同一張圖可出現多次）。座標為舞台百分比（中心點 x／y）、scale、rotation、zIndex。
 - 上限：圖庫 20 張、畫面上 12 張；僅圖片。伺服器會將貼紙縮至最長邊 1600px 並轉成 WebP 後儲存，不保留原檔。
 - 訪客頁貼紙不攔截點擊。示範帳號可以裝扮、改提示與頭貼，但**不可寫入共用**的 `AskLink`／`User.image`／`PageSticker`：多人同時用 `@lewanq` 時，彼此看不到對方的改動；未登入示範的外人看 `/lewanq` **永遠是官方示範**（種子 prompt、官方頭貼、無私人貼紙）。
-- 隔離鍵是 cookie `6w7_demo_sandbox`（HttpOnly、約 30 分鐘、與圖檔壽命對齊），不是 `userId`（示範登入大家是同一個 User）。提示／布局／頭貼 URL 存在 Redis（無 Upstash 時本機記憶體）`6w7:demo-sandbox:{id}`。示範上傳的 MediaAsset 帶 `sandboxId`＋`expiresAt`（30 分鐘），列表只回自己的沙盒；到期刪儲存檔與資料列。官方 `profile.png` 不套用此壽命。一般帳號 `sandboxId`／`expiresAt` 為空。清理以讀寫裝扮／公開頁時的機會性 purge 為主，另以 cron `GET /api/v1/cron/demo-media` 補掃。 Inbox 種子留言仍共用。
+- 隔離鍵是 cookie `6w7_demo_sandbox`（HttpOnly、約 30 分鐘、與圖檔壽命對齊），不是 `userId`（示範登入大家是同一個 User）。提示／布局／頭貼 URL 存在 Redis（無 Upstash 時本機記憶體）`6w7:demo-sandbox:{id}`。示範上傳的 MediaAsset 帶 `sandboxId`＋`expiresAt`（30 分鐘），列表只回自己的沙盒；到期刪儲存檔與資料列。官方 `profile.png` 不套用此壽命。一般帳號 `sandboxId`／`expiresAt` 為空。清理以讀寫裝扮／公開頁時的機會性 purge 為主，另以 cron `GET /api/v1/cron/demo-media` 補掃（Vercel Hobby 每天最多一次，正式排程 `0 16 * * *`＝台灣時間 00:00）。 Inbox 種子留言仍共用。
 - 貼紙超出公開頁舞台（問答區塊）的部分一律裁切，不可把頁面撐出額外橫向／縱向捲軸。
 - 訪客聚焦留言輸入框時，輸入框提到貼紙之上並半透明，仍看得到底下貼紙；失焦後恢復。
 - `AiJob`、`ToolUsage` 等 —— **等做到該工具再加**。

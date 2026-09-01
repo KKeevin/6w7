@@ -1,5 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { prisma } from "@/lib/db";
+import { encodeAvatarPng } from "@/lib/storage/avatar";
 import { putPublicObject } from "@/lib/storage/object-store";
 import { DEMO_MEDIA_TTL_MS } from "@/shared/demo-account";
 import type { PublicSticker } from "@/shared/page-stickers";
@@ -207,12 +208,7 @@ export async function saveDemoSandboxAvatar(
   sandboxId: string,
   input: Buffer,
 ): Promise<{ publicPath: string }> {
-  const sharp = (await import("sharp")).default;
-  const png = await sharp(input, { limitInputPixels: 40_000_000 })
-    .rotate()
-    .resize(512, 512, { fit: "cover", position: "center" })
-    .png({ compressionLevel: 8 })
-    .toBuffer();
+  const png = await encodeAvatarPng(input);
 
   const objectKey = `stickers/${userId}/${AVATAR_KEY_MARK}${sandboxId}.png`;
   const { publicUrl } = await putPublicObject(objectKey, png, "image/png");

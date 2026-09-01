@@ -89,8 +89,8 @@ export const ASK_LIMITS = {
   imageUploadMaxBytes: 30 * 1024 * 1024,
   /** 瀏覽器先壓到這個大小才送 API（雲端函式的請求本文有上限） */
   uploadTargetBytes: 4 * 1024 * 1024,
-  /** 頭貼預壓最長邊；伺服器最後固定輸出 512px PNG */
-  avatarMaxEdge: 1024,
+  /** 頭貼預壓最長邊；與伺服器輸出同為 512px，避免裁完再壓一次大圖 */
+  avatarMaxEdge: 512,
   /** 貼紙最長邊；前端預壓與伺服器輸出一致 */
   stickerMaxEdge: 1600,
   stickerScaleMin: 0.35,

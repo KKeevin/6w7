@@ -157,16 +157,21 @@ async function saveAvatarS3(userId: string, png: Buffer) {
  * 上傳頭貼：轉成 profile.png，刪除舊檔，回傳公開路徑／URL。
  * 本機：uploads/{userId}/profile.png；正式：R2/S3 avatars/{userId}/profile.png
  */
+/** 頭貼轉 512 PNG；effort／compression 刻意偏低，上傳等待比檔案再小一點重要 */
+export async function encodeAvatarPng(input: Buffer): Promise<Buffer> {
+  const sharp = (await import("sharp")).default;
+  return sharp(input, { limitInputPixels: MAX_INPUT_PIXELS })
+    .rotate()
+    .resize(512, 512, { fit: "cover", position: "center" })
+    .png({ compressionLevel: 4, effort: 3 })
+    .toBuffer();
+}
+
 export async function saveProfileAvatar(
   userId: string,
   input: Buffer,
 ): Promise<{ publicPath: string }> {
-  const sharp = (await import("sharp")).default;
-  const png = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS })
-    .rotate()
-    .resize(512, 512, { fit: "cover", position: "center" })
-    .png({ compressionLevel: 8 })
-    .toBuffer();
+  const png = await encodeAvatarPng(input);
 
   if (getDriver() === "s3") {
     return saveAvatarS3(userId, png);

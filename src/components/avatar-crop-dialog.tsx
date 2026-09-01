@@ -24,7 +24,7 @@ function clamp(value: number, min: number, max: number) {
 
 /**
  * 大頭貼裁切：方框內就是會存下來的範圍，圓圈是實際顯示的區域。
- * 輸出正方形，最長邊 {@link ASK_LIMITS.avatarMaxEdge}，伺服器再轉成 512px PNG。
+ * 輸出正方形，邊長 {@link ASK_LIMITS.avatarMaxEdge}（與伺服器 512px PNG 對齊）。
  */
 export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
   const t = useT();
@@ -172,7 +172,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
       canvas.height = out;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("canvas unavailable");
-      ctx.imageSmoothingQuality = "high";
+      ctx.imageSmoothingQuality = "medium";
       ctx.drawImage(img, sx, sy, source, source, 0, 0, out, out);
 
       onConfirm(await canvasToImageFile(canvas, "avatar"));

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ADS, adsReady } from "@/shared/ads";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n-provider";
 
 declare global {
   interface Window {
@@ -26,6 +27,7 @@ type AdSlotProps = {
  * 只在 AdSense 真正填入時露出。沒播出不畫空框；未填滿時移出主內容流，避免跑版。
  */
 export function AdSlot({ format, className = "" }: AdSlotProps) {
+  const t = useT();
   const insRef = useRef<HTMLModElement>(null);
   const pushed = useRef(false);
   const [filled, setFilled] = useState(false);
@@ -81,7 +83,7 @@ export function AdSlot({ format, className = "" }: AdSlotProps) {
       {filled ? (
         <div className="flex items-center justify-between border-b border-[var(--line)]/50 px-2.5 py-1">
           <span className="text-[0.65rem] font-semibold tracking-wide text-[var(--muted)]">
-            贊助
+            {t("ads.sponsor")}
           </span>
         </div>
       ) : null}

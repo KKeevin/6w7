@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
-import { LoggedInPublisherNote } from "@/components/ads/logged-in-publisher-note";
 import { InboxClient } from "@/components/inbox-client";
 import { getViewer } from "@/lib/viewer";
+import { getRequestLocale, getT } from "@/lib/locale";
 import { loginPath } from "@/shared/paths";
+import { toInboxDemoMessages } from "@/shared/demo-account";
 import { listInbox } from "@/services/message.service";
 import { SHELL_CONTENT } from "@/shared/shell";
 
-export const metadata: Metadata = {
-  title: "收件匣",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("inbox.title") };
+}
 
 export default async function InboxPage() {
   const viewer = await getViewer();
@@ -18,8 +20,13 @@ export default async function InboxPage() {
     redirect(loginPath("/inbox"));
   }
 
-  const result = await listInbox(viewer.user.id, { filter: "all", page: 1 });
-  const initialMessages = result.messages.map((m) => ({
+  const t = await getT();
+  const locale = await getRequestLocale();
+  const demo = viewer.kind === "demo";
+  const result = demo
+    ? null
+    : await listInbox(viewer.user.id, { filter: "all", page: 1 });
+  const initialMessages = result?.messages.map((m) => ({
     id: m.id,
     body: m.body,
     topic: m.topic,
@@ -36,22 +43,20 @@ export default async function InboxPage() {
       <AdRailLayout width="narrow">
         <div className={`${SHELL_CONTENT} w-full`}>
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold lg:text-4xl">
-            收件匣
+            {t("inbox.title")}
           </h1>
           <p className="mt-2 text-[var(--muted)] lg:text-lg">
-            點開提問就會看到限動圖卡，可直接寫回覆並分享；也能標示為未讀、精選、封存、刪除或檢舉。未讀先不展開內文，方便在外面打開。
+            {t("inbox.lead")}
           </p>
           <div className="mt-8 lg:mt-10">
             <InboxClient
+              demoMessages={demo ? toInboxDemoMessages(locale) : undefined}
               initialMessages={initialMessages}
-              initialPage={result.page}
-              initialTotal={result.total}
-              initialTotalPages={result.totalPages}
+              initialPage={result?.page}
+              initialTotal={result?.total}
+              initialTotalPages={result?.totalPages}
             />
           </div>
-          {viewer.kind === "demo" ? (
-            <LoggedInPublisherNote page="inbox" />
-          ) : null}
         </div>
       </AdRailLayout>
     </main>

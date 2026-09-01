@@ -1,10 +1,12 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { localeForMail } from "@/lib/account-locale";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
 import { buildTransactionalMail } from "@/lib/mail-template";
 import { createRawToken, hashToken } from "@/lib/token-hash";
 import { getSiteUrl } from "@/lib/utils";
 import { AppError } from "@/shared/errors";
+import { translate, type Locale, type MessageKey } from "@/shared/i18n";
 import { normalizeUsername } from "@/shared/slug";
 import { BRAND } from "@/shared/tools";
 
@@ -28,6 +30,8 @@ async function findUserForReset(identifier: string) {
         status: true,
         isDemo: true,
         emailVerified: true,
+        locale: true,
+        localeChosen: true,
       },
     });
   }
@@ -41,29 +45,37 @@ async function findUserForReset(identifier: string) {
       status: true,
       isDemo: true,
       emailVerified: true,
+      locale: true,
+      localeChosen: true,
     },
   });
 }
 
-function resetMailCopy(username: string, email: string, url: string) {
+function resetMailCopy(
+  locale: Locale,
+  username: string,
+  email: string,
+  url: string,
+) {
+  const t = (key: MessageKey, vars?: Record<string, string | number>) =>
+    translate(locale, key, vars);
+  const brand = { brand: BRAND.en, brandZh: BRAND.zh };
   return buildTransactionalMail({
-    subject: `重設你的 ${BRAND.en} 密碼`,
-    preheader: "連結 1 小時內有效。不是你本人請直接忽略，密碼不會變。",
-    title: "重設密碼",
+    locale,
+    subject: t("mail.reset.subject", brand),
+    preheader: t("mail.reset.preheader"),
+    title: t("mail.reset.title"),
     username,
-    paragraphs: [
-      `有人申請重設你在 ${BRAND.en}（${BRAND.zh}）的密碼。若是你本人，請在 1 小時內按下面的按鈕。`,
-      "我們不會在信裡要你回覆密碼，也不會要你下載檔案。若有人這樣跟你要，請當成詐騙。",
-    ],
-    ctaLabel: "重設密碼",
+    paragraphs: [t("mail.reset.p1", brand), t("mail.reset.p2")],
+    ctaLabel: t("mail.reset.cta"),
     ctaUrl: url,
     specs: [
-      { label: "帳號", value: `@${username}` },
-      { label: "信箱", value: email },
-      { label: "用途", value: "重設密碼" },
-      { label: "有效期限", value: "1 小時（用過即失效）" },
-      { label: "寄件者", value: BRAND.contactEmail },
-      { label: "網站", value: BRAND.domain },
+      { label: t("mail.specAccount"), value: `@${username}` },
+      { label: t("mail.specEmail"), value: email },
+      { label: t("mail.specPurpose"), value: t("mail.reset.purpose") },
+      { label: t("mail.specExpiry"), value: t("mail.reset.expiry") },
+      { label: t("mail.specFrom"), value: BRAND.contactEmail },
+      { label: t("mail.specSite"), value: BRAND.domain },
     ],
   });
 }
@@ -108,7 +120,11 @@ export async function requestPasswordReset(identifier: string) {
   }
 
   try {
-    const copy = resetMailCopy(user.username, user.email, url);
+    const locale = await localeForMail(user.locale, {
+      chosen: user.localeChosen,
+      fallback: "request",
+    });
+    const copy = resetMailCopy(locale, user.username, user.email, url);
     await sendMail({
       to: user.email,
       subject: copy.subject,
@@ -135,14 +151,10 @@ export async function resetPasswordWithToken(rawToken: string, password: string)
   });
 
   if (!row || row.expiresAt.getTime() <= Date.now()) {
-    throw new AppError(
-      "BAD_REQUEST",
-      "重設連結無效或已過期，請重新申請。",
-      400,
-    );
+    throw new AppError("BAD_REQUEST", "api.resetExpired", 400);
   }
   if (row.user.status !== "active" || row.user.isDemo) {
-    throw new AppError("FORBIDDEN", "這個帳號無法重設密碼。", 403);
+    throw new AppError("FORBIDDEN", "api.resetForbidden", 403);
   }
 
   const passwordHash = await bcrypt.hash(password, 12);

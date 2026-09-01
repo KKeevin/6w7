@@ -1,3 +1,5 @@
+"use client";
+
 import { BRAND } from "@/shared/tools";
 import { getSiteUrl } from "@/lib/utils";
 import { StoryBrandLockup } from "@/components/story-brand-lockup";
@@ -6,6 +8,7 @@ import {
   SHARE_STICKER_BOX,
   sharePointAtLayout,
 } from "@/shared/share-story-art";
+import { useT } from "@/components/i18n-provider";
 
 const W = 1080;
 const H = 1920;
@@ -43,6 +46,7 @@ export function ShareStoryCard({
   displayName,
   logoSrc,
 }: ShareStoryCardProps) {
+  const t = useT();
   const initial = (displayName || username).slice(0, 1).toUpperCase();
   const resolvedLogo = logoSrc || logoUrl();
   const resolvedPointAt = pointAtUrl();
@@ -215,7 +219,7 @@ export function ShareStoryCard({
             color: "rgba(255,248,246,0.5)",
           }}
         >
-          連結貼紙可放這裡
+          {t("shareStory.linkHint")}
         </div>
       </div>
 

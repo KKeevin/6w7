@@ -4,14 +4,19 @@ import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { BrandLogo } from "@/components/brand-logo";
 import { SHELL_CONTENT } from "@/shared/shell";
 import { BRAND } from "@/shared/tools";
+import { getT } from "@/lib/locale";
 
-export const metadata: Metadata = {
-  title: "聯絡我們",
-  description: `如何聯絡 ${BRAND.en}（${BRAND.zh}）：帳號協助、刪除資料、檢舉濫用與合作來信。`,
-  alternates: { canonical: "/contact" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return {
+    title: t("contact.title"),
+    description: t("contact.metaDesc", { brand: BRAND.en, zh: BRAND.zh }),
+    alternates: { canonical: "/contact" },
+  };
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const t = await getT();
   const mailto = `mailto:${BRAND.contactEmail}`;
 
   return (
@@ -22,51 +27,47 @@ export default function ContactPage() {
         >
           <BrandLogo height={36} />
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold text-[var(--ink)]">
-            聯絡我們
+            {t("contact.title")}
           </h1>
-          <p>
-            {BRAND.en}（{BRAND.zh}
-            ）是匿名留言連結服務。這頁給需要找平台的人用：帳號、隱私、檢舉或合作。想留給某個使用者的匿名話，請走對方的短網址，不要寄到這裡。
-          </p>
+          <p>{t("contact.intro", { brand: BRAND.en, zh: BRAND.zh })}</p>
 
           <h2 className="font-[family-name:var(--font-display)] pt-2 text-xl font-bold text-[var(--ink)]">
-            怎麼寫信
+            {t("contact.howTitle")}
           </h2>
           <p>
-            請來信{" "}
             <a href={mailto} className="font-semibold text-[var(--ink)] underline">
               {BRAND.contactEmail}
             </a>
-            。主旨請寫清楚類型，例如「帳號協助」「刪除資料」「檢舉濫用」或「合作」。我們會依來信內容處理，不會把你的信公開到任何留言牆上。
+            <span className="block sm:inline sm:before:content-['._']">
+              {t("contact.howBody", { email: BRAND.contactEmail })}
+            </span>
           </p>
 
           <h2 className="font-[family-name:var(--font-display)] pt-2 text-xl font-bold text-[var(--ink)]">
-            我們處理什麼
+            {t("contact.handleTitle")}
           </h2>
+          <p>{t("contact.handle1")}</p>
           <p>
-            帳號登入問題、停用或刪除帳號、隱私權相關請求、違法或傷害他人內容的檢舉，以及媒體／合作詢問。涉及未成年人或不當內容的檢舉會優先看。
-          </p>
-          <p>
-            請不要請我們點擊網站上的廣告，也不要鼓勵別人去點。廣告相關成效請用你自己的分析工具查看；點擊自己的廣告違反{" "}
+            {t("contact.handle2a")}{" "}
             <Link href="/legal/terms" className="underline hover:text-[var(--ink)]">
-              服務條款
-            </Link>
-            與 AdSense 政策。
+              {t("footer.terms")}
+            </Link>{" "}
+            {t("contact.handle2b")}
           </p>
 
           <h2 className="font-[family-name:var(--font-display)] pt-2 text-xl font-bold text-[var(--ink)]">
-            其他入口
+            {t("contact.otherTitle")}
           </h2>
           <p>
-            想了解產品怎麼運作，請看{" "}
+            {t("contact.other1a")}{" "}
             <Link href="/about" className="underline hover:text-[var(--ink)]">
-              關於 {BRAND.en}
+              {t("contact.aboutBrand", { brand: BRAND.en })}
             </Link>
-            。資料怎麼蒐集見{" "}
+            {t("contact.other1b")}{" "}
             <Link href="/legal/privacy" className="underline hover:text-[var(--ink)]">
-              隱私權政策
+              {t("footer.privacy")}
             </Link>
-            。
+            {t("contact.other1c")}
           </p>
         </article>
       </AdRailLayout>

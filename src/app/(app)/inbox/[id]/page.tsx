@@ -3,12 +3,14 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import {
-  DEMO_MESSAGES,
   DEMO_PROFILE,
   getDemoMessage,
+  getLocalizedDemoMessages,
   demoMessagePath,
 } from "@/shared/demo-account";
 import { getViewer } from "@/lib/viewer";
+import { getRequestLocale, getT } from "@/lib/locale";
+import { DATE_BCP47 } from "@/shared/i18n";
 import { loginPath } from "@/shared/paths";
 import { BRAND } from "@/shared/tools";
 import { SHELL_CONTENT } from "@/shared/shell";
@@ -17,10 +19,12 @@ type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const viewer = await getViewer();
-  if (viewer.kind === "guest") return { title: "登入" };
+  const t = await getT();
+  if (viewer.kind === "guest") return { title: t("inbox.loginTitle") };
   const { id } = await params;
-  const message = getDemoMessage(id);
-  if (!message) return { title: "問答" };
+  const locale = await getRequestLocale();
+  const message = getDemoMessage(id, locale);
+  if (!message) return { title: t("inbox.qaTitle") };
   return {
     title: message.title,
     description: message.body.slice(0, 120),
@@ -36,14 +40,17 @@ export default async function InboxMessagePage({ params }: Props) {
   if (viewer.kind === "user") {
     redirect("/inbox");
   }
-  const message = getDemoMessage(id);
+  const t = await getT();
+  const locale = await getRequestLocale();
+  const message = getDemoMessage(id, locale);
   if (!message) notFound();
 
-  const index = DEMO_MESSAGES.findIndex((m) => m.id === id);
-  const prev = index > 0 ? DEMO_MESSAGES[index - 1] : undefined;
+  const messages = getLocalizedDemoMessages(locale);
+  const index = messages.findIndex((m) => m.id === id);
+  const prev = index > 0 ? messages[index - 1] : undefined;
   const next =
-    index >= 0 && index < DEMO_MESSAGES.length - 1
-      ? DEMO_MESSAGES[index + 1]
+    index >= 0 && index < messages.length - 1
+      ? messages[index + 1]
       : undefined;
 
   return (
@@ -52,19 +59,16 @@ export default async function InboxMessagePage({ params }: Props) {
         <article className={`${SHELL_CONTENT} w-full`}>
           <p className="text-sm text-[var(--muted)]">
             <Link href="/inbox" className="font-semibold hover:underline">
-              ← 收件匣
+              {t("inbox.back")}
             </Link>
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex rounded-full bg-[var(--surface)] px-2 py-0.5 text-[11px] font-semibold text-[var(--muted)]">
-              {message.topic}
-            </span>
-            {message.isFeatured ? (
+          {message.isFeatured ? (
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
               <span className="inline-flex rounded-full bg-[var(--accent)]/12 px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)]">
-                精選
+                {t("inbox.featured")}
               </span>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
           <h1 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-bold leading-tight lg:text-3xl">
             {message.title}
           </h1>
@@ -72,8 +76,10 @@ export default async function InboxMessagePage({ params }: Props) {
             className="mt-2 block text-xs text-[var(--muted)]"
             dateTime={message.createdAt}
           >
-            示範留言 · {new Date(message.createdAt).toLocaleString("zh-TW")} · @
-            {DEMO_PROFILE.username}
+            {t("inbox.demoNote", {
+              when: new Date(message.createdAt).toLocaleString(DATE_BCP47[locale]),
+              username: DEMO_PROFILE.username,
+            })}
           </time>
           <p className="mt-6 whitespace-pre-wrap text-base leading-relaxed text-[var(--ink)] lg:text-lg">
             {message.body}
@@ -81,23 +87,22 @@ export default async function InboxMessagePage({ params }: Props) {
 
           <section className="mt-10 space-y-3 border-t border-[var(--line)] pt-8 text-sm leading-relaxed text-[var(--muted)]">
             <h2 className="font-[family-name:var(--font-display)] text-base font-bold text-[var(--ink)]">
-              這則問答在 {BRAND.en} 裡怎麼運作
+              {t("inbox.howTitle", { brand: BRAND.en })}
             </h2>
             <p>
-              訪客在公開頁選主題「{message.topic}
-              」後送出，文字只進主人收件匣。這則是示範帳號裡的範例；真實使用者的留言只有本人登入後看得到。
+              {t("inbox.howBody")}
             </p>
             <p>
-              想看其他主題，回到{" "}
+              {t("inbox.otherTopicsA")}{" "}
               <Link href="/inbox" className="underline hover:text-[var(--ink)]">
-                收件匣
+                {t("inbox.title")}
               </Link>
-              ，或去{" "}
+              {t("inbox.otherTopicsB")}{" "}
               <Link
                 href={DEMO_PROFILE.publicPath}
                 className="underline hover:text-[var(--ink)]"
               >
-                公開留言頁
+                {t("inbox.publicPage")}
               </Link>
               。
             </p>
@@ -105,7 +110,7 @@ export default async function InboxMessagePage({ params }: Props) {
 
           <nav
             className="mt-8 flex flex-col gap-2 text-sm sm:flex-row sm:justify-between"
-            aria-label="相鄰問答"
+            aria-label={t("inbox.adjacentAria")}
           >
             {prev ? (
               <Link

@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { burstMemeFireworks } from "@/components/meme-drift";
 import { ASK_LIMITS } from "@/shared/tools";
 import type { PublicAskLink } from "@/shared/schemas";
+import { useT } from "@/components/i18n-provider";
 
 export function PublicAskForm({ link }: { link: PublicAskLink }) {
+  const i18n = useT();
   const [body, setBody] = useState("");
   const [topic, setTopic] = useState<string | undefined>(
     link.requireTopic ? link.topics[0] : undefined,
@@ -20,7 +22,7 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
   if (!link.acceptingMessages) {
     return (
       <p className="mt-8 rounded-xl border border-[var(--line)] bg-[var(--surface)]/60 px-4 py-6 text-sm text-[var(--muted)]">
-        此連結目前不接受留言。主人可能暫時關閉了收件。
+        {i18n("share.closed")}
       </p>
     );
   }
@@ -29,11 +31,9 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
     return (
       <div className="mt-8 border-t-2 border-[var(--mint)] pt-6">
         <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-          送出囉！
+          {i18n("ask.sentTitle")}
         </h2>
-        <p className="mt-2 text-[var(--muted)]">
-          你的問題已經躺在對方的收件匣裡，而且沒人會知道是你。
-        </p>
+        <p className="mt-2 text-[var(--muted)]">{i18n("ask.sentBody")}</p>
       </div>
     );
   }
@@ -51,10 +51,10 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
         body: JSON.stringify({ body, topic }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message || "送出失敗");
+      if (!res.ok) throw new Error(data?.error?.message || i18n("ask.sendFailed"));
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "送出失敗");
+      setError(err instanceof Error ? err.message : i18n("ask.sendFailed"));
     } finally {
       setLoading(false);
     }
@@ -64,27 +64,32 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
     <form onSubmit={onSubmit} className="mt-8 space-y-4">
       {link.topics.length > 0 && (
         <div>
-          <Label>主題{link.requireTopic ? "（必選）" : "（選填）"}</Label>
+          <Label>
+            {i18n("share.topic")}
+            {link.requireTopic ? i18n("common.required") : i18n("common.optional")}
+          </Label>
           <div className="mt-2 flex flex-wrap gap-2">
-            {link.topics.map((t) => (
+            {link.topics.map((item) => (
               <button
-                key={t}
+                key={item}
                 type="button"
-                onClick={() => setTopic(topic === t && !link.requireTopic ? undefined : t)}
+                onClick={() =>
+                  setTopic(topic === item && !link.requireTopic ? undefined : item)
+                }
                 className={`rounded-xl px-3 py-1.5 text-sm font-semibold ${
-                  topic === t
+                  topic === item
                     ? "bg-[var(--ink)] text-[var(--bg)]"
                     : "border border-[var(--line)]"
                 }`}
               >
-                {t}
+                {item}
               </button>
             ))}
           </div>
         </div>
       )}
       <div>
-        <Label htmlFor="body">匿名留言</Label>
+        <Label htmlFor="body">{i18n("share.anonMessage")}</Label>
         <div className="relative focus-within:z-30">
           <Textarea
             id="body"
@@ -92,7 +97,7 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
             onChange={(e) => setBody(e.target.value)}
             required
             maxLength={ASK_LIMITS.bodyMax}
-            placeholder="輸入你的提問 ⁶🤷🏻‍♀️⁷"
+            placeholder={i18n("share.placeholder")}
             className="transition-[background-color,backdrop-filter,box-shadow] duration-200 focus:bg-[var(--bg)]/68 focus:shadow-[0_10px_28px_rgba(20,33,43,0.14)] focus:backdrop-blur-[3px]"
           />
         </div>
@@ -102,11 +107,9 @@ export function PublicAskForm({ link }: { link: PublicAskLink }) {
       </div>
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "送出中…" : "匿名送出"}
+        {loading ? i18n("ask.sending") : i18n("share.sendAnon")}
       </Button>
-      <p className="text-xs text-[var(--muted)]">
-        匿名對主人顯示；系統為防濫用可能保留必要技術資料。請勿發送違法或傷害他人的內容。
-      </p>
+      <p className="text-xs text-[var(--muted)]">{i18n("share.anonNote")}</p>
     </form>
   );
 }

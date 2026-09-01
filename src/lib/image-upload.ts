@@ -1,6 +1,7 @@
 /** 上傳前的瀏覽器端圖片處理：擋掉過大的檔，其餘一律縮壓到 API 收得下的大小。 */
 
 import { ASK_LIMITS } from "@/shared/tools";
+import type { MessageKey, Translator } from "@/shared/i18n";
 
 const MB = 1024 * 1024;
 
@@ -11,12 +12,40 @@ export const IMAGE_UPLOAD_MAX_MB = Math.round(
 export const IMAGE_UPLOAD_ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
 
 export class ImageTooLargeError extends Error {
-  constructor(size: number) {
-    super(
-      `圖片過大（${(size / MB).toFixed(1)}MB），無法上傳。請改用 ${IMAGE_UPLOAD_MAX_MB}MB 以內的圖片。`,
-    );
+  readonly bytes: number;
+
+  constructor(bytes: number) {
+    super("upload.tooLarge");
     this.name = "ImageTooLargeError";
+    this.bytes = bytes;
   }
+}
+
+export class ImageUploadError extends Error {
+  readonly key: MessageKey;
+
+  constructor(key: MessageKey) {
+    super(key);
+    this.name = "ImageUploadError";
+    this.key = key;
+  }
+}
+
+export function formatImageUploadError(
+  error: unknown,
+  t: Translator,
+  fallback: string,
+): string {
+  if (error instanceof ImageTooLargeError) {
+    return t("upload.tooLarge", {
+      size: (error.bytes / MB).toFixed(1),
+      max: IMAGE_UPLOAD_MAX_MB,
+    });
+  }
+  if (error instanceof ImageUploadError) {
+    return t(error.key);
+  }
+  return error instanceof Error ? error.message : fallback;
 }
 
 type Decoded = {
@@ -94,12 +123,12 @@ function renamed(name: string, type: string) {
 }
 
 /** 選檔當下的即時檢查；回傳要顯示的錯誤訊息，沒問題就回 null */
-export function imageSelectionError(file: File): string | null {
+export function imageSelectionError(file: File, t: Translator): string | null {
   if (file.type && !file.type.startsWith("image/")) {
-    return "只能上傳圖片檔。";
+    return t("upload.notImage");
   }
   if (file.size > ASK_LIMITS.imageUploadMaxBytes) {
-    return new ImageTooLargeError(file.size).message;
+    return formatImageUploadError(new ImageTooLargeError(file.size), t, "");
   }
   return null;
 }
@@ -121,7 +150,7 @@ export async function canvasToImageFile(
     if (blob.size <= targetBytes) break;
   }
   if (!last || last.size > targetBytes) {
-    throw new Error("圖片處理後仍太大，請改用小一點的圖片。");
+    throw new ImageUploadError("upload.stillTooLarge");
   }
   return new File([last], renamed(baseName, type), { type });
 }
@@ -142,7 +171,7 @@ export async function prepareImageUpload(
   { maxEdge, targetBytes = ASK_LIMITS.uploadTargetBytes }: PrepareOptions,
 ): Promise<File> {
   if (file.type && !file.type.startsWith("image/")) {
-    throw new Error("只能上傳圖片檔。");
+    throw new ImageUploadError("upload.notImage");
   }
   if (file.size > ASK_LIMITS.imageUploadMaxBytes) {
     throw new ImageTooLargeError(file.size);
@@ -151,7 +180,7 @@ export async function prepareImageUpload(
   const decoded = await decode(file).catch(() => null);
   if (!decoded) {
     if (file.size > targetBytes) {
-      throw new Error("這張圖打不開，請改用 JPEG、PNG 或 WebP。");
+      throw new ImageUploadError("upload.unreadable");
     }
     return file;
   }
@@ -193,12 +222,12 @@ export async function prepareImageUpload(
 
     if (!last) {
       if (file.size > targetBytes) {
-        throw new Error("圖片壓縮失敗，請改用小一點的圖片。");
+        throw new ImageUploadError("upload.compressFailed");
       }
       return file;
     }
     if (last.size > targetBytes) {
-      throw new Error("圖片壓縮後仍太大，請改用小一點的圖片。");
+      throw new ImageUploadError("upload.stillTooLarge");
     }
     if (last.size >= file.size && fit === 1) return file;
 
@@ -209,9 +238,13 @@ export async function prepareImageUpload(
 }
 
 /** 上傳 API 的錯誤訊息；Vercel 在超過請求本文上限時會直接回 413（非 JSON） */
-export async function uploadErrorMessage(res: Response, fallback: string) {
+export async function uploadErrorMessage(
+  res: Response,
+  t: Translator,
+  fallback: string,
+) {
   if (res.status === 413) {
-    return "圖片過大，無法上傳。請改用小一點的圖片。";
+    return t("upload.payloadTooLarge");
   }
   const data = await res.json().catch(() => null);
   return data?.error?.message || fallback;

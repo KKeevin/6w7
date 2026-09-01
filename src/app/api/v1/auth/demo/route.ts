@@ -1,7 +1,10 @@
 import { signIn, signOut } from "@/lib/auth";
+import { getOrCreateDemoSandboxId } from "@/lib/demo-sandbox";
 import { ensureDemoAccount, demoAccountPassword } from "@/services/demo-account.service";
 import { DEMO_PROFILE } from "@/shared/demo-account";
 import { safeInternalPath, withSearchParam } from "@/shared/paths";
+
+export const runtime = "nodejs";
 
 function nextPath(request: Request) {
   const url = new URL(request.url);
@@ -11,6 +14,7 @@ function nextPath(request: Request) {
 /** 以真實帳密登入示範帳號 */
 export async function GET(request: Request) {
   await ensureDemoAccount();
+  await getOrCreateDemoSandboxId();
   await signIn("credentials", {
     username: DEMO_PROFILE.username,
     password: demoAccountPassword(),

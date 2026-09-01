@@ -28,8 +28,11 @@
   }
 }
 
-/* 頂欄／頁尾：左右軌道不縮放（對齊同一條 max-w-6xl），只放大兩端內容 */
+/* 頂欄／頁尾：左右軌道不縮放（對齊同一條 max-w-6xl），只放大兩端內容。
+   transform 不佔版面，卻會擴大點擊範圍；左右必須疊在中欄之上，中欄本身只能包住真實內容。 */
 .chrome-scale-start {
+  position: relative;
+  z-index: 1;
   transform: scale(var(--desktop-scale));
   transform-origin: left center;
 }
@@ -40,6 +43,8 @@
 }
 
 .chrome-scale-end {
+  position: relative;
+  z-index: 1;
   transform: scale(var(--desktop-scale));
   transform-origin: right center;
 }

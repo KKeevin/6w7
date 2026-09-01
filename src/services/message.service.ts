@@ -14,28 +14,28 @@ export async function createPublicMessage(
 ) {
   const link = await prisma.askLink.findUnique({ where: { slug } });
   if (!link || !link.isActive) {
-    throw new AppError("NOT_FOUND", "找不到此匿名問答連結。", 404);
+    throw new AppError("NOT_FOUND", "api.publicLinkNotFound", 404);
   }
   if (!link.acceptingMessages) {
-    throw new AppError("LINK_CLOSED", "此連結目前不接受留言。", 403);
+    throw new AppError("LINK_CLOSED", "api.linkClosed", 403);
   }
 
   const body = sanitizePlainText(input.body);
   if (!body) {
-    throw new AppError("VALIDATION_ERROR", "請輸入留言內容。", 400);
+    throw new AppError("VALIDATION_ERROR", "api.bodyRequired", 400);
   }
   if (containsBlockedContent(body)) {
-    throw new AppError("VALIDATION_ERROR", "留言內容無法送出。", 400);
+    throw new AppError("VALIDATION_ERROR", "api.bodyBlocked", 400);
   }
 
   const topics = asTopicList(link.topics);
   const topic = input.topic ? sanitizePlainText(input.topic) : undefined;
   if (link.requireTopic) {
     if (!topic || !topics.includes(topic)) {
-      throw new AppError("VALIDATION_ERROR", "請選擇一個主題標籤。", 400);
+      throw new AppError("VALIDATION_ERROR", "api.topicRequired", 400);
     }
   } else if (topic && topics.length > 0 && !topics.includes(topic)) {
-    throw new AppError("VALIDATION_ERROR", "主題標籤無效。", 400);
+    throw new AppError("VALIDATION_ERROR", "api.topicInvalid", 400);
   }
 
   if (link.dailyLimit && link.dailyLimit > 0) {
@@ -45,7 +45,7 @@ export async function createPublicMessage(
       where: { linkId: link.id, createdAt: { gte: start } },
     });
     if (count >= link.dailyLimit) {
-      throw new AppError("LINK_CLOSED", "今日收件已達上限，請明天再試。", 403);
+      throw new AppError("LINK_CLOSED", "api.dailyLimit", 403);
     }
   }
 
@@ -59,7 +59,7 @@ export async function createPublicMessage(
     },
   });
   if (blocked?.fingerprintHash === fingerprintHash) {
-    throw new AppError("FORBIDDEN", "無法送出留言。", 403);
+    throw new AppError("FORBIDDEN", "api.messageForbidden", 403);
   }
 
   const message = await prisma.message.create({
@@ -131,7 +131,7 @@ async function getOwnedMessage(userId: string, messageId: string) {
     include: { link: true },
   });
   if (!message || message.link.userId !== userId) {
-    throw new AppError("NOT_FOUND", "找不到此留言。", 404);
+    throw new AppError("NOT_FOUND", "api.messageNotFound", 404);
   }
   return message;
 }

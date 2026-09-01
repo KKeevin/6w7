@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/db";
+import { localeForMail } from "@/lib/account-locale";
 import { isMailConfigured, sendMail } from "@/lib/mailer";
 import { buildTransactionalMail } from "@/lib/mail-template";
 import { allowRateLimit } from "@/lib/rate-limit";
 import { getSiteUrl } from "@/lib/utils";
+import { translate, type MessageKey } from "@/shared/i18n";
 import { BRAND } from "@/shared/tools";
 import type { NotificationSummary } from "@/shared/notifications";
 
@@ -64,6 +66,8 @@ export async function notifyOwnerNewMessage(userId: string) {
         emailVerified: true,
         isDemo: true,
         status: true,
+        locale: true,
+        localeChosen: true,
       },
     });
     if (
@@ -94,27 +98,34 @@ export async function notifyOwnerNewMessage(userId: string) {
     });
     if (!dailyOk) return;
 
+    const locale = await localeForMail(user.locale, {
+      chosen: user.localeChosen,
+      fallback: "default",
+    });
+    const t = (key: MessageKey, vars?: Record<string, string | number>) =>
+      translate(locale, key, vars);
+    const brand = { brand: BRAND.en, brandZh: BRAND.zh };
     const summary = await getNotificationSummary(userId);
     const inboxUrl = `${getSiteUrl()}/inbox`;
     const unreadLabel =
-      summary.unreadCount > 0 ? `${summary.unreadCount} 則` : "有新留言";
+      summary.unreadCount > 0
+        ? t("mail.newMsg.unread", { count: summary.unreadCount })
+        : t("mail.newMsg.unreadFallback");
 
     const copy = buildTransactionalMail({
-      subject: `你的 ${BRAND.en} 收到新的匿名留言`,
-      preheader: "打開收件匣看看吧。",
-      title: "有新的匿名留言",
+      locale,
+      subject: t("mail.newMsg.subject", brand),
+      preheader: t("mail.newMsg.preheader"),
+      title: t("mail.newMsg.title"),
       username: user.username,
-      paragraphs: [
-        `有人用你的 ${BRAND.en}（${BRAND.zh}）連結丟了一句匿名留言給你。`,
-        "按下面的按鈕就能看。",
-      ],
-      ctaLabel: "開啟收件匣",
+      paragraphs: [t("mail.newMsg.p1", brand), t("mail.newMsg.p2")],
+      ctaLabel: t("mail.newMsg.cta"),
       ctaUrl: inboxUrl,
       specs: [
-        { label: "帳號", value: `@${user.username}` },
-        { label: "目前未讀", value: unreadLabel },
-        { label: "寄件者", value: BRAND.contactEmail },
-        { label: "網站", value: BRAND.domain },
+        { label: t("mail.specAccount"), value: `@${user.username}` },
+        { label: t("mail.specUnread"), value: unreadLabel },
+        { label: t("mail.specFrom"), value: BRAND.contactEmail },
+        { label: t("mail.specSite"), value: BRAND.domain },
       ],
     });
 

@@ -45,7 +45,7 @@ function seedMatches(link: SeededLink) {
     const row = byId.get(message.id);
     if (!row) return false;
     if (row.body !== demoMessageBody(message)) return false;
-    if (row.topic !== message.topic) return false;
+    if (row.topic !== null) return false;
     if (row.isRead !== message.isRead) return false;
     if (row.isFeatured !== message.isFeatured) return false;
     if (row.isArchived !== message.isArchived) return false;
@@ -78,13 +78,8 @@ async function findSeededDemoUser() {
   });
 }
 
-/** 公開頁用：帳號已在就略過，避免每次 /lewanq 都重種 */
+/** 公開頁用：內容與程式一致就只讀；主題／範例提問有改才重種 */
 export const ensureDemoAccountIfMissing = cache(async () => {
-  const found = await prisma.user.findUnique({
-    where: { username: DEMO_PROFILE.username },
-    select: { id: true, isDemo: true },
-  });
-  if (found?.isDemo) return found;
   return ensureDemoAccount();
 });
 
@@ -154,7 +149,7 @@ export async function ensureDemoAccount() {
             id: message.id,
             linkId,
             body: demoMessageBody(message),
-            topic: message.topic,
+            topic: null,
             isRead: message.isRead,
             isFeatured: message.isFeatured,
             isArchived: message.isArchived,
@@ -164,7 +159,7 @@ export async function ensureDemoAccount() {
           update: {
             linkId,
             body: demoMessageBody(message),
-            topic: message.topic,
+            topic: null,
             isRead: message.isRead,
             isFeatured: message.isFeatured,
             isArchived: message.isArchived,

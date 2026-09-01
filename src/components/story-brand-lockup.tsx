@@ -1,7 +1,11 @@
+"use client";
+
 import { BRAND } from "@/shared/tools";
+import { useT } from "@/components/i18n-provider";
 
 /** 限動圖卡底部：logo + .link，下方「匿名問答」對齊兩端 */
 export function StoryBrandLockup({ logoSrc }: { logoSrc: string }) {
+  const t = useT();
   return (
     <div
       style={{
@@ -59,8 +63,8 @@ export function StoryBrandLockup({ logoSrc }: { logoSrc: string }) {
           color: "rgba(255,248,246,0.7)",
         }}
       >
-        {"匿名問答".split("").map((ch) => (
-          <span key={ch}>{ch}</span>
+        {t("share.kicker").split("").map((ch, i) => (
+          <span key={`${ch}-${i}`}>{ch}</span>
         ))}
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { useT } from "@/components/i18n-provider";
 import { BRAND } from "@/shared/tools";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function AskReadDialog({ open, onClose, body, topic }: Props) {
+  const t = useT();
   if (!open) return null;
 
   return (
@@ -67,14 +69,14 @@ export function AskReadDialog({ open, onClose, body, topic }: Props) {
           <div className="min-w-0">
             <BrandLogo height={28} />
             <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
-              {BRAND.en} · 匿名提問
+              {t("story.anonAsk", { brand: BRAND.en })}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/20 text-white/70 transition hover:bg-white/10 hover:text-white"
-            aria-label="關閉"
+            aria-label={t("common.close")}
           >
             ✕
           </button>
@@ -88,7 +90,7 @@ export function AskReadDialog({ open, onClose, body, topic }: Props) {
                 id="ask-read-title"
                 className="text-sm font-bold text-[var(--mint)]"
               >
-                {topic ? `主題｜${topic}` : "提問"}
+                {topic ? t("story.topicPrefix", { topic }) : t("story.question")}
               </h2>
               <p className="mt-3 whitespace-pre-wrap text-[1.35rem] font-semibold leading-snug text-[var(--ink)] sm:text-[1.6rem] sm:leading-snug">
                 {body}
@@ -98,7 +100,7 @@ export function AskReadDialog({ open, onClose, body, topic }: Props) {
         </div>
 
         <p className="relative z-10 px-5 pb-5 text-center text-[11px] font-medium text-white/50 sm:px-6">
-          {BRAND.domain} · 開心玩樂去
+          {t("story.brandFoot", { domain: BRAND.domain })}
         </p>
       </div>
     </div>

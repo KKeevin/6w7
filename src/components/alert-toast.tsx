@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { TriangleAlert, X } from "lucide-react";
+import { useT } from "@/components/i18n-provider";
 
 const noopSubscribe = () => () => {};
 
@@ -30,6 +31,7 @@ export function AlertToast({
   duration?: number;
 }) {
   const mounted = useMounted();
+  const t = useT();
 
   useEffect(() => {
     if (!message || duration <= 0) return;
@@ -61,7 +63,7 @@ export function AlertToast({
           </p>
           <button
             type="button"
-            aria-label="關閉提示"
+            aria-label={t("common.closeAlert")}
             onClick={onClose}
             className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/10 hover:text-white"
           >

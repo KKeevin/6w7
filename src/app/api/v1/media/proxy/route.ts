@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { AppError, errorBody } from "@/shared/errors";
+import { getRequestLocale } from "@/lib/locale";
 
 export const runtime = "nodejs";
 
@@ -41,7 +42,7 @@ function isAllowed(url: URL) {
 async function readImageBody(response: Response): Promise<ArrayBuffer> {
   const contentLength = Number(response.headers.get("content-length"));
   if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
-    throw new AppError("BAD_REQUEST", "圖片檔案過大", 400);
+    throw new AppError("BAD_REQUEST", "api.imageFileTooLarge", 400);
   }
 
   if (!response.body) return new ArrayBuffer(0);
@@ -55,7 +56,7 @@ async function readImageBody(response: Response): Promise<ArrayBuffer> {
     total += value.byteLength;
     if (total > MAX_IMAGE_BYTES) {
       await reader.cancel();
-      throw new AppError("BAD_REQUEST", "圖片檔案過大", 400);
+      throw new AppError("BAD_REQUEST", "api.imageFileTooLarge", 400);
     }
     chunks.push(value);
   }
@@ -77,18 +78,18 @@ export async function GET(request: Request) {
   try {
     const raw = new URL(request.url).searchParams.get("url");
     if (!raw) {
-      throw new AppError("BAD_REQUEST", "缺少 url", 400);
+      throw new AppError("BAD_REQUEST", "api.missingUrl", 400);
     }
 
     let target: URL;
     try {
       target = new URL(raw);
     } catch {
-      throw new AppError("BAD_REQUEST", "url 無效", 400);
+      throw new AppError("BAD_REQUEST", "api.invalidUrl", 400);
     }
 
     if (!["http:", "https:"].includes(target.protocol) || !isAllowed(target)) {
-      throw new AppError("FORBIDDEN", "不允許的圖片來源", 403);
+      throw new AppError("FORBIDDEN", "api.badImageSource", 403);
     }
 
     const upstream = await fetch(target.toString(), {
@@ -96,12 +97,12 @@ export async function GET(request: Request) {
       cache: "force-cache",
     });
     if (!upstream.ok) {
-      throw new AppError("NOT_FOUND", "找不到圖片", 404);
+      throw new AppError("NOT_FOUND", "api.imageNotFound", 404);
     }
 
     const contentType = upstream.headers.get("content-type") || "image/png";
     if (!contentType.startsWith("image/")) {
-      throw new AppError("BAD_REQUEST", "不是圖片", 400);
+      throw new AppError("BAD_REQUEST", "api.notImage", 400);
     }
 
     const buffer = await readImageBody(upstream);
@@ -112,11 +113,12 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    const locale = await getRequestLocale();
     if (error instanceof AppError) {
-      return NextResponse.json(errorBody(error), { status: error.status });
+      return NextResponse.json(errorBody(error, locale), { status: error.status });
     }
     return NextResponse.json(
-      errorBody(new AppError("INTERNAL", "代理失敗", 500)),
+      errorBody(new AppError("INTERNAL", "api.proxyFailed", 500), locale),
       { status: 500 },
     );
   }

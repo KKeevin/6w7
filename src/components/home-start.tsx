@@ -43,7 +43,9 @@ function StartPanel({ fallback }: { fallback: ReactNode }) {
 export function HomeStart({ t }: Props) {
   return (
     <>
-      <HomeStartScroll />
+      <Suspense fallback={null}>
+        <HomeStartScroll />
+      </Suspense>
       <HomeViewportSection
         id="start"
         labelledBy="start-title"

@@ -111,7 +111,7 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
   const logoUrl = mailPublicUrl(BRAND.logoSrc);
   const privacyUrl = pageUrl("/legal/privacy");
   const termsUrl = pageUrl("/legal/terms");
-  const contactUrl = pageUrl("/contact");
+  const contactUrl = pageUrl("/about#contact");
   const handle = `@${input.username}`;
   const year = new Date().getFullYear();
   const hello = t("mail.hello", { handle });

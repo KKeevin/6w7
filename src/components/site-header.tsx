@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { getViewer } from "@/lib/viewer";
 import { prisma } from "@/lib/db";
-import { BrandLogo } from "@/components/brand-logo";
+import { HeaderHomeLink } from "@/components/header-home-link";
 import { HeaderNav } from "@/components/site-header-nav";
 import { HeaderTourButton } from "@/components/header-tour-button";
-import { BRAND } from "@/shared/tools";
 import { SHELL_X } from "@/shared/shell";
 import { getT } from "@/lib/locale";
 
@@ -57,15 +56,7 @@ export async function SiteHeader() {
       <div
         className={`${SHELL_X} grid h-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3`}
       >
-        <Link
-          href={signedIn ? "/dashboard" : "/"}
-          className="chrome-scale-start group flex min-w-0 items-end gap-0 justify-self-start"
-        >
-          <BrandLogo height={28} priority className="shrink-0" />
-          <span className="hidden overflow-visible pb-1 text-xs leading-none text-[var(--muted)] group-hover:text-[var(--ink)] sm:inline">
-            {BRAND.zh}
-          </span>
-        </Link>
+        <HeaderHomeLink />
 
         <div className="chrome-scale-mid w-fit max-w-full min-w-0 justify-self-center">
           <HeaderNav items={nav} />

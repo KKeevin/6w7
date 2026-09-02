@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { MemeDrift } from "@/components/meme-drift";
 import { I18nProvider } from "@/components/i18n-provider";
+import { HomeLogoSplashHost } from "@/components/brand-splash";
 import { getRequestLocale, getT } from "@/lib/locale";
 import { BRAND } from "@/shared/tools";
 import { HTML_LANG, OG_LOCALE } from "@/shared/i18n";
@@ -90,7 +91,7 @@ export default async function RootLayout({
   return (
     <html
       lang={HTML_LANG[locale]}
-      className={`${display.variable} ${body.variable} min-h-full`}
+      className={`${display.variable} ${body.variable} min-h-full max-w-full overflow-x-clip`}
       suppressHydrationWarning
     >
       <head>
@@ -99,11 +100,12 @@ export default async function RootLayout({
       </head>
       {/* suppressHydrationWarning：避免密碼管理等擴充注入 bis_register 等屬性觸發 hydration 警告 */}
       <body
-        className="flex min-h-dvh flex-col antialiased"
+        className="flex min-h-dvh min-w-0 w-full flex-col antialiased"
         suppressHydrationWarning
       >
         <I18nProvider locale={locale}>
           {children}
+          <HomeLogoSplashHost />
           <MemeDrift />
         </I18nProvider>
         <Analytics />

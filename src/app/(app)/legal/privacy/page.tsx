@@ -38,7 +38,10 @@ export default async function PrivacyPage() {
                 {BRAND.contactEmail}
               </a>
               {t("privacy.p5b")}{" "}
-              <Link href="/contact" className="underline hover:text-[var(--ink)]">
+              <Link
+                href="/about#contact"
+                className="underline hover:text-[var(--ink)]"
+              >
                 {t("footer.contact")}
               </Link>
               {t("privacy.p5c")}

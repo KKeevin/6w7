@@ -6,26 +6,41 @@ import { LoginForm } from "@/components/login-form";
 import { BRAND } from "@/shared/tools";
 import { useT } from "@/components/i18n-provider";
 
-/** 首頁右側：依本機是否用過帳號，預設登入或註冊，標題跟著切 */
-export function HomeAuthPanel() {
+type Props = {
+  /** 外層已有標題時，只留提示與表單 */
+  embedded?: boolean;
+};
+
+/** 首頁註冊／登入卡 */
+export function HomeAuthPanel({ embedded = false }: Props) {
   const [mode, setMode] = useState<"login" | "register">("register");
   const t = useT();
 
   return (
     <>
-      <h2 className="text-xl font-bold text-[var(--ink)]">
-        {mode === "login"
-          ? t("home.welcomeBack")
-          : t("home.startUsing", { brand: BRAND.en })}
-      </h2>
-      <p className="mt-1 text-sm text-[var(--muted)]">
-        {mode === "login" ? t("home.loginHint") : t("home.registerHint")}
-      </p>
-      <div className="mt-5">
+      {embedded ? null : (
+        <>
+          <h2 className="text-xl font-bold text-[var(--ink)]">
+            {mode === "login"
+              ? t("home.welcomeBack")
+              : t("home.startUsing", { brand: BRAND.en })}
+          </h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            {mode === "login" ? t("home.loginHint") : t("home.registerHint")}
+          </p>
+        </>
+      )}
+      {embedded ? (
+        <p className="text-sm text-[var(--muted)]">
+          {mode === "login" ? t("home.loginHint") : t("home.registerHint")}
+        </p>
+      ) : null}
+      <div className={embedded ? "mt-4" : "mt-5"}>
         <LoginForm
           defaultMode="register"
           redirectTo="/dashboard"
           compact
+          hideDemo
           onModeChange={setMode}
         />
       </div>

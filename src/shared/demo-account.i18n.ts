@@ -64,9 +64,9 @@ export type DemoMessageId = keyof typeof demoMessageEn;
 type DemoMessageCopy = Record<DemoMessageId, { title: string; body: string }>;
 
 export const DEMO_PROMPT_I18N = {
-  en: "Ask me anything — go wild :D",
-  ja: "聞きたいこと、言いたいこと、好きにして：D",
-  ko: "묻고 싶은 거, 말하고 싶은 거, 마음대로 :D",
+  en: "Ask me anything!",
+  ja: "なんでも聞いてね〜",
+  ko: "편하게 물어봐~",
 } as const satisfies Record<Exclude<Locale, "zh-Hant">, string>;
 
 export const DEMO_MESSAGE_I18N = {

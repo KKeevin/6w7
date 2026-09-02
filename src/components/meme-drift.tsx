@@ -35,6 +35,7 @@ type FireworkSprite = {
   size: number;
   rotate: number;
   delay: number;
+  fall: number;
 };
 
 function rand(min: number, max: number) {
@@ -47,6 +48,7 @@ function pick<T>(items: readonly T[]): T {
 
 export function burstMemeFireworks(
   origin?: { x: number; y: number } | DOMRect | EventTarget | null,
+  options?: { scale?: number },
 ) {
   if (typeof window === "undefined") return;
   let x = window.innerWidth / 2;
@@ -62,8 +64,9 @@ export function burstMemeFireworks(
     x = origin.x;
     y = origin.y;
   }
+  const scale = options?.scale ?? 1;
   window.dispatchEvent(
-    new CustomEvent(FIREWORKS_EVENT, { detail: { x, y } }),
+    new CustomEvent(FIREWORKS_EVENT, { detail: { x, y, scale } }),
   );
 }
 
@@ -198,15 +201,18 @@ export function MemeDrift() {
 
     let nextId = 0;
     const onBurst = (event: Event) => {
-      const detail = (event as CustomEvent<{ x: number; y: number }>).detail;
+      const detail = (
+        event as CustomEvent<{ x: number; y: number; scale?: number }>
+      ).detail;
       if (!detail) return;
       const compact = window.innerWidth < 640;
+      const scale = Number.isFinite(detail.scale) ? Math.max(0.2, detail.scale ?? 1) : 1;
       const sparks = compact ? 28 : 40;
       const batch: FireworkSprite[] = [];
 
       for (let i = 0; i < sparks; i++) {
         const angle = (i / sparks) * Math.PI * 2 + rand(-0.18, 0.18);
-        const dist = rand(72, compact ? 200 : 280);
+        const dist = rand(72, compact ? 200 : 280) * scale;
         const combo = i % 6 === 0;
         batch.push({
           id: ++nextId,
@@ -215,17 +221,19 @@ export function MemeDrift() {
           x: detail.x,
           y: detail.y,
           dx: Math.cos(angle) * dist,
-          dy: Math.sin(angle) * dist - rand(24, 80),
+          dy: Math.sin(angle) * dist - rand(24, 80) * scale,
           duration: rand(0.95, 1.55),
-          size: combo
-            ? compact
-              ? rand(18, 24)
-              : rand(22, 30)
-            : compact
-              ? rand(20, 32)
-              : rand(26, 42),
+          size:
+            (combo
+              ? compact
+                ? rand(18, 24)
+                : rand(22, 30)
+              : compact
+                ? rand(20, 32)
+                : rand(26, 42)) * scale,
           rotate: rand(-40, 40),
           delay: rand(0, 0.08),
+          fall: 88 * scale,
         });
       }
 
@@ -281,6 +289,7 @@ export function MemeDrift() {
               "--fw-x": `${spark.dx}px`,
               "--fw-y": `${spark.dy}px`,
               "--fw-rot": `${spark.rotate}deg`,
+              "--fw-fall": `${spark.fall}px`,
             } as CSSProperties
           }
           onAnimationEnd={(event) => {

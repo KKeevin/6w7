@@ -68,6 +68,19 @@ export const BRAND = {
   pointAtSrc: "/brand/point-at.png",
   /** 收件匣沒有留言時的插畫：public/brand/inbox-empty.png */
   inboxEmptySrc: "/brand/inbox-empty.png",
+  /** 首頁「把公開頁變成自己的」：四語實際手機截圖 */
+  landingDressShotSrc: {
+    "zh-Hant": "/brand/landing_page/display_zh-Hant.png",
+    en: "/brand/landing_page/display_en.png",
+    ja: "/brand/landing_page/display_ja.png",
+    ko: "/brand/landing_page/display_ko.png",
+  },
+  /** 首頁限動圖卡示範頭貼 */
+  landingDemoAvatarSrc: "/brand/landing_page/demo_profile.png",
+  /** 首頁手機預覽頭貼 */
+  landingPreviewAvatarSrc: "/brand/landing_page/demo_profile_0.png",
+  /** 首頁步驟 03：示意 IG 限動連結貼紙 */
+  landingIgLinkStickerSrc: "/brand/landing_page/ig_link_sticker.png",
   /** 分享頁「限動教學」彈窗：手機規格 walkthrough（CDN） */
   shareIgGuideVideoSrc:
     "https://cdn.6w7.link/walkthrough/guide_share_to_ig_001.mp4",

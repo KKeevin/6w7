@@ -95,20 +95,20 @@ export default async function PublicAskPage({ params, searchParams }: Props) {
             </Link>
 
             <div className="mt-10 flex flex-col items-center text-center">
-              <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-[var(--line)] bg-[var(--surface)]">
+              <div className="h-32 w-32 overflow-hidden rounded-full border-2 border-[var(--line)] bg-[var(--surface)]">
                 {link.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={link.image}
                     alt=""
-                    width={96}
-                    height={96}
+                    width={128}
+                    height={128}
                     fetchPriority="high"
                     decoding="async"
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[var(--muted)]">
+                  <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-[var(--muted)]">
                     {(link.displayName || link.slug).slice(0, 1).toUpperCase()}
                   </div>
                 )}

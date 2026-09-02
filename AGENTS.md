@@ -37,7 +37,7 @@
 |------|-------------------|
 | 品牌 | 僅使用 6w7／樂玩ㄑ；禁止 NGL 字樣、相似 logo、仿冒配色與版面 |
 | 平台定位 | 長期為多工具；**MVP 對外只呈現匿名問答**，不曝光「即將推出」占位工具 |
-| 連結體驗 | 自有短網域 `6w7.link`；首頁引導快速註冊 → 立刻建立項目 → 取得專屬連結 |
+| 連結體驗 | 自有短網域 `6w7.link`；首頁先講產品再引導註冊或示範體驗 → 立刻建立項目 → 取得專屬連結 |
 | 收件體驗 | 強調「主題／問題提示」「分類或標籤」「主人可設定收件規則」等，勿 1:1 抄 NGL UI |
 | 回覆方式 | 可設計「精選公開牆」「一鍵複製回覆圖卡」「限動模板」等自有玩法（實作可分期） |
 | 安全 | 預設更強的限流、敏感詞、檢舉、封鎖、未成年保護（見 §7） |
@@ -100,7 +100,7 @@
 | AI 產圖／換臉 | 外部 API（Replicate／自架 GPU）、佇列（Inngest／BullMQ）、物件儲存（S3／R2） |
 | 即時通知 | Web Push、Expo Push、可選 SSE／WebSocket |
 | 分析 | **Vercel Analytics**（`@vercel/analytics`，根 layout；隱私友善、勿再亂塞追蹤） |
-| 廣告收益 | 僅有原創說明的頁可放 AdSense：`/about`、`/contact`、`/legal/privacy`、`/legal/terms`、帶說明的 `/{slug}`、示範帳號與正式登入後的 dashboard／inbox。**禁止**登入／註冊／忘記密碼／重設密碼／驗證信箱／settings／404。見 `NEXT_PUBLIC_ADS_*`；AdSense 後台須關閉自動廣告 |
+| 廣告收益 | 僅有原創說明的頁可放 AdSense：`/about`（含聯絡）、`/legal/privacy`、`/legal/terms`、帶說明的 `/{slug}`、示範帳號與正式登入後的 dashboard／inbox。**禁止**登入／註冊／忘記密碼／重設密碼／驗證信箱／settings／404。見 `NEXT_PUBLIC_ADS_*`；AdSense 後台須關閉自動廣告 |
 | 郵件／通知 | 忘記密碼、信箱驗證、新留言通知已接 SMTP（Gmail 代發）。對外 From 固定 `service@6w7.link`，**禁止**把代發 Gmail 寫進前端。新留言通知**禁止**帶留言全文。環境變數：`SMTP_HOST`／`SMTP_USER`／`SMTP_PASS`／`MAIL_FROM` |
 | 監控 | **Vercel Speed Insights**（`@vercel/speed-insights`，根 layout）；Sentry 可之後再加 |
 | Monorepo | pnpm workspace：`apps/web`、`apps/mobile`、`packages/*` |
@@ -139,7 +139,7 @@ AI 搭骨架時請朝此結構靠攏（可微調，但意圖不變）：
 
 | 路徑 | 用途 | 第一版 |
 |------|------|--------|
-| `/` | 首頁：品牌 + **快速註冊／登入**，引導立刻建立連結 | 必做 |
+| `/` | 宣傳首頁：品牌、怎麼玩、特色；**立即體驗**走示範帳號進 dashboard（須標示示範）；另可註冊／登入。已登入不自動跳走 | 必做 |
 | `/tools` | 工具列表 | **MVP 不對外露出**（未上線工具勿掛導覽）；路由可留作內部 |
 | `/tools/ask` 或行銷說明頁 | 匿名問答介紹／建立 | 可導向註冊或 dashboard |
 | `/[slug]` | 訪客留言（6 碼英數／可含 `-`） | 必做（路徑選定後勿亂改） |
@@ -149,7 +149,8 @@ AI 搭骨架時請朝此結構靠攏（可微調，但意圖不變）：
 | `/forgot-password` `/reset-password` `/verify-email` | 忘記密碼／重設／驗證信箱（寄信；禁止廣告） | 必做 |
 | `/tools/face` 等 | AI 換臉等 | **未上線前不出現在 UI**；僅程式內占位可保留 |
 | `/legal/privacy` `/legal/terms` | 隱私權／條款 | 必做（可先簡版） |
-| `/about` `/contact` | 關於我們／聯絡我們（AdSense 透明度） | 必做 |
+| `/about` | 關於我們（含聯絡信箱；AdSense 透明度） | 必做 |
+| `/contact` | 導向 `/about#contact` | 舊連結 |
 | `/demo` | 舊路徑導向登入頁。未登入造訪 `/dashboard` `/inbox` `/settings` 一律進登入；登入畫面可「用示範帳號登入」成真實 User `@lewanq`（`isDemo`），再走正式頁，可登出 | 示範帳號 |
 
 短連結對外以 **`https://6w7.link/...`** 為準。
@@ -210,7 +211,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 - PageSticker：貼在公開頁上的實例（同一張圖可出現多次）。座標為舞台百分比（中心點 x／y）、scale、rotation、zIndex。
 - 上限：圖庫 20 張、畫面上 12 張；僅圖片。伺服器會將貼紙縮至最長邊 1600px 並轉成 WebP 後儲存，不保留原檔。
 - 訪客頁貼紙不攔截點擊。示範帳號可以裝扮、改提示與頭貼，但**不可寫入共用**的 `AskLink`／`User.image`／`PageSticker`：多人同時用 `@lewanq` 時，彼此看不到對方的改動；未登入示範的外人看 `/lewanq` **永遠是官方示範**（種子 prompt、官方頭貼、無私人貼紙）。
-- 隔離鍵是 cookie `6w7_demo_sandbox`（HttpOnly、約 30 分鐘、與圖檔壽命對齊），不是 `userId`（示範登入大家是同一個 User）。提示／布局／頭貼 URL 存在 Redis（無 Upstash 時本機記憶體）`6w7:demo-sandbox:{id}`。示範上傳的 MediaAsset 帶 `sandboxId`＋`expiresAt`（30 分鐘），列表只回自己的沙盒；到期刪儲存檔與資料列。官方 `profile.png` 不套用此壽命。一般帳號 `sandboxId`／`expiresAt` 為空。清理以讀寫裝扮／公開頁時的機會性 purge 為主，另以 cron `GET /api/v1/cron/demo-media` 補掃（Vercel Hobby 每天最多一次，正式排程 `0 16 * * *`＝台灣時間 00:00）。 Inbox 種子留言仍共用。
+- 隔離鍵是 cookie `6w7_demo_sandbox`（HttpOnly、約 30 分鐘、與圖檔壽命對齊），不是 `userId`（示範登入大家是同一個 User）。提示／布局／頭貼 URL 存在 Redis（無 Upstash 時本機記憶體）`6w7:demo-sandbox:{id}`。示範上傳的 MediaAsset 帶 `sandboxId`＋`expiresAt`（30 分鐘），列表只回自己的沙盒；到期刪儲存檔與資料列。官方 `profile.png` 不套用此壽命。一般帳號 `sandboxId`／`expiresAt` 為空。清理以讀寫裝扮／公開頁時的機會性 purge 為主，另以 cron `GET /api/v1/cron/demo-media` 補掃（Vercel Hobby 每天最多一次，正式排程 `0 16 * * *`＝台灣時間 00:00）。 Inbox **種子留言內容仍共用**；已讀／精選／封存／檢舉狀態寫入同一套 sandbox overlay，**不**寫入共用 `Message`。種子信**不能刪除**。示範收件匣走正式 `/api/v1/inbox` 與 `/api/v1/messages/:id`，未讀在列表先隱藏正文、點開才顯示；每次重新登入示範帳號會把未讀／精選／封存恢復成種子預設。
 - 貼紙超出公開頁舞台（問答區塊）的部分一律裁切，不可把頁面撐出額外橫向／縱向捲軸。
 - 訪客聚焦留言輸入框時，輸入框提到貼紙之上並半透明，仍看得到底下貼紙；失焦後恢復。
 - `AiJob`、`ToolUsage` 等 —— **等做到該工具再加**。
@@ -243,7 +244,7 @@ AI 實作時可細化欄位，但概念實體不可缺：
 - [ ] API 與頁面限流
 - [ ] 新留言近即時通知（角標／toast／summary API；Web SSE，App 可輪詢）
 - [ ] 隱私權／服務條款入口
-- [ ] 首頁：快速註冊 → 分享頁（**不展示**未上線工具）
+- [ ] 首頁：宣傳型落地（怎麼玩／特色）→ 立即體驗（示範）或註冊拿專屬連結（**不展示**未上線工具）
 
 ### 5.3 差異化功能（排程，盡量做、可分 P1／P2）
 
@@ -409,7 +410,7 @@ GET    /api/v1/cron/demo-media             # 清過期示範裝扮圖（Vercel C
 - 預設繁體中文；可切換成英文、日文、韓文（頁尾「語言」開選擇視窗）。
 - 行動優先；留言頁在 IG in-app browser 可正常用。
 - 品牌名在首屏可見：`6w7`／`樂玩ㄑ`。
-- MVP 首屏目標：讓訪客**立刻註冊並建立專屬連結**；勿用「即將推出」佔版面。
+- MVP 首屏目標：讓訪客**立刻搞懂匿名問答、願意註冊拿專屬連結**；可先「立即體驗」示範帳號（須標示）。勿用「即將推出」佔版面。已登入訪客留在首頁，用頂欄進短網址／收件匣。
 - 未上線工具不對外暗示開發中（避免降低信任與焦點）。
 - 使用 Tailwind + shadcn；保持一套 CSS 變數色票，避免每次 AI 亂換主題。
 - **避免**通用 AI 網頁套路：紫漸層、過度 glassmorphism、無意義統計卡牆。

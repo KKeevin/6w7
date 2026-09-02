@@ -24,9 +24,6 @@ export async function SiteFooter() {
           <Link href="/about" className="hover:text-[var(--ink)]">
             <FooterCondensedText>{t("footer.about")}</FooterCondensedText>
           </Link>
-          <Link href="/contact" className="hover:text-[var(--ink)]">
-            <FooterCondensedText>{t("footer.contact")}</FooterCondensedText>
-          </Link>
           <Link href="/legal/privacy" className="hover:text-[var(--ink)]">
             <FooterCondensedText>{t("footer.privacy")}</FooterCondensedText>
           </Link>

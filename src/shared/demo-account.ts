@@ -19,7 +19,7 @@ export const DEMO_SANDBOX_COOKIE = "6w7_demo_sandbox";
 export const DEMO_PROFILE = {
   username: "lewanq",
   displayName: "樂玩ㄑ小編",
-  prompt: "想問想說，隨你高興：D",
+  prompt: "想問都問~",
   acceptingMessages: true,
   requireTopic: false,
   topics: [] as readonly string[],
@@ -190,6 +190,10 @@ export function localizeDemoMessage(
 
 export function getLocalizedDemoMessages(locale: Locale = DEFAULT_LOCALE) {
   return DEMO_MESSAGES.map((message) => localizeDemoMessage(message, locale));
+}
+
+export function isDemoMessageId(id: string): id is DemoMessageId {
+  return DEMO_MESSAGES.some((m) => m.id === id);
 }
 
 export function getDemoMessage(

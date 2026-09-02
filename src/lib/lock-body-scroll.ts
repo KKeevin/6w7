@@ -99,6 +99,11 @@ function releaseLock() {
   window.scrollTo(0, y);
 }
 
+/** 鎖住期間若程式把頁面捲到別處，解鎖時跟過去，不要跳回鎖定當下的位置 */
+export function noteLockedScrollY(y: number) {
+  if (saved) saved.scrollY = y;
+}
+
 /** 有 modal 時鎖住背景頁捲動；可疊加，全部關掉才恢復 */
 export function useLockBodyScroll(locked: boolean) {
   useEffect(() => {

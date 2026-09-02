@@ -39,6 +39,24 @@ function pinTo(y: number) {
   window.scrollTo({ top: y, behavior: "auto" });
 }
 
+let jumpLockAt = 0;
+
+/** 往下滑到下一個磁吸點（略過只在往上才吸的點） */
+export function nextHomeMagnetY(fromY = window.scrollY) {
+  const stops: number[] = [];
+  for (const snap of collectSnaps()) {
+    if (snap.dir === -1) continue;
+    const last = stops[stops.length - 1];
+    if (last == null || snap.y - last > 24) stops.push(snap.y);
+  }
+  return stops.find((stop) => stop > fromY + 28) ?? null;
+}
+
+export function goToHomeMagnet(y: number) {
+  jumpLockAt = Date.now();
+  pinTo(y);
+}
+
 function pinToPageEnd() {
   pinTo(maxScrollTop());
 }
@@ -163,6 +181,7 @@ export function attachHomeScrollMagnet() {
 
   function snap(dir: MagnetDir) {
     if (magnetBlocked()) return;
+    if (Date.now() - jumpLockAt < 450) return;
     const y = window.scrollY;
     const target = pickSnap(y, dir);
     if (!target) return;

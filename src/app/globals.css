@@ -556,6 +556,34 @@ html[data-scroll-locked] body {
   animation: ig-guide-hint-point 1.1s ease-in-out infinite;
 }
 
+@keyframes home-next-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+.home-next-bob {
+  animation: home-next-bob 1.35s ease-in-out infinite;
+}
+
+@keyframes home-top-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.home-top-bob {
+  animation: home-top-bob 1.35s ease-in-out infinite;
+}
+
 /* 首頁「註冊拿自己的連結」過場：6→7 */
 .home-start-rite {
   position: fixed;
@@ -665,6 +693,8 @@ html[data-scroll-locked] body {
   .home-wiggle-late,
   .home-caret,
   .home-point,
+  .home-next-bob,
+  .home-top-bob,
   .home-start-pair-catch {
     animation: none;
   }

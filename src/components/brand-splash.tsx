@@ -5,11 +5,14 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { useT } from "@/components/i18n-provider";
-import { useLockBodyScroll } from "@/lib/lock-body-scroll";
+import {
+  noteLockedScrollY,
+  useLockBodyScroll,
+} from "@/lib/lock-body-scroll";
 
-const SPLASH_MS = 800;
+export const HOME_LOGO_SPLASH_MS = 800;
+export const HOME_LOGO_SPLASH_EVENT = "6w7:home-logo-splash";
 const STORAGE_KEY = "6w7.home.logoSplash";
-const EVENT = "6w7:home-logo-splash";
 
 export function BrandSplashLockup() {
   const t = useT();
@@ -53,11 +56,12 @@ export function triggerHomeLogoSplash() {
   } catch {
     /* private mode */
   }
-  window.dispatchEvent(new Event(EVENT));
+  window.dispatchEvent(new Event(HOME_LOGO_SPLASH_EVENT));
 }
 
 function scrollHomeTop() {
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  noteLockedScrollY(0);
   if (window.location.pathname === "/" && window.location.hash) {
     window.history.replaceState(null, "", "/");
   }
@@ -94,7 +98,7 @@ export function HomeLogoSplashHost() {
       }
       setOpen(true);
       window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => setOpen(false), SPLASH_MS);
+      timer.current = window.setTimeout(() => setOpen(false), HOME_LOGO_SPLASH_MS);
     }
 
     try {
@@ -102,9 +106,9 @@ export function HomeLogoSplashHost() {
     } catch {
       /* private mode */
     }
-    window.addEventListener(EVENT, show);
+    window.addEventListener(HOME_LOGO_SPLASH_EVENT, show);
     return () => {
-      window.removeEventListener(EVENT, show);
+      window.removeEventListener(HOME_LOGO_SPLASH_EVENT, show);
       window.clearTimeout(timer.current);
     };
   }, []);

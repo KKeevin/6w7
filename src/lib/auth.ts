@@ -102,6 +102,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   events: {
     async signIn({ user }) {
       if (user.id) await rememberInferredLocale(user.id);
+      const demo = Boolean((user as { isDemo?: boolean }).isDemo);
+      if (demo) {
+        const { resetDemoInboxFlags } = await import(
+          "@/services/demo-inbox.service"
+        );
+        await resetDemoInboxFlags();
+      }
     },
   },
   trustHost: true,

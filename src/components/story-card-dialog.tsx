@@ -10,6 +10,7 @@ import { saveImageHint, saveOrSharePng } from "@/lib/save-image";
 import { useI18n } from "@/components/i18n-provider";
 import { DATE_BCP47 } from "@/shared/i18n";
 import { displayAskTitle } from "@/shared/ask-title";
+import { useLockBodyScroll } from "@/lib/lock-body-scroll";
 
 type MessageLite = {
   id: string;
@@ -27,7 +28,6 @@ type Props = {
   open: boolean;
   onClose: () => void;
   message: MessageLite;
-  demo?: boolean;
   onFeatured?: () => void;
   onArchived?: () => void;
   onMarkUnread?: () => void;
@@ -39,7 +39,6 @@ export function StoryCardDialog({
   open,
   onClose,
   message,
-  demo,
   onFeatured,
   onArchived,
   onMarkUnread,
@@ -47,6 +46,7 @@ export function StoryCardDialog({
   onDelete,
 }: Props) {
   const { t, locale } = useI18n();
+  useLockBodyScroll(open);
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +116,7 @@ export function StoryCardDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ink)]/45 p-3 backdrop-blur-[3px] sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-none bg-[var(--ink)]/45 p-3 backdrop-blur-[3px] sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="story-card-title"
@@ -228,7 +228,7 @@ export function StoryCardDialog({
             {t("story.shareHint")}
           </p>
 
-          {showManage && !demo ? (
+          {showManage ? (
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 border-t border-[var(--line)] pt-3 text-sm font-semibold">
               {onFeatured ? (
                 <button

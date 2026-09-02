@@ -14,6 +14,7 @@ import {
   resolveAuthMode,
 } from "@/lib/device-auth-hint";
 import { resetDemoIgShareGuideHint } from "@/lib/ig-share-guide-hint";
+import { burstMemeFireworks } from "@/components/meme-drift";
 import { useT } from "@/components/i18n-provider";
 
 type AuthMode = "login" | "register";
@@ -24,6 +25,8 @@ type Props = {
   redirectTo?: string;
   /** 落地頁一屏排版用，縮小間距 */
   compact?: boolean;
+  /** 首頁已有「立即體驗」時，表單不再重複示範登入 */
+  hideDemo?: boolean;
   onModeChange?: (mode: AuthMode) => void;
 };
 
@@ -31,6 +34,7 @@ export function LoginForm({
   defaultMode = "register",
   redirectTo,
   compact = false,
+  hideDemo = false,
   onModeChange,
 }: Props) {
   const router = useRouter();
@@ -155,7 +159,16 @@ export function LoginForm({
         />
       </div>
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={loading}
+        onClick={
+          compact
+            ? (event) => burstMemeFireworks(event.currentTarget)
+            : undefined
+        }
+      >
         {loading
           ? t("common.processing")
           : mode === "login"
@@ -169,22 +182,26 @@ export function LoginForm({
       >
         {mode === "login" ? t("auth.noAccount") : t("auth.hasAccount")}
       </button>
-      <div className="relative py-1 text-center">
-        <span className="bg-[var(--bg)] px-2 text-xs text-[var(--muted)] lg:bg-white">
-          {t("common.or")}
-        </span>
-      </div>
-      <a
-        id="demo-login"
-        href={demoEnterHref(next)}
-        className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-        onClick={() => resetDemoIgShareGuideHint()}
-      >
-        {t("auth.demoLogin")}
-      </a>
-      <p className="text-center text-[11px] leading-relaxed text-[var(--muted)]">
-        {t("auth.demoHint")}
-      </p>
+      {hideDemo ? null : (
+        <>
+          <div className="relative py-1 text-center">
+            <span className="bg-[var(--bg)] px-2 text-xs text-[var(--muted)] lg:bg-white">
+              {t("common.or")}
+            </span>
+          </div>
+          <a
+            id="demo-login"
+            href={demoEnterHref(next)}
+            className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+            onClick={() => resetDemoIgShareGuideHint()}
+          >
+            {t("auth.demoLogin")}
+          </a>
+          <p className="text-center text-[11px] leading-relaxed text-[var(--muted)]">
+            {t("auth.demoHint")}
+          </p>
+        </>
+      )}
     </form>
   );
 }

@@ -3,9 +3,8 @@ import { redirect } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
 import { InboxClient } from "@/components/inbox-client";
 import { getViewer } from "@/lib/viewer";
-import { getRequestLocale, getT } from "@/lib/locale";
+import { getT } from "@/lib/locale";
 import { loginPath } from "@/shared/paths";
-import { toInboxDemoMessages } from "@/shared/demo-account";
 import { listInbox } from "@/services/message.service";
 import { SHELL_CONTENT } from "@/shared/shell";
 
@@ -21,12 +20,8 @@ export default async function InboxPage() {
   }
 
   const t = await getT();
-  const locale = await getRequestLocale();
-  const demo = viewer.kind === "demo";
-  const result = demo
-    ? null
-    : await listInbox(viewer.user.id, { filter: "all", page: 1 });
-  const initialMessages = result?.messages.map((m) => ({
+  const result = await listInbox(viewer.user.id, { filter: "all", page: 1 });
+  const initialMessages = result.messages.map((m) => ({
     id: m.id,
     body: m.body,
     topic: m.topic,
@@ -34,7 +29,8 @@ export default async function InboxPage() {
     isFeatured: m.isFeatured,
     isArchived: m.isArchived,
     status: m.status,
-    createdAt: m.createdAt.toISOString(),
+    createdAt:
+      m.createdAt instanceof Date ? m.createdAt.toISOString() : m.createdAt,
     link: m.link,
   }));
 
@@ -50,11 +46,11 @@ export default async function InboxPage() {
           </p>
           <div className="mt-8 lg:mt-10">
             <InboxClient
-              demoMessages={demo ? toInboxDemoMessages(locale) : undefined}
               initialMessages={initialMessages}
-              initialPage={result?.page}
-              initialTotal={result?.total}
-              initialTotalPages={result?.totalPages}
+              initialPage={result.page}
+              initialTotal={result.total}
+              initialTotalPages={result.totalPages}
+              allowDelete={viewer.kind !== "demo"}
             />
           </div>
         </div>

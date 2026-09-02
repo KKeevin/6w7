@@ -7,6 +7,7 @@ import { getSiteUrl } from "@/lib/utils";
 import { translate, type MessageKey } from "@/shared/i18n";
 import { BRAND } from "@/shared/tools";
 import type { NotificationSummary } from "@/shared/notifications";
+import { getDemoNotificationSummary } from "@/services/demo-inbox.service";
 
 export type { NotificationSummary };
 
@@ -14,6 +15,14 @@ export type { NotificationSummary };
 export async function getNotificationSummary(
   userId: string,
 ): Promise<NotificationSummary> {
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isDemo: true },
+  });
+  if (account?.isDemo) {
+    return getDemoNotificationSummary();
+  }
+
   const link = await prisma.askLink.findUnique({
     where: { userId },
     select: { id: true },

@@ -15,6 +15,10 @@ function nextPath(request: Request) {
 export async function GET(request: Request) {
   await ensureDemoAccount();
   await getOrCreateDemoSandboxId();
+  const { resetDemoInboxFlags } = await import(
+    "@/services/demo-inbox.service"
+  );
+  await resetDemoInboxFlags();
   await signIn("credentials", {
     username: DEMO_PROFILE.username,
     password: demoAccountPassword(),

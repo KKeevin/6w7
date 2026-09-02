@@ -6,6 +6,14 @@ import { DEMO_MEDIA_TTL_MS } from "@/shared/demo-account";
 import type { PublicSticker } from "@/shared/page-stickers";
 import { ASK_LIMITS } from "@/shared/tools";
 
+export type DemoInboxFlags = {
+  isRead?: boolean;
+  isFeatured?: boolean;
+  isArchived?: boolean;
+  deleted?: boolean;
+  status?: "visible" | "flagged" | "deleted";
+};
+
 export type DemoSandboxOverlay = {
   prompt?: string;
   title?: string;
@@ -13,6 +21,7 @@ export type DemoSandboxOverlay = {
   avatarUrl?: string;
   avatarAssetId?: string;
   stickers: PublicSticker[];
+  inbox?: Record<string, DemoInboxFlags>;
 };
 
 const REDIS_PREFIX = "6w7:demo-sandbox:";
@@ -46,6 +55,34 @@ function emptyOverlay(): DemoSandboxOverlay {
   return { stickers: [] };
 }
 
+function normalizeInboxFlags(raw: unknown): DemoInboxFlags | null {
+  if (!raw || typeof raw !== "object") return null;
+  const value = raw as Record<string, unknown>;
+  const flags: DemoInboxFlags = {};
+  if (typeof value.isRead === "boolean") flags.isRead = value.isRead;
+  if (typeof value.isFeatured === "boolean") flags.isFeatured = value.isFeatured;
+  if (typeof value.isArchived === "boolean") flags.isArchived = value.isArchived;
+  if (typeof value.deleted === "boolean") flags.deleted = value.deleted;
+  if (
+    value.status === "visible" ||
+    value.status === "flagged" ||
+    value.status === "deleted"
+  ) {
+    flags.status = value.status;
+  }
+  return Object.keys(flags).length > 0 ? flags : null;
+}
+
+function normalizeInbox(raw: unknown): Record<string, DemoInboxFlags> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const inbox: Record<string, DemoInboxFlags> = {};
+  for (const [id, flags] of Object.entries(raw as Record<string, unknown>)) {
+    const next = normalizeInboxFlags(flags);
+    if (next) inbox[id] = next;
+  }
+  return Object.keys(inbox).length > 0 ? inbox : undefined;
+}
+
 function normalizeOverlay(raw: unknown): DemoSandboxOverlay {
   if (!raw || typeof raw !== "object") return emptyOverlay();
   const value = raw as Record<string, unknown>;
@@ -63,6 +100,7 @@ function normalizeOverlay(raw: unknown): DemoSandboxOverlay {
     avatarAssetId:
       typeof value.avatarAssetId === "string" ? value.avatarAssetId : undefined,
     stickers,
+    inbox: normalizeInbox(value.inbox),
   };
 }
 
@@ -128,6 +166,7 @@ export async function patchDemoSandboxOverlay(
     ...current,
     ...patch,
     stickers: patch.stickers ?? current.stickers,
+    inbox: patch.inbox ?? current.inbox,
   });
 }
 

@@ -7,8 +7,7 @@ import Image from "next/image";
 import { useNotifications } from "@/components/notifications/notification-provider";
 import { useI18n } from "@/components/i18n-provider";
 import { DATE_BCP47 } from "@/shared/i18n";
-import { ASK_LIMITS, BRAND } from "@/shared/tools";
-import { toInboxDemoMessages } from "@/shared/demo-account";
+import { BRAND } from "@/shared/tools";
 
 const StoryCardDialog = dynamic(
   () =>
@@ -33,20 +32,19 @@ type Message = InboxMessage;
 type Filter = "all" | "unread" | "featured" | "archived";
 
 export function InboxClient({
-  demoMessages,
   initialMessages,
   initialPage = 1,
   initialTotal,
   initialTotalPages = 1,
+  allowDelete = true,
 }: {
-  demoMessages?: InboxMessage[];
   initialMessages?: InboxMessage[];
   initialPage?: number;
   initialTotal?: number;
   initialTotalPages?: number;
+  allowDelete?: boolean;
 }) {
-  const demo = Boolean(demoMessages?.length);
-  const seeded = demoMessages ?? initialMessages;
+  const seeded = initialMessages;
   const { t, locale } = useI18n();
   const { refresh: refreshNotifications } = useNotifications();
   const listTopRef = useRef<HTMLDivElement>(null);
@@ -69,28 +67,6 @@ export function InboxClient({
     nextPage = page,
     opts?: { quiet?: boolean },
   ) {
-    if (demo) {
-      const source = toInboxDemoMessages(locale);
-      const filtered =
-        nextFilter === "unread"
-          ? source.filter((m) => !m.isRead && !m.isArchived)
-          : nextFilter === "featured"
-            ? source.filter((m) => m.isFeatured)
-            : nextFilter === "archived"
-              ? source.filter((m) => m.isArchived)
-              : source.filter((m) => !m.isArchived);
-      const pageSize = ASK_LIMITS.inboxPageSize;
-      const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
-      const safePage = Math.min(Math.max(1, nextPage), pages);
-      setTotal(filtered.length);
-      setTotalPages(pages);
-      setPage(safePage);
-      setMessages(
-        filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
-      );
-      setLoading(false);
-      return;
-    }
     if (!opts?.quiet) setLoading(true);
     setError(null);
     try {
@@ -133,7 +109,6 @@ export function InboxClient({
   }, [loading, highlightId, messages]);
 
   async function patch(id: string, body: Record<string, unknown>) {
-    if (demo) return false;
     const res = await fetch(`/api/v1/messages/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -160,7 +135,7 @@ export function InboxClient({
 
   async function openMessage(m: Message) {
     setStoryMessage(m);
-    if (demo || m.isRead || openingId === m.id) return;
+    if (m.isRead || openingId === m.id) return;
     setOpeningId(m.id);
     try {
       await patch(m.id, { isRead: true });
@@ -203,7 +178,6 @@ export function InboxClient({
   }
 
   async function remove(id: string) {
-    if (demo) return;
     const res = await fetch(`/api/v1/messages/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (!res.ok) {
@@ -216,7 +190,6 @@ export function InboxClient({
   }
 
   async function report(id: string) {
-    if (demo) return;
     const reason = window.prompt(t("inbox.reportPrompt"));
     if (!reason) return;
     const res = await fetch(`/api/v1/messages/${id}/report`, {
@@ -359,11 +332,9 @@ export function InboxClient({
                   />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-start justify-between gap-3">
-                      {demo || m.isRead ? (
+                      {m.isRead ? (
                         <span
-                          className={`text-[15px] font-medium leading-snug text-[var(--ink)] ${
-                            demo ? "" : "line-clamp-2"
-                          }`}
+                          className="text-[15px] font-medium leading-snug text-[var(--ink)] line-clamp-2"
                         >
                           {m.body}
                         </span>
@@ -447,13 +418,12 @@ export function InboxClient({
           key={selected.id}
           open
           message={selected}
-          demo={demo}
           onClose={closeDetail}
-          onFeatured={demo ? undefined : () => void toggleFeatured(selected)}
-          onArchived={demo ? undefined : () => void toggleArchived(selected)}
-          onMarkUnread={demo ? undefined : () => void markUnread(selected)}
-          onReport={demo ? undefined : () => void report(selected.id)}
-          onDelete={demo ? undefined : () => void remove(selected.id)}
+          onFeatured={() => void toggleFeatured(selected)}
+          onArchived={() => void toggleArchived(selected)}
+          onMarkUnread={() => void markUnread(selected)}
+          onReport={() => void report(selected.id)}
+          onDelete={allowDelete ? () => void remove(selected.id) : undefined}
         />
       ) : null}
     </div>

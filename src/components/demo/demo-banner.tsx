@@ -1,6 +1,5 @@
 import { signOut } from "@/lib/auth";
 import { DEMO_PROFILE } from "@/shared/demo-account";
-import { BRAND } from "@/shared/tools";
 import { SHELL_X } from "@/shared/shell";
 import { getT } from "@/lib/locale";
 
@@ -19,7 +18,6 @@ export async function DemoBanner() {
       >
         <p>
           {t("demo.banner", {
-            brand: BRAND.en,
             username: DEMO_PROFILE.username,
           })}
         </p>

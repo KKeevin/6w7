@@ -4,6 +4,12 @@ import { AppError } from "@/shared/errors";
 import { ASK_LIMITS } from "@/shared/tools";
 import { containsBlockedContent, sanitizePlainText } from "@/lib/moderation";
 import { notifyOwnerNewMessage } from "@/services/notification.service";
+import {
+  deleteDemoInboxMessage,
+  listDemoInbox,
+  reportDemoInboxMessage,
+  updateDemoInboxMessage,
+} from "@/services/demo-inbox.service";
 import type { z } from "zod";
 import type { createMessageSchema, updateMessageSchema } from "@/shared/schemas";
 
@@ -84,6 +90,13 @@ export async function listInbox(
     page?: number;
   },
 ) {
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isDemo: true },
+  });
+  if (account?.isDemo) {
+    return listDemoInbox({ filter: options?.filter, page: options?.page });
+  }
   const pageSize = ASK_LIMITS.inboxPageSize;
   const requestedPage = Math.max(1, Math.floor(options?.page ?? 1));
   const links = await prisma.askLink.findMany({
@@ -141,6 +154,13 @@ export async function updateMessage(
   messageId: string,
   input: z.infer<typeof updateMessageSchema>,
 ) {
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isDemo: true },
+  });
+  if (account?.isDemo) {
+    return updateDemoInboxMessage(messageId, input);
+  }
   await getOwnedMessage(userId, messageId);
   return prisma.message.update({
     where: { id: messageId },
@@ -157,6 +177,14 @@ export async function updateMessage(
 }
 
 export async function deleteMessage(userId: string, messageId: string) {
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isDemo: true },
+  });
+  if (account?.isDemo) {
+    await deleteDemoInboxMessage(messageId);
+    return;
+  }
   await getOwnedMessage(userId, messageId);
   await prisma.message.update({
     where: { id: messageId },
@@ -169,6 +197,13 @@ export async function reportMessage(
   messageId: string,
   reason: string,
 ) {
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isDemo: true },
+  });
+  if (account?.isDemo) {
+    return reportDemoInboxMessage(messageId, reason);
+  }
   await getOwnedMessage(userId, messageId);
   const report = await prisma.report.create({
     data: { messageId, reason },

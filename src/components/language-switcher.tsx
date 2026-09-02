@@ -7,6 +7,7 @@ import { BRAND } from "@/shared/tools";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/shared/i18n";
 import { useI18n } from "@/components/i18n-provider";
 import { FooterCondensedText } from "@/components/footer-condensed-text";
+import { useLockBodyScroll } from "@/lib/lock-body-scroll";
 
 const noopSubscribe = () => () => {};
 
@@ -33,6 +34,7 @@ export function LanguagePickDialog({
 }) {
   const { locale, pending, t } = useI18n();
   const mounted = useMounted();
+  useLockBodyScroll(open);
 
   useEffect(() => {
     if (!open) return;
@@ -40,19 +42,14 @@ export function LanguagePickDialog({
       if (event.key === "Escape") onClose?.();
     }
     window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   if (!open || !mounted) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-[var(--ink)]/45 p-4 backdrop-blur-[3px]"
+      className="fixed inset-0 z-[70] flex items-center justify-center overflow-hidden overscroll-none bg-[var(--ink)]/45 p-4 backdrop-blur-[3px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="lang-dialog-title"

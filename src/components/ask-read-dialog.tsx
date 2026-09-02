@@ -3,6 +3,7 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { useT } from "@/components/i18n-provider";
 import { BRAND } from "@/shared/tools";
+import { useLockBodyScroll } from "@/lib/lock-body-scroll";
 
 type Props = {
   open: boolean;
@@ -13,11 +14,12 @@ type Props = {
 
 export function AskReadDialog({ open, onClose, body, topic }: Props) {
   const t = useT();
+  useLockBodyScroll(open);
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-[var(--ink)]/55 p-4 backdrop-blur-[4px]"
+      className="fixed inset-0 z-[70] flex items-center justify-center overflow-hidden overscroll-none bg-[var(--ink)]/55 p-4 backdrop-blur-[4px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="ask-read-title"

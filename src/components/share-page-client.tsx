@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 import { Camera } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { BrandSplashLockup } from "@/components/brand-splash";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +31,7 @@ import { useUniformFitScale } from "@/lib/uniform-fit-scale";
 import { useI18n } from "@/components/i18n-provider";
 import { LanguagePickDialog } from "@/components/language-switcher";
 import { isLocale, makeTranslator, type Locale } from "@/shared/i18n";
+import { useLockBodyScroll } from "@/lib/lock-body-scroll";
 
 const ShareStoryDialog = dynamic(
   () =>
@@ -136,6 +138,7 @@ export function SharePageClient({
   const [guideOpen, setGuideOpen] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
   const [tourStep, setTourStep] = useState<ShareTourStep | null>(null);
+  useLockBodyScroll(tourStep === "splash");
   /** 手機：尚未捲到「調整公開頁」時顯示引導 */
   const [showPreviewHint, setShowPreviewHint] = useState(true);
   const [cropFile, setCropFile] = useState<File | null>(null);
@@ -496,10 +499,6 @@ export function SharePageClient({
   const accepting = profile.link.acceptingMessages;
   const publicHref = `/${profile.user.username}`;
   const dressHref = `${publicHref}?edit=1`;
-  const splashKicker = walkT("share.kicker");
-  const splashKickerLetters = [...splashKicker];
-  const splashKickerCompact =
-    splashKickerLetters.filter((ch) => ch.trim()).length <= 6;
 
   /** compact：桌機側欄預覽（自然高度，矮螢幕可整頁捲動） */
   const previewPanel = (compact: boolean) => (
@@ -1117,30 +1116,9 @@ export function SharePageClient({
 
       {tourStep === "splash"
         ? createPortal(
-            <div className="bg-atmosphere fixed inset-0 z-[80] flex flex-col items-center justify-center">
+            <div className="bg-atmosphere fixed inset-0 z-[80] flex flex-col items-center justify-center overflow-hidden overscroll-none">
               <div className="animate-rise flex flex-col items-center text-center">
-                <div className="flex flex-col items-center">
-                  <div className="inline-flex flex-col items-stretch">
-                    <div className="inline-flex items-end">
-                      <BrandLogo height={52} priority />
-                      <span className="-ml-0.5 translate-y-[-3px] font-[family-name:var(--font-display)] text-[1.65rem] font-bold leading-none tracking-tight text-[var(--ink)]">
-                        .link
-                      </span>
-                    </div>
-                    {splashKickerCompact ? (
-                      <p className="mt-1.5 flex w-full justify-between pl-1 text-sm font-semibold leading-none text-[var(--muted)]">
-                        {splashKickerLetters.map((ch, i) => (
-                          <span key={`${ch}-${i}`}>{ch}</span>
-                        ))}
-                      </p>
-                    ) : null}
-                  </div>
-                  {splashKickerCompact ? null : (
-                    <p className="mt-3 whitespace-nowrap text-base font-medium tracking-[0.32em] text-[var(--muted)]">
-                      {splashKicker}
-                    </p>
-                  )}
-                </div>
+                <BrandSplashLockup />
                 <p className="mt-8 font-[family-name:var(--font-display)] text-xl font-bold tracking-tight text-[var(--ink)]">
                   {walkT("tour.splashTitle")}
                 </p>

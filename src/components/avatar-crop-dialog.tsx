@@ -7,6 +7,7 @@ import { canvasToImageFile } from "@/lib/image-upload";
 import { cn } from "@/lib/utils";
 import { ASK_LIMITS, BRAND } from "@/shared/tools";
 import { useT } from "@/components/i18n-provider";
+import { useLockBodyScroll } from "@/lib/lock-body-scroll";
 
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 4;
@@ -28,6 +29,7 @@ function clamp(value: number, min: number, max: number) {
  */
 export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
   const t = useT();
+  useLockBodyScroll(true);
   const stageRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -186,7 +188,7 @@ export function AvatarCropDialog({ file, onCancel, onConfirm }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-[var(--ink)]/55 p-3 backdrop-blur-[4px] sm:p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center overflow-hidden overscroll-none bg-[var(--ink)]/55 p-3 backdrop-blur-[4px] sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="avatar-crop-title"

@@ -36,6 +36,8 @@ export type ShareStoryCardProps = {
   displayName?: string | null;
   /** 匯出用：預先轉好的 logo data URL，手機較穩 */
   logoSrc?: string | null;
+  /** 首頁示範用：蓋在虛線區上的 IG 連結貼紙圖；實際分享匯出不要帶 */
+  linkStickerSrc?: string | null;
 };
 
 /** 分享頁限動底圖（邀請留言用，與收件匣回覆圖卡版型不同） */
@@ -45,6 +47,7 @@ export function ShareStoryCard({
   imageUrl,
   displayName,
   logoSrc,
+  linkStickerSrc,
 }: ShareStoryCardProps) {
   const t = useT();
   const initial = (displayName || username).slice(0, 1).toUpperCase();
@@ -191,37 +194,76 @@ export function ShareStoryCard({
       </div>
 
       {/* 連結貼紙：對準右下指向圖的指尖 */}
-      <div
-        style={{
-          position: "absolute",
-          left: art.stickerX,
-          top: art.stickerY,
-          width: SHARE_STICKER_BOX.width,
-          height: SHARE_STICKER_BOX.height,
-          zIndex: 2,
-          borderRadius: 24,
-          border: "3px dashed rgba(255,248,246,0.35)",
-          backgroundColor: "rgba(255,248,246,0.06)",
-          padding: "20px 28px",
-          textAlign: "center" as const,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          boxSizing: "border-box",
-          pointerEvents: "none",
-        }}
-      >
+      {linkStickerSrc ? (
         <div
           style={{
-            fontSize: 26,
-            fontWeight: 600,
-            color: "rgba(255,248,246,0.5)",
+            position: "absolute",
+            left: art.stickerX,
+            top: art.stickerY,
+            width: SHARE_STICKER_BOX.width,
+            height: SHARE_STICKER_BOX.height,
+            zIndex: 2,
+            boxSizing: "border-box",
+            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "10px 14px",
+            borderRadius: 20,
+            backgroundColor: "#ffffff",
+            border: "6px solid #ffffff",
+            boxShadow: "0 10px 28px rgba(0,0,0,0.28)",
+            overflow: "hidden",
           }}
         >
-          {t("shareStory.linkHint")}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={assetUrl(linkStickerSrc)}
+            alt={t("home.how3LinkStickerAlt")}
+            width={289}
+            height={76}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              objectPosition: "center",
+              display: "block",
+            }}
+          />
         </div>
-      </div>
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            left: art.stickerX,
+            top: art.stickerY,
+            width: SHARE_STICKER_BOX.width,
+            height: SHARE_STICKER_BOX.height,
+            zIndex: 2,
+            borderRadius: 24,
+            border: "3px dashed rgba(255,248,246,0.35)",
+            backgroundColor: "rgba(255,248,246,0.06)",
+            padding: "20px 28px",
+            textAlign: "center" as const,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            boxSizing: "border-box",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 26,
+              fontWeight: 600,
+              color: "rgba(255,248,246,0.5)",
+            }}
+          >
+            {t("shareStory.linkHint")}
+          </div>
+        </div>
+      )}
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

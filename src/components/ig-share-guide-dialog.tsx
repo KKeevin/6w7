@@ -58,7 +58,7 @@ export function IgShareGuideDialog({
     >
       <div
         ref={panelRef}
-        className="animate-rise flex w-full max-w-[min(28rem,calc(100vw-0.75rem))] flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_24px_60px_rgba(20,33,43,0.22)]"
+        className="animate-rise flex w-full max-w-[min(32rem,calc(100vw-0.75rem))] flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_24px_60px_rgba(20,33,43,0.22)]"
         style={{
           height: frameH ?? "calc(100dvh - 0.75rem)",
           maxHeight: frameH ?? "calc(100dvh - 0.75rem)",
@@ -66,7 +66,7 @@ export function IgShareGuideDialog({
       >
         <div className="h-1.5 shrink-0 bg-gradient-to-r from-[var(--mint)] via-[#3197e5] to-[var(--accent)]" />
 
-        <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-4">
+        <div className="flex min-h-0 flex-1 flex-col px-2.5 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4">
           <div className="flex shrink-0 items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold tracking-[0.18em] text-[var(--mint)]">
@@ -92,21 +92,14 @@ export function IgShareGuideDialog({
           <FitMediaFrame
             width={VIDEO_SIZE.width}
             height={VIDEO_SIZE.height}
+            scaleContent={false}
             className="mt-3"
             frameClassName="rounded-[1.25rem] bg-black shadow-[0_12px_28px_rgba(20,33,43,0.18)] ring-1 ring-[var(--line)]"
           >
-            <div
-              className="relative"
-              style={{
-                width: VIDEO_SIZE.width,
-                height: VIDEO_SIZE.height,
-              }}
-            >
-              <GuideVideoPlayer
-                src={BRAND.shareIgGuideVideoSrc}
-                onEnded={onVideoEnded}
-              />
-            </div>
+            <GuideVideoPlayer
+              src={BRAND.shareIgGuideVideoSrc}
+              onEnded={onVideoEnded}
+            />
           </FitMediaFrame>
 
           <div className="mt-3 grid shrink-0 grid-cols-2 gap-2 border-t border-[var(--line)] pt-3">

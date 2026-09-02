@@ -38,6 +38,8 @@ type FitMediaFrameProps = {
   children: ReactNode;
   className?: string;
   frameClassName?: string;
+  /** false：子層用畫面上的實際尺寸，控制列不會跟 1080×1920 一起被縮小 */
+  scaleContent?: boolean;
 };
 
 /** 在剩餘空間內等比縮放 9:16 媒體，不撐出捲軸 */
@@ -47,6 +49,7 @@ export function FitMediaFrame({
   children,
   className,
   frameClassName,
+  scaleContent = true,
 }: FitMediaFrameProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.2);
@@ -86,21 +89,25 @@ export function FitMediaFrame({
       )}
     >
       <div
-        className={cn("overflow-hidden", frameClassName)}
+        className={cn("relative overflow-hidden", frameClassName)}
         style={{ width: scaledW, height: scaledH }}
       >
-        <div
-          style={
-            {
-              width,
-              height,
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-            } as CSSProperties
-          }
-        >
-          {children}
-        </div>
+        {scaleContent ? (
+          <div
+            style={
+              {
+                width,
+                height,
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+              } as CSSProperties
+            }
+          >
+            {children}
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </div>
   );

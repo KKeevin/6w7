@@ -174,18 +174,18 @@ export function GuideVideoPlayer({
         )}
         aria-hidden
       >
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_10px_28px_rgba(255,90,60,0.45)]">
+        <span className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-[0_10px_28px_rgba(255,90,60,0.45)]">
           {ended ? (
-            <RotateCcw className="h-7 w-7" strokeWidth={2.4} />
+            <RotateCcw className="h-8 w-8" strokeWidth={2.4} />
           ) : (
-            <Play className="ml-0.5 h-8 w-8" strokeWidth={2.4} fill="currentColor" />
+            <Play className="ml-0.5 h-9 w-9" strokeWidth={2.4} fill="currentColor" />
           )}
         </span>
       </div>
 
       <div
         className={cn(
-          "absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-[var(--ink)]/90 via-[var(--ink)]/45 to-transparent px-3 pb-3 pt-10 transition-opacity duration-200",
+          "absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-[var(--ink)]/90 via-[var(--ink)]/45 to-transparent px-3.5 pb-3.5 pt-12 transition-opacity duration-200",
           chromeVisible || !playing ? "opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={(e) => e.stopPropagation()}
@@ -193,7 +193,7 @@ export function GuideVideoPlayer({
       >
         <div
           ref={trackRef}
-          className="group relative flex h-5 cursor-pointer items-center"
+          className="group relative flex h-8 cursor-pointer items-center"
           role="slider"
           aria-label={t("guide.progress")}
           aria-valuemin={0}
@@ -231,46 +231,46 @@ export function GuideVideoPlayer({
             }
           }}
         >
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/25">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/25">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[var(--mint)] via-[#3197e5] to-[var(--accent)]"
               style={{ width: `${progress * 100}%` }}
             />
           </div>
           <span
-            className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[var(--mint)] shadow-sm"
+            className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[var(--mint)] shadow-sm"
             style={{ left: `${progress * 100}%` }}
           />
         </div>
 
-        <div className="mt-1.5 flex items-center gap-1.5 text-white">
+        <div className="mt-2 flex items-center gap-1.5 text-white">
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mint)]"
+            className="flex h-11 w-11 items-center justify-center rounded-xl transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mint)]"
             aria-label={playing ? t("guide.pause") : ended ? t("guide.replay") : t("guide.play")}
             onClick={togglePlay}
           >
             {ended ? (
-              <RotateCcw className="h-4 w-4" strokeWidth={2.4} />
+              <RotateCcw className="h-5 w-5" strokeWidth={2.4} />
             ) : playing ? (
-              <Pause className="h-4 w-4" strokeWidth={2.4} fill="currentColor" />
+              <Pause className="h-5 w-5" strokeWidth={2.4} fill="currentColor" />
             ) : (
-              <Play className="ml-px h-4 w-4" strokeWidth={2.4} fill="currentColor" />
+              <Play className="ml-px h-5 w-5" strokeWidth={2.4} fill="currentColor" />
             )}
           </button>
 
-          <p className="min-w-0 flex-1 font-[family-name:var(--font-display)] text-[10px] font-bold tracking-[0.14em] text-white/70">
+          <p className="min-w-0 flex-1 font-[family-name:var(--font-display)] text-xs font-bold tracking-[0.14em] text-white/70">
             {BRAND.en}
           </p>
 
-          <span className="tabular-nums text-[11px] font-semibold text-white/90">
+          <span className="tabular-nums text-[13px] font-semibold text-white/90">
             {formatTime(current)}
             <span className="text-white/45"> / {formatTime(duration)}</span>
           </span>
 
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mint)]"
+            className="flex h-11 w-11 items-center justify-center rounded-xl transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mint)]"
             aria-label={muted ? t("guide.unmute") : t("guide.mute")}
             onClick={() => {
               setMuted((m) => !m);
@@ -278,9 +278,9 @@ export function GuideVideoPlayer({
             }}
           >
             {muted ? (
-              <VolumeX className="h-4 w-4" strokeWidth={2.4} />
+              <VolumeX className="h-5 w-5" strokeWidth={2.4} />
             ) : (
-              <Volume2 className="h-4 w-4" strokeWidth={2.4} />
+              <Volume2 className="h-5 w-5" strokeWidth={2.4} />
             )}
           </button>
         </div>

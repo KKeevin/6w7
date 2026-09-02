@@ -31,6 +31,15 @@ type Message = InboxMessage;
 
 type Filter = "all" | "unread" | "featured" | "archived";
 
+const INBOX_PREVIEW_CHARS = 20;
+
+function inboxBodyPreview(body: string, max = INBOX_PREVIEW_CHARS): string {
+  const compact = body.replace(/\s+/g, " ").trim();
+  const chars = Array.from(compact);
+  if (chars.length <= max) return compact;
+  return `${chars.slice(0, max).join("")}...`;
+}
+
 export function InboxClient({
   initialMessages,
   initialPage = 1,
@@ -276,6 +285,13 @@ export function InboxClient({
           {messages.map((m) => {
             const justAdded = highlightId === m.id;
             const chips = [
+              !m.isRead
+                ? {
+                    key: "unread",
+                    label: t("inbox.unread"),
+                    tone: "unread" as const,
+                  }
+                : null,
               m.topic
                 ? { key: "topic", label: m.topic, tone: "neutral" as const }
                 : null,
@@ -288,7 +304,7 @@ export function InboxClient({
             ].filter(Boolean) as {
               key: string;
               label: string;
-              tone: "neutral" | "accent" | "danger";
+              tone: "unread" | "neutral" | "accent" | "danger";
             }[];
 
             return (
@@ -332,22 +348,35 @@ export function InboxClient({
                   />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-start justify-between gap-3">
-                      {m.isRead ? (
-                        <span
-                          className="text-[15px] font-medium leading-snug text-[var(--ink)] line-clamp-2"
-                        >
-                          {m.body}
-                        </span>
-                      ) : (
-                        <span className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span className="inline-flex shrink-0 items-center rounded-md bg-[var(--mint)] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
-                            {t("inbox.unread")}
+                      <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        {chips.map((c) => (
+                          <span
+                            key={c.key}
+                            className={
+                              c.tone === "unread"
+                                ? "inline-flex shrink-0 items-center rounded-md bg-[var(--mint)] px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white"
+                                : `inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                    c.tone === "accent"
+                                      ? "bg-[var(--accent)]/12 text-[var(--accent)]"
+                                      : c.tone === "danger"
+                                        ? "bg-[var(--danger)]/10 text-[var(--danger)]"
+                                        : "bg-[var(--surface)] text-[var(--muted)]"
+                                  }`
+                            }
+                          >
+                            {c.label}
                           </span>
+                        ))}
+                        {m.isRead ? (
+                          <span className="text-[15px] font-medium leading-snug text-[var(--ink)]">
+                            {inboxBodyPreview(m.body)}
+                          </span>
+                        ) : (
                           <span className="text-[15px] font-medium text-[var(--muted)]">
                             {t("inbox.openToRead")}
                           </span>
-                        </span>
-                      )}
+                        )}
+                      </span>
                       <time className="shrink-0 pt-0.5 text-[11px] tabular-nums text-[var(--muted)]">
                         {new Date(m.createdAt).toLocaleString(DATE_BCP47[locale], {
                           month: "numeric",
@@ -357,24 +386,6 @@ export function InboxClient({
                         })}
                       </time>
                     </span>
-                    {chips.length > 0 && (
-                      <span className="mt-2.5 flex flex-wrap gap-1.5">
-                        {chips.map((c) => (
-                          <span
-                            key={c.key}
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                              c.tone === "accent"
-                                ? "bg-[var(--accent)]/12 text-[var(--accent)]"
-                                : c.tone === "danger"
-                                  ? "bg-[var(--danger)]/10 text-[var(--danger)]"
-                                  : "bg-[var(--surface)] text-[var(--muted)]"
-                            }`}
-                          >
-                            {c.label}
-                          </span>
-                        ))}
-                      </span>
-                    )}
                   </span>
                 </button>
               </li>

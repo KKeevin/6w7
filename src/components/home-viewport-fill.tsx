@@ -151,8 +151,8 @@ function FitPanel({
     <div
       ref={hostRef}
       className={cn(
-        "flex w-full min-h-0 min-w-0 max-w-full items-center justify-center overflow-hidden",
-        squeeze && "h-full",
+        "flex w-full min-h-0 min-w-0 max-w-full items-center justify-center",
+        squeeze ? "h-full overflow-hidden" : "overflow-visible",
       )}
     >
       <div
@@ -234,7 +234,7 @@ export function HomeViewportSection({
       id={id}
       aria-labelledby={labelledBy}
       className={cn(
-        "bg-atmosphere relative overflow-x-clip",
+        "bg-atmosphere relative max-lg:overflow-x-clip",
         squeeze &&
           (fillDesktop
             ? "h-[calc(100svh-var(--header-h)-var(--footer-h))] overflow-y-clip"

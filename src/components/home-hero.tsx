@@ -13,7 +13,7 @@ export function HomeHero({ copy, preview }: Props) {
       id="home-hero"
       copy={copy}
       panel={preview}
-      innerClassName="lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:py-20"
+      innerClassName="lg:grid-cols-[minmax(0,1fr)_20rem] lg:py-20"
     />
   );
 }

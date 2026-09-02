@@ -3,8 +3,12 @@
 import { useEffect, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { GuideVideoPlayer } from "@/components/guide-video-player";
+import { FitMediaFrame, useDialogFrameHeight } from "@/components/fit-dialog";
+import { useLockBodyScroll } from "@/lib/lock-body-scroll";
 import { BRAND } from "@/shared/tools";
 import { useT } from "@/components/i18n-provider";
+
+const VIDEO_SIZE = { width: 1080, height: 1920 } as const;
 
 type Props = {
   open: boolean;
@@ -28,6 +32,9 @@ export function IgShareGuideDialog({
   shareButtonRef,
 }: Props) {
   const t = useT();
+  const frameH = useDialogFrameHeight(12);
+  useLockBodyScroll(open);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -41,7 +48,7 @@ export function IgShareGuideDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-[var(--ink)]/45 p-2 backdrop-blur-[3px] sm:p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden overscroll-none bg-[var(--ink)]/45 p-1.5 backdrop-blur-[3px] sm:p-3"
       role="dialog"
       aria-modal="true"
       aria-labelledby="ig-share-guide-title"
@@ -51,11 +58,15 @@ export function IgShareGuideDialog({
     >
       <div
         ref={panelRef}
-        className="animate-rise flex max-h-[96dvh] w-full max-w-[min(28rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_24px_60px_rgba(20,33,43,0.22)]"
+        className="animate-rise flex w-full max-w-[min(28rem,calc(100vw-0.75rem))] flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_24px_60px_rgba(20,33,43,0.22)]"
+        style={{
+          height: frameH ?? "calc(100dvh - 0.75rem)",
+          maxHeight: frameH ?? "calc(100dvh - 0.75rem)",
+        }}
       >
         <div className="h-1.5 shrink-0 bg-gradient-to-r from-[var(--mint)] via-[#3197e5] to-[var(--accent)]" />
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+        <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-3 sm:px-5 sm:pb-4 sm:pt-4">
           <div className="flex shrink-0 items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold tracking-[0.18em] text-[var(--mint)]">
@@ -78,16 +89,27 @@ export function IgShareGuideDialog({
             </button>
           </div>
 
-          <div className="mx-auto mt-3 w-full max-w-[min(100%,calc(76dvh*9/16))] shrink-0">
-            <div className="relative aspect-[9/16] overflow-hidden rounded-[1.25rem] bg-black shadow-[0_12px_28px_rgba(20,33,43,0.18)] ring-1 ring-[var(--line)]">
+          <FitMediaFrame
+            width={VIDEO_SIZE.width}
+            height={VIDEO_SIZE.height}
+            className="mt-3"
+            frameClassName="rounded-[1.25rem] bg-black shadow-[0_12px_28px_rgba(20,33,43,0.18)] ring-1 ring-[var(--line)]"
+          >
+            <div
+              className="relative"
+              style={{
+                width: VIDEO_SIZE.width,
+                height: VIDEO_SIZE.height,
+              }}
+            >
               <GuideVideoPlayer
                 src={BRAND.shareIgGuideVideoSrc}
                 onEnded={onVideoEnded}
               />
             </div>
-          </div>
+          </FitMediaFrame>
 
-          <div className="mt-4 grid shrink-0 grid-cols-2 gap-2 border-t border-[var(--line)] pt-4">
+          <div className="mt-3 grid shrink-0 grid-cols-2 gap-2 border-t border-[var(--line)] pt-3">
             <Button type="button" variant="outline" onClick={onCopyLink}>
               {copied ? t("guide.copiedUrl") : t("guide.copyShort")}
             </Button>

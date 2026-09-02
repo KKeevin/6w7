@@ -64,9 +64,9 @@ export function HomeLanding({ signedIn, t, locale }: Props) {
     },
   ];
   const feats = [
+    { title: t("home.feat3Title"), body: t("home.feat3Body") },
     { title: t("home.feat1Title"), body: t("home.feat1Body") },
     { title: t("home.feat2Title"), body: t("home.feat2Body") },
-    { title: t("home.feat3Title"), body: t("home.feat3Body") },
   ];
 
   return (

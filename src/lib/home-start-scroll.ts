@@ -22,15 +22,216 @@ export function leftoverViewportPx() {
   };
 }
 
+function visualHeight() {
+  return window.visualViewport?.height ?? window.innerHeight;
+}
+
 function maxScrollTop() {
   const el = document.scrollingElement ?? document.documentElement;
-  const view = window.visualViewport?.height ?? window.innerHeight;
-  return Math.max(0, el.scrollHeight - view);
+  return Math.max(0, el.scrollHeight - visualHeight());
+}
+
+export function distanceToPageEnd() {
+  return maxScrollTop() - window.scrollY;
+}
+
+function pinTo(y: number) {
+  window.scrollTo({ top: y, behavior: "auto" });
 }
 
 function pinToPageEnd() {
-  window.scrollTo({ top: maxScrollTop(), behavior: "auto" });
+  pinTo(maxScrollTop());
 }
+
+const MAGNET_IDLE_MS = 90;
+const MAGNET_DESKTOP = "(min-width: 1024px)";
+const MAGNET_SETTLED = 14;
+
+type MagnetDir = 1 | -1 | 0;
+
+type MagnetSnap = {
+  y: number;
+  range: number;
+  dir: MagnetDir;
+};
+
+function magnetSnapPx() {
+  return Math.min(180, Math.max(96, visualHeight() * 0.2));
+}
+
+function magnetBlocked() {
+  return (
+    window.matchMedia(MAGNET_DESKTOP).matches ||
+    document.documentElement.dataset.scrollLocked === "1"
+  );
+}
+
+function clampScroll(y: number) {
+  return Math.max(0, Math.min(maxScrollTop(), y));
+}
+
+function yAlignTop(el: Element) {
+  return clampScroll(
+    el.getBoundingClientRect().top + window.scrollY - leftoverViewportPx().header,
+  );
+}
+
+function yAlignBottom(el: Element) {
+  return clampScroll(
+    el.getBoundingClientRect().bottom +
+      window.scrollY -
+      visualHeight() +
+      leftoverViewportPx().footer,
+  );
+}
+
+function mergeSnaps(snaps: MagnetSnap[]) {
+  const sorted = [...snaps].sort((a, b) => a.y - b.y);
+  const out: MagnetSnap[] = [];
+  for (const snap of sorted) {
+    const prev = out[out.length - 1];
+    if (prev && Math.abs(prev.y - snap.y) < 24) {
+      prev.range = Math.max(prev.range, snap.range);
+      prev.dir = prev.dir === snap.dir ? prev.dir : 0;
+      continue;
+    }
+    out.push({ ...snap });
+  }
+  return out;
+}
+
+function collectSnaps() {
+  const near = magnetSnapPx();
+  const leftover = leftoverViewportPx().leftover;
+  const wide = Math.min(leftover * 0.5, Math.max(near * 2, leftover * 0.38));
+  const snaps: MagnetSnap[] = [];
+  const hero = document.getElementById("home-hero");
+  const how = document.getElementById("how");
+  const sections = ["home-hero", "how", "feat", "start"]
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => Boolean(el));
+
+  snaps.push({
+    y: 0,
+    range: hero ? Math.max(near, hero.offsetHeight * 0.5) : near,
+    dir: -1,
+  });
+
+  if (how) {
+    snaps.push({ y: yAlignTop(how), range: near, dir: 0 });
+    how.querySelectorAll<HTMLElement>("[data-home-step]").forEach((step) => {
+      if (step.dataset.homeStep === "01") return;
+      snaps.push({ y: yAlignTop(step), range: near, dir: 0 });
+    });
+  }
+
+  const secondLast = sections[sections.length - 2];
+  const thirdLast = sections[sections.length - 3];
+  if (secondLast) {
+    snaps.push({ y: yAlignTop(secondLast), range: near, dir: 0 });
+  }
+  if (thirdLast) {
+    snaps.push({ y: yAlignBottom(thirdLast), range: wide, dir: -1 });
+  }
+
+  snaps.push({ y: maxScrollTop(), range: near, dir: 1 });
+  return mergeSnaps(snaps);
+}
+
+function pickSnap(y: number, dir: MagnetDir) {
+  let best: MagnetSnap | null = null;
+  let bestDist = Infinity;
+  for (const snap of collectSnaps()) {
+    if (snap.dir !== 0 && snap.dir !== dir) continue;
+    const dist = Math.abs(snap.y - y);
+    if (dist <= snap.range && dist < bestDist) {
+      best = snap;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+/**
+ * 手機首頁區塊磁吸：頂對 header、底對 footer。
+ * 接近頁尾仍貼底，避免工具列進出改 visualViewport 卻捲不到底。
+ */
+export function attachHomeScrollMagnet() {
+  let touching = false;
+  let idle = 0;
+  let lastY = window.scrollY;
+
+  function snap(dir: MagnetDir) {
+    if (magnetBlocked()) return;
+    const y = window.scrollY;
+    const target = pickSnap(y, dir);
+    if (!target) return;
+    if (Math.abs(target.y - y) < MAGNET_SETTLED) return;
+    pinTo(target.y);
+  }
+
+  function schedule(dir: MagnetDir) {
+    window.clearTimeout(idle);
+    idle = window.setTimeout(() => {
+      if (!touching) snap(dir);
+    }, MAGNET_IDLE_MS);
+  }
+
+  function onScroll() {
+    if (magnetBlocked() || touching) return;
+    const y = window.scrollY;
+    const goingDown = y >= lastY - 0.5;
+    lastY = y;
+    schedule(goingDown ? 1 : -1);
+  }
+
+  function onTouchStart() {
+    touching = true;
+    lastY = window.scrollY;
+    window.clearTimeout(idle);
+  }
+
+  function onTouchEnd() {
+    touching = false;
+    const y = window.scrollY;
+    const goingDown = y >= lastY - 0.5;
+    lastY = y;
+    schedule(goingDown ? 1 : -1);
+  }
+
+  function onViewport() {
+    if (magnetBlocked() || touching) return;
+    const y = window.scrollY;
+    if (distanceToPageEnd() <= magnetSnapPx() * 1.7) {
+      pinToPageEnd();
+      return;
+    }
+    const hero = document.getElementById("home-hero");
+    if (hero && y <= hero.offsetHeight * 0.52) pinTo(0);
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("touchstart", onTouchStart, { passive: true });
+  window.addEventListener("touchend", onTouchEnd, { passive: true });
+  window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+  window.addEventListener("resize", onViewport);
+  window.visualViewport?.addEventListener("resize", onViewport);
+  window.visualViewport?.addEventListener("scroll", onViewport);
+
+  return () => {
+    window.clearTimeout(idle);
+    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("touchstart", onTouchStart);
+    window.removeEventListener("touchend", onTouchEnd);
+    window.removeEventListener("touchcancel", onTouchEnd);
+    window.removeEventListener("resize", onViewport);
+    window.visualViewport?.removeEventListener("resize", onViewport);
+    window.visualViewport?.removeEventListener("scroll", onViewport);
+  };
+}
+
+/** @deprecated 與 {@link attachHomeScrollMagnet} 相同 */
+export const attachHomeBottomMagnet = attachHomeScrollMagnet;
 
 /** 捲到整頁最底，不能再往下的位置 */
 export function scrollStartToEnd(

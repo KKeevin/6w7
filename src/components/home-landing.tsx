@@ -6,6 +6,7 @@ import { HomeHero } from "@/components/home-hero";
 import { HomeReplyShot } from "@/components/home-reply-shot";
 import { HomeShareShot } from "@/components/home-share-shot";
 import { HomeStart } from "@/components/home-start";
+import { HomeScrollMagnet } from "@/components/home-scroll-magnet";
 import { HomePreviewStage } from "@/components/home-preview-stage";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -70,6 +71,7 @@ export function HomeLanding({ signedIn, t, locale }: Props) {
 
   return (
     <div className="flex min-w-0 w-full flex-1 flex-col">
+      <HomeScrollMagnet />
       <HomeHero
         copy={
           <>
@@ -149,6 +151,7 @@ export function HomeLanding({ signedIn, t, locale }: Props) {
       />
 
       <section
+        id="how"
         className="overflow-x-hidden border-y border-[var(--line)] bg-white"
         aria-labelledby="how-title"
       >
@@ -166,6 +169,7 @@ export function HomeLanding({ signedIn, t, locale }: Props) {
             {steps.map((step, index) => (
               <li
                 key={step.n}
+                data-home-step={step.n}
                 className={cn(
                   "grid min-w-0 items-center gap-6 border-t border-[var(--line)] pt-10 first:border-t-0 first:pt-0 sm:grid-cols-2 sm:gap-10",
                   index % 2 === 1 && "sm:[&>*:first-child]:order-2",
@@ -199,6 +203,7 @@ export function HomeLanding({ signedIn, t, locale }: Props) {
       </section>
 
       <section
+        id="feat"
         className="bg-[var(--ink)] text-[var(--accent-fg)]"
         aria-labelledby="feat-title"
       >

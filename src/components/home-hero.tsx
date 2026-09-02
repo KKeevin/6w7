@@ -10,6 +10,7 @@ type Props = {
 export function HomeHero({ copy, preview }: Props) {
   return (
     <HomeViewportSection
+      id="home-hero"
       copy={copy}
       panel={preview}
       innerClassName="lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:py-20"

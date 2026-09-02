@@ -602,7 +602,7 @@ export const zhHant = {
     "連結 1 小時內有效。不是你本人請直接忽略，密碼不會變。",
   "mail.reset.title": "重設密碼",
   "mail.reset.p1":
-    "有人申請重設你在 {brand}（{brandZh}）的密碼。若是你本人，請在 1 小時內按下面的按鈕。",
+    "有人申請重設你在 {brand} 的密碼。若是你本人，請在 1 小時內按下面的按鈕。",
   "mail.reset.p2":
     "我們不會在信裡要你回覆密碼，也不會要你下載檔案。若有人這樣跟你要，請當成詐騙。",
   "mail.reset.cta": "重設密碼",
@@ -612,7 +612,7 @@ export const zhHant = {
   "mail.verify.preheader": "24 小時內點一下即可。不是你綁定的話，忽略這封信就好。",
   "mail.verify.title": "驗證這個信箱",
   "mail.verify.p1":
-    "你在 {brand}（{brandZh}）把這個信箱綁到帳號。請在 24 小時內按下面的按鈕完成驗證。",
+    "你在 {brand} 把這個信箱綁到帳號。請在 24 小時內按下面的按鈕完成驗證。",
   "mail.verify.p2":
     "驗證後，忘記密碼才能把重設信寄到這裡。現在不驗證也沒關係，其他功能一樣能用。",
   "mail.verify.cta": "驗證信箱",
@@ -622,7 +622,7 @@ export const zhHant = {
   "mail.newMsg.preheader": "打開收件匣看看吧。",
   "mail.newMsg.title": "有新的匿名留言",
   "mail.newMsg.p1":
-    "有人用你的 {brand}（{brandZh}）連結丟了一句匿名留言給你。",
+    "有人用你的 {brand} 連結丟了一句匿名留言給你。",
   "mail.newMsg.p2": "按下面的按鈕就能看。",
   "mail.newMsg.cta": "開啟收件匣",
   "mail.newMsg.unread": "{count} 則",

@@ -113,7 +113,7 @@ export async function notifyOwnerNewMessage(userId: string) {
     });
     const t = (key: MessageKey, vars?: Record<string, string | number>) =>
       translate(locale, key, vars);
-    const brand = { brand: BRAND.en, brandZh: BRAND.zh };
+    const brand = { brand: BRAND.en };
     const summary = await getNotificationSummary(userId);
     const inboxUrl = `${getSiteUrl()}/inbox`;
     const unreadLabel =

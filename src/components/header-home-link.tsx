@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandDomainMark } from "@/components/brand-logo";
 import { triggerHomeLogoSplash } from "@/components/brand-splash";
-import { BRAND } from "@/shared/tools";
 import { useT } from "@/components/i18n-provider";
 
 export function HeaderHomeLink() {
@@ -12,7 +11,7 @@ export function HeaderHomeLink() {
   return (
     <Link
       href="/"
-      className="chrome-scale-start group flex min-w-0 items-end gap-0 justify-self-start"
+      className="chrome-scale-start group flex min-w-0 items-end justify-self-start"
       aria-label={t("common.home")}
       onClick={(event) => {
         triggerHomeLogoSplash();
@@ -25,10 +24,7 @@ export function HeaderHomeLink() {
         }
       }}
     >
-      <BrandLogo height={28} priority className="shrink-0" />
-      <span className="hidden overflow-visible pb-1 text-xs leading-none text-[var(--muted)] group-hover:text-[var(--ink)] sm:inline">
-        {BRAND.zh}
-      </span>
+      <BrandDomainMark height={28} priority />
     </Link>
   );
 }

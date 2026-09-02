@@ -59,7 +59,7 @@ function resetMailCopy(
 ) {
   const t = (key: MessageKey, vars?: Record<string, string | number>) =>
     translate(locale, key, vars);
-  const brand = { brand: BRAND.en, brandZh: BRAND.zh };
+  const brand = { brand: BRAND.en };
   return buildTransactionalMail({
     locale,
     subject: t("mail.reset.subject", brand),

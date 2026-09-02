@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdRailLayout } from "@/components/ads/ad-rail-layout";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandDomainMark } from "@/components/brand-logo";
 import { PublicAskForm } from "@/components/public-ask-form";
 import { PublicPageStudio } from "@/components/public-page-studio";
 import { getPublicAskLink, applyDemoSandboxToPublicLink } from "@/services/ask-link.service";
@@ -86,12 +86,17 @@ export default async function PublicAskPage({ params, searchParams }: Props) {
           initialEdit={canEdit && edit === "1"}
           initialStickers={link.stickers ?? []}
         >
-          <div className="flex min-h-[calc(100dvh-var(--footer-h))] flex-col px-4 py-8 sm:px-6 sm:py-10">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <BrandLogo height={26} priority />
-              <span className="text-sm font-medium text-[var(--muted)]">
-                {BRAND.zh}
-              </span>
+          <div className="flex min-h-[calc(100dvh-var(--footer-h))] flex-col px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-6">
+            <Link
+              href="/"
+              className="inline-flex w-fit self-start"
+              aria-label={`${BRAND.domain} ${t("share.kicker")}`}
+            >
+              <BrandDomainMark
+                height={26}
+                priority
+                kicker={t("share.kicker")}
+              />
             </Link>
 
             <div className="mt-10 flex flex-col items-center text-center">

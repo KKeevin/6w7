@@ -6,7 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 import { Camera } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandDomainMark } from "@/components/brand-logo";
 import { BrandSplashLockup } from "@/components/brand-splash";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -532,19 +532,15 @@ export function SharePageClient({
       {/* 與公開頁 /[slug] 相同配置；桌機側欄放大頭貼與文字 */}
       <div
         className={`bg-atmosphere relative mx-auto flex w-full max-w-lg flex-col overflow-hidden px-4 sm:px-6 ${
-          compact ? "px-5 py-7 sm:px-6" : "py-8 sm:py-10"
+          compact ? "px-5 pb-7 pt-5 sm:px-6" : "pb-8 pt-5 sm:pb-10 sm:pt-6"
         }`}
       >
         <StickerLayer stickers={profile.stickers ?? []} />
-        <div className="inline-flex items-center gap-2">
-          <BrandLogo height={compact ? 28 : 26} />
-          <span
-            className={`font-medium text-[var(--muted)] ${
-              compact ? "text-base" : "text-sm"
-            }`}
-          >
-            {BRAND.zh}
-          </span>
+        <div className="inline-flex w-fit self-start">
+          <BrandDomainMark
+            height={compact ? 28 : 26}
+            kicker={t("share.kicker")}
+          />
         </div>
 
         <div

@@ -75,12 +75,8 @@ export function HomeLanding({ signedIn, t, locale }: Props) {
       <HomeHero
         copy={
           <>
-            <p className="inline-flex items-center rounded-full border border-[var(--line)] bg-white/80 px-3 py-1 text-[11px] font-bold tracking-[0.08em] text-[var(--mint)]">
-              {BRAND.domain}
-            </p>
             <div
               className={cn(
-                "mt-2.5 sm:mt-5",
                 locale === "en" ? "max-w-xl overflow-x-clip" : null,
               )}
             >

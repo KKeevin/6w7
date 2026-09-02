@@ -606,7 +606,7 @@ export const en = {
     "The link works for 1 hour. If this wasn't you, ignore it — your password stays the same.",
   "mail.reset.title": "Reset password",
   "mail.reset.p1":
-    "Someone asked to reset your {brand} ({brandZh}) password. If that was you, tap the button within 1 hour.",
+    "Someone asked to reset your {brand} password. If that was you, tap the button within 1 hour.",
   "mail.reset.p2":
     "We will never ask you to reply with a password or download a file. If someone does, treat it as a scam.",
   "mail.reset.cta": "Reset password",
@@ -616,7 +616,7 @@ export const en = {
   "mail.verify.preheader": "One tap within 24 hours. If you didn't bind this address, ignore the email.",
   "mail.verify.title": "Verify this email",
   "mail.verify.p1":
-    "You added this address to your {brand} ({brandZh}) account. Tap the button within 24 hours to verify.",
+    "You added this address to your {brand} account. Tap the button within 24 hours to verify.",
   "mail.verify.p2":
     "After verification, password-reset emails can go here. You can skip this for now — everything else still works.",
   "mail.verify.cta": "Verify email",
@@ -626,7 +626,7 @@ export const en = {
   "mail.newMsg.preheader": "Open your inbox to read it.",
   "mail.newMsg.title": "You have a new anonymous message",
   "mail.newMsg.p1":
-    "Someone used your {brand} ({brandZh}) link to send you an anonymous message.",
+    "Someone used your {brand} link to send you an anonymous message.",
   "mail.newMsg.p2": "Tap the button below to read it.",
   "mail.newMsg.cta": "Open inbox",
   "mail.newMsg.unread": "{count}",

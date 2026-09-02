@@ -605,7 +605,7 @@ export const ko = {
     "링크는 1시간 동안 유효해요. 본인이 아니라면 무시하세요. 비밀번호는 바뀌지 않아요.",
   "mail.reset.title": "비밀번호 재설정",
   "mail.reset.p1":
-    "누군가 {brand}（{brandZh}） 비밀번호 재설정을 신청했어요. 본인이라면 1시간 안에 아래 버튼을 눌러 주세요.",
+    "누군가 {brand} 비밀번호 재설정을 신청했어요. 본인이라면 1시간 안에 아래 버튼을 눌러 주세요.",
   "mail.reset.p2":
     "메일에서 비밀번호를 답장하거나 파일을 받으라고 하지 않아요. 그런 연락은 사기로 보세요.",
   "mail.reset.cta": "비밀번호 재설정",
@@ -615,7 +615,7 @@ export const ko = {
   "mail.verify.preheader": "24시간 안에 눌러 주세요. 본인이 연결한 게 아니면 무시해도 돼요.",
   "mail.verify.title": "이 이메일 확인",
   "mail.verify.p1":
-    "{brand}（{brandZh}） 계정에 이 이메일을 연결했어요. 24시간 안에 아래 버튼으로 확인해 주세요.",
+    "{brand} 계정에 이 이메일을 연결했어요. 24시간 안에 아래 버튼으로 확인해 주세요.",
   "mail.verify.p2":
     "확인하면 비밀번호 재설정 메일을 여기로 보낼 수 있어요. 지금 안 해도 다른 기능은 그대로 쓸 수 있어요.",
   "mail.verify.cta": "이메일 확인",
@@ -625,7 +625,7 @@ export const ko = {
   "mail.newMsg.preheader": "받은편지함을 열어 보세요.",
   "mail.newMsg.title": "새 익명 메시지가 있어요",
   "mail.newMsg.p1":
-    "누군가 당신의 {brand}（{brandZh}） 링크로 익명 메시지를 보냈어요.",
+    "누군가 당신의 {brand} 링크로 익명 메시지를 보냈어요.",
   "mail.newMsg.p2": "아래 버튼을 누르면 볼 수 있어요.",
   "mail.newMsg.cta": "받은편지함 열기",
   "mail.newMsg.unread": "{count}통",

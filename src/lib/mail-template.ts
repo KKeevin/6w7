@@ -62,6 +62,40 @@ function pageUrl(path: string) {
   return `${origin}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+function mailBrandLockup(
+  logoUrl: string,
+  kicker: string,
+) {
+  const letters = [...kicker];
+  const compact = letters.filter((ch) => ch.trim()).length <= 6;
+  const kickerRow = compact
+    ? `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr>${letters
+        .map(
+          (ch) =>
+            `<td align="center" style="font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;line-height:1;color:#d7e0e7;">${ch.trim() ? escapeHtml(ch) : "&nbsp;"}</td>`,
+        )
+        .join("")}</tr></table>`
+    : `<p style="margin:0;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;line-height:1;letter-spacing:0.18em;color:#d7e0e7;">${escapeHtml(kicker)}</p>`;
+
+  return `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+      <tr>
+        <td valign="bottom" style="padding:0;">
+          <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(BRAND.en)}" width="120" height="40" style="display:block;height:40px;width:auto;max-width:160px;border:0;outline:none;text-decoration:none;" />
+        </td>
+        <td valign="bottom" style="padding:0 0 1px 2px;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:700;line-height:1;letter-spacing:-0.04em;color:${ACCENT_FG};">
+          .link
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" style="padding:8px 0 0 4px;">
+          ${kickerRow}
+        </td>
+      </tr>
+    </table>
+  `.trim();
+}
+
 function bulletproofButton(label: string, url: string) {
   const safeUrl = escapeHtml(url);
   const safeLabel = escapeHtml(label);
@@ -118,7 +152,8 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
   const helloPlain = t("mail.helloPlain", { handle });
 
   const text = [
-    `${BRAND.en}（${BRAND.zh}）`,
+    `6w7.link`,
+    t("share.kicker"),
     site,
     "",
     helloPlain,
@@ -137,6 +172,8 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
     `${t("mail.privacy")}：${privacyUrl}`,
     `${t("mail.terms")}：${termsUrl}`,
     `${t("mail.contact")}：${contactUrl}`,
+    "",
+    `© ${year} ${BRAND.domain} ${t("share.kicker")}`,
   ].join("\n");
 
   const paragraphsHtml = input.paragraphs
@@ -164,10 +201,7 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:560px;">
           <tr>
             <td style="background:${INK};border-radius:20px 20px 0 0;padding:28px 24px 22px;text-align:center;">
-              <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(BRAND.en)}" width="120" height="40" style="display:block;margin:0 auto 10px;height:40px;width:auto;max-width:160px;border:0;outline:none;text-decoration:none;" />
-              <p style="margin:0;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:0.08em;color:#d7e0e7;">
-                ${escapeHtml(BRAND.en)}（${escapeHtml(BRAND.zh)}）
-              </p>
+              ${mailBrandLockup(logoUrl, t("share.kicker"))}
             </td>
           </tr>
           <tr>
@@ -221,8 +255,9 @@ export function buildTransactionalMail(input: TransactionalMailInput) {
                 <a href="${escapeHtml(contactUrl)}" style="color:${MUTED};text-decoration:underline;">${escapeHtml(t("mail.contact"))}</a>
               </p>
               <p style="margin:0;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:${MUTED};">
-                © ${year} ${escapeHtml(BRAND.en)}（${escapeHtml(BRAND.zh)}）·
+                © ${year}
                 <a href="${escapeHtml(site)}" style="color:${MUTED};text-decoration:underline;">${escapeHtml(BRAND.domain)}</a>
+                ${escapeHtml(t("share.kicker"))}
                 <br />
                 ${escapeHtml(t("mail.questions"))}
                 <a href="mailto:${escapeHtml(BRAND.contactEmail)}" style="color:${MUTED};text-decoration:underline;">${escapeHtml(BRAND.contactEmail)}</a>

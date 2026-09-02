@@ -28,7 +28,7 @@ function StartCopy({ t }: { t: Translator }) {
 
 function StartPanel({ fallback }: { fallback: ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-3xl border border-[var(--line)] bg-white shadow-[0_20px_50px_rgba(20,33,43,0.12)]">
+    <div className="w-full overflow-hidden rounded-3xl border border-[var(--line)] bg-white shadow-[0_20px_50px_rgba(20,33,43,0.12)]">
       <div className="h-1.5 bg-gradient-to-r from-[var(--mint)] to-[var(--accent)]" />
       <div className="p-5 sm:p-7">
         <Suspense fallback={fallback}>
@@ -48,6 +48,7 @@ export function HomeStart({ t }: Props) {
         id="start"
         labelledBy="start-title"
         fillDesktop
+        fillWidth
         className="scroll-mb-[var(--footer-h)]"
         innerClassName="lg:grid-cols-[minmax(0,1fr)_22rem] lg:py-10"
         copy={<StartCopy t={t} />}

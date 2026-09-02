@@ -50,21 +50,53 @@ function canSqueezeViewport(fillDesktop: boolean) {
   return !isBelowMinPhone();
 }
 
-/** 把面板縮進剩餘高度；過矮／過扁時停縮，且不低於最小比例 */
+function onViewportChange(handler: () => void) {
+  window.addEventListener("resize", handler);
+  const view = window.visualViewport;
+  view?.addEventListener("resize", handler);
+  view?.addEventListener("scroll", handler);
+  const media = window.matchMedia(DESKTOP);
+  media.addEventListener("change", handler);
+  return () => {
+    window.removeEventListener("resize", handler);
+    view?.removeEventListener("resize", handler);
+    view?.removeEventListener("scroll", handler);
+    media.removeEventListener("change", handler);
+  };
+}
+
+type FitBox = {
+  scale: number;
+  width: number;
+  height: number;
+};
+
+function sameBox(a: FitBox | null, b: FitBox) {
+  if (!a) return false;
+  return (
+    Math.abs(a.scale - b.scale) < 0.002 &&
+    Math.abs(a.width - b.width) < 0.5 &&
+    Math.abs(a.height - b.height) < 0.5
+  );
+}
+
+/**
+ * 把面板縮進宿主剩餘空間。
+ * 寬度一律以宿主 clientWidth 為準，避免量到「已經縮過的自己」越縮越窄。
+ */
 function FitPanel({
   squeeze,
+  fillWidth,
   children,
 }: {
   squeeze: boolean;
+  /** 表單等應吃滿欄寬；手機預覽維持內容固有寬 */
+  fillWidth?: boolean;
   children: ReactNode;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [box, setBox] = useState<{
-    scale: number;
-    width: number;
-    height: number;
-  } | null>(null);
+  const [box, setBox] = useState<FitBox | null>(null);
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -74,44 +106,52 @@ function FitPanel({
     const measure = () => {
       if (!squeeze) {
         setBox(null);
+        inner.style.transform = "";
+        inner.style.width = "";
         return;
       }
       const availW = host.clientWidth;
       const availH = host.clientHeight;
       if (availW < 8 || availH < 8) return;
-      const naturalW = inner.offsetWidth;
+
+      inner.style.transform = "none";
+      inner.style.width = fillWidth ? `${availW}px` : "max-content";
+
+      const naturalW = fillWidth ? availW : Math.max(inner.offsetWidth, 1);
       const naturalH = inner.offsetHeight;
       if (naturalW < 8 || naturalH < 8) return;
+
       const raw = Math.min(1, availW / naturalW, availH / naturalH);
       const scale = Math.max(MIN_PANEL_SCALE, raw);
-      setBox({
+      const next: FitBox = {
         scale,
         width: naturalW * scale,
         height: naturalH * scale,
-      });
+      };
+      setBox((prev) => (sameBox(prev, next) ? prev : next));
     };
 
     measure();
+    const frame = window.requestAnimationFrame(() => {
+      measure();
+      window.requestAnimationFrame(measure);
+    });
     const observer = new ResizeObserver(measure);
     observer.observe(host);
     observer.observe(inner);
-    window.addEventListener("resize", measure);
-    window.visualViewport?.addEventListener("resize", measure);
-    const media = window.matchMedia(DESKTOP);
-    media.addEventListener("change", measure);
+    const stopViewport = onViewportChange(measure);
     return () => {
+      window.cancelAnimationFrame(frame);
       observer.disconnect();
-      window.removeEventListener("resize", measure);
-      window.visualViewport?.removeEventListener("resize", measure);
-      media.removeEventListener("change", measure);
+      stopViewport();
     };
-  }, [squeeze]);
+  }, [squeeze, fillWidth]);
 
   return (
     <div
       ref={hostRef}
       className={cn(
-        "flex min-h-0 min-w-0 max-w-full items-center justify-center",
+        "flex w-full min-h-0 min-w-0 max-w-full items-center justify-center overflow-hidden",
         squeeze && "h-full",
       )}
     >
@@ -121,12 +161,13 @@ function FitPanel({
       >
         <div
           ref={innerRef}
+          className={fillWidth ? "w-full" : undefined}
           style={
             box
               ? {
                   width: box.width / box.scale,
                   transform: `scale(${box.scale})`,
-                  transformOrigin: "top left",
+                  transformOrigin: fillWidth ? "top center" : "top left",
                 }
               : undefined
           }
@@ -147,6 +188,8 @@ type Props = {
   panel: ReactNode;
   /** 桌機也鎖一屏高度（註冊區）；第一屏不要開 */
   fillDesktop?: boolean;
+  /** 面板（註冊表單）吃滿格子寬，高度不夠再整塊縮小 */
+  fillWidth?: boolean;
 };
 
 /** 一屏：高度 = 目前可視區 − 頂欄 − 頁尾。預設只套手機；`fillDesktop` 連桌機一起。 */
@@ -158,6 +201,7 @@ export function HomeViewportSection({
   copy,
   panel,
   fillDesktop = false,
+  fillWidth = false,
 }: Props) {
   const sectionRef = useRef<HTMLElement>(null);
   const [squeeze, setSqueeze] = useState(true);
@@ -180,15 +224,8 @@ export function HomeViewportSection({
     };
 
     sync();
-    window.addEventListener("resize", sync);
-    window.visualViewport?.addEventListener("resize", sync);
-    const media = window.matchMedia(DESKTOP);
-    media.addEventListener("change", sync);
-    return () => {
-      window.removeEventListener("resize", sync);
-      window.visualViewport?.removeEventListener("resize", sync);
-      media.removeEventListener("change", sync);
-    };
+    const stopViewport = onViewportChange(sync);
+    return stopViewport;
   }, [fillDesktop]);
 
   return (
@@ -219,11 +256,13 @@ export function HomeViewportSection({
         <div className="animate-rise min-w-0 max-w-full">{copy}</div>
         <div
           className={cn(
-            "animate-rise-delay min-w-0 max-w-full",
+            "animate-rise-delay min-w-0 w-full max-w-full",
             squeeze && (fillDesktop ? "min-h-0 h-full" : "min-h-0 max-lg:h-full"),
           )}
         >
-          <FitPanel squeeze={squeeze}>{panel}</FitPanel>
+          <FitPanel squeeze={squeeze} fillWidth={fillWidth}>
+            {panel}
+          </FitPanel>
         </div>
       </div>
     </section>

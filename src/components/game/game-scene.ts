@@ -1,3 +1,4 @@
+import { SPRITE_WIDTH, SPRITE_HEIGHT } from "./character-art";
 import * as Phaser from "phaser";
 import { drawBear, drawMap } from "./pixel-art";
 import { WORLD, type GameAction, type Snapshot, type Player, type Place } from "@/shared/game/protocol";
@@ -11,6 +12,7 @@ type Actor = { sprite: Phaser.GameObjects.Image; label: Phaser.GameObjects.Text;
 
 export function mountGame(parent: HTMLElement, bridge: GameBridge) {
   class NeighborhoodScene extends Phaser.Scene {
+    private appearances = new Map<string,string>();
     private actors = new Map<string, Actor>();
     private map!: Phaser.GameObjects.Image;
     private place: Place | null = null;
@@ -49,15 +51,23 @@ export function mountGame(parent: HTMLElement, bridge: GameBridge) {
       this.events.once("shutdown",() => { canvas.removeEventListener("keydown",down);window.removeEventListener("keyup",up);canvas.removeEventListener("blur",reset);window.removeEventListener("blur",reset);document.removeEventListener("visibilitychange",visible); });
     }
     private texture(p: Player, frame: number) {
-      const a=p.appearance,key=`bear-${a.body}-${a.skin}-${a.shorts}-${Number(a.beard)}-${frame}-${p.facing}`;
-      if(!this.textures.exists(key)) { const t=this.textures.createCanvas(key,96,128)!;drawBear(t.context,a,frame,p.facing);t.refresh(); }
+      const a=p.appearance,key=`character-${p.id}-${frame}-${p.facing}`;
+      const signature=JSON.stringify(a);
+      const existing=this.textures.get(key);
+      if(!this.textures.exists(key)) {
+        const t=this.textures.createCanvas(key,SPRITE_WIDTH,SPRITE_HEIGHT)!;
+        drawBear(t.context,a,frame,p.facing);t.refresh();this.appearances.set(key,signature);
+      } else if(this.appearances.get(key)!==signature) {
+        const t=existing as Phaser.Textures.CanvasTexture;
+        drawBear(t.context,a,frame,p.facing);t.refresh();this.appearances.set(key,signature);
+      }
       return key;
     }
     update(time: number, delta: number) {
       const s=bridge.snapshot;if(!s)return;
       const self=s.players.find(p=>p.id===s.selfId);if(!self)return;
       const changed=this.place!==self.place;
-      if(changed){this.place=self.place;this.map.setTexture(`map-${self.place}`);this.target=null;this.marker.setVisible(false);for(const actor of this.actors.values()){actor.sprite.destroy();actor.label.destroy();actor.bubble.destroy();}this.actors.clear();}
+      if(changed){this.place=self.place;this.map.setTexture(`map-${self.place}`);this.target=null;this.marker.setVisible(false);for(const actor of this.actors.values()){actor.sprite.destroy();actor.label.destroy();actor.bubble.destroy();}this.actors.clear();for(const key of this.appearances.keys())this.textures.remove(key);this.appearances.clear();}
       let x=bridge.direction.x,y=bridge.direction.y;
       if(this.keys.has("a")||this.keys.has("arrowleft"))x--;
       if(this.keys.has("d")||this.keys.has("arrowright"))x++;
@@ -69,11 +79,11 @@ export function mountGame(parent: HTMLElement, bridge: GameBridge) {
       const people=[...s.players];
       if(self.place==="home"&&!s.owner.connected&&!s.ownerReconnecting) people.push({...s.owner,id:"sleeping-owner",place:"home",x:165,y:315,moving:false,sleeping:true,facing:0});
       const present=new Set(people.map(p=>p.id));
-      for(const [id,a] of this.actors)if(!present.has(id)){a.sprite.destroy();a.label.destroy();a.bubble.destroy();this.actors.delete(id);}
+      for(const [id,a] of this.actors)if(!present.has(id)){a.sprite.destroy();a.label.destroy();a.bubble.destroy();this.actors.delete(id);for(const key of this.appearances.keys())if(key.startsWith(`character-${id}-`)){this.textures.remove(key);this.appearances.delete(key);}}
       for(const p of people){
         let a=this.actors.get(p.id);
         const frame=p.moving?(Math.floor(time/160)%2)+1:0;
-        if(!a){a={sprite:this.add.image(p.x,p.y,this.texture(p,frame)).setOrigin(.5,.92),label:this.add.text(p.x,p.y+12,"",{fontFamily:"system-ui",fontSize:"13px",color:"#fff8e8",backgroundColor:"#34483e",padding:{x:7,y:3}}).setOrigin(.5,0),bubble:this.add.text(p.x,p.y-145,"",{fontFamily:"system-ui",fontSize:"16px",color:"#34483e",backgroundColor:"#fff7df",padding:{x:12,y:7}}).setOrigin(.5,1)};this.actors.set(p.id,a);}
+        if(!a){a={sprite:this.add.image(p.x,p.y,this.texture(p,frame)).setOrigin(.5,.95).setScale(.62),label:this.add.text(p.x,p.y+12,"",{fontFamily:"system-ui",fontSize:"13px",color:"#fff8e8",backgroundColor:"#34483e",padding:{x:7,y:3}}).setOrigin(.5,0),bubble:this.add.text(p.x,p.y-145,"",{fontFamily:"system-ui",fontSize:"16px",color:"#34483e",backgroundColor:"#fff7df",padding:{x:12,y:7}}).setOrigin(.5,1)};this.actors.set(p.id,a);}
         const ease=1-Math.exp(-delta/45);
         if(changed||Math.hypot(a.sprite.x-p.x,a.sprite.y-p.y)>120)a.sprite.setPosition(p.x,p.y);
         else a.sprite.setPosition(Phaser.Math.Linear(a.sprite.x,p.x,ease),Phaser.Math.Linear(a.sprite.y,p.y,ease));

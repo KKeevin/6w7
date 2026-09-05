@@ -5,14 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Room } from "@colyseus/sdk";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Copy, DoorOpen, Home, Leaf, LoaderCircle, MapPin, Share2, Sparkles, Users, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { appearanceSchema, BODY_LABELS, BODY_TYPES, DEFAULT_APPEARANCE, PLACE_LABELS, roomIdSchema, SHORTS, SKINS, type Appearance, type GameAction, type Snapshot } from "@/shared/game/protocol";
+import { readAppearance, BODY_LABELS, DEFAULT_APPEARANCE, PLACE_LABELS, roomIdSchema, type Appearance, type GameAction, type Snapshot } from "@/shared/game/protocol";
 import { GameWorld } from "@/shared/game/world";
-import { drawBear } from "./pixel-art";
+import { CharacterPreview, Wardrobe } from "./wardrobe";
 import type { GameBridge } from "./game-scene";
 import styles from "./game.module.css";
 
 type Status = "solo" | "connecting" | "online" | "reconnecting" | "disconnected";
-const STORAGE_KEY = "6w7:game:appearance:v1";
+const STORAGE_KEY = "6w7:game:appearance:v2";
 const EMOTES = ["嗨！", "一起走？", "謝謝你", "好可愛", "💪"] as const;
 
 export function GameClient({ invitation, onlineEnabled, endpoint, needsCode }: {
@@ -28,7 +28,7 @@ export function GameClient({ invitation, onlineEnabled, endpoint, needsCode }: {
   const [pilotCode,setPilotCode] = useState("");
   const [inviteUrl,setInviteUrl] = useState("");
   const canvasHost = useRef<HTMLDivElement>(null);
-  const preview = useRef<HTMLCanvasElement>(null);
+
   const room = useRef<Room | null>(null);
   const local = useRef<GameWorld | null>(null);
   const attempt = useRef(0);
@@ -50,7 +50,7 @@ export function GameClient({ invitation, onlineEnabled, endpoint, needsCode }: {
   useEffect(()=>{
     mounted.current=true;
     let saved=DEFAULT_APPEARANCE;
-    try { const raw=localStorage.getItem(STORAGE_KEY);const parsed=appearanceSchema.safeParse(raw?JSON.parse(raw):null);if(parsed.success)saved=parsed.data; } catch { /* Private browsing still supports the game without saving. */ }
+    try { const raw=localStorage.getItem(STORAGE_KEY)??localStorage.getItem("6w7:game:appearance:v1");const parsed=readAppearance(raw?JSON.parse(raw):null);if(parsed)saved=parsed; } catch { /* Private browsing still supports the game without saving. */ }
     setAppearance(saved);startSolo(saved);
     const timer=window.setInterval(()=>{if(statusRef.current!=="solo"||!local.current)return;local.current.tick(50);report(local.current.snapshot("you"));},50);
     return ()=>{mounted.current=false;attempt.current++;clearInterval(timer);void room.current?.leave();room.current=null;};
@@ -62,11 +62,12 @@ export function GameClient({ invitation, onlineEnabled, endpoint, needsCode }: {
       .catch(()=>{if(alive)setError("遊戲畫面載入失敗，請重新整理頁面再試。");});
     return ()=>{alive=false;destroy?.();};
   },[]);
-  useEffect(()=>{const c=preview.current?.getContext("2d");if(c){c.imageSmoothingEnabled=false;drawBear(c,appearance);}},[appearance]);
+
   useEffect(()=>{if(!notice)return;const id=setTimeout(()=>setNotice(""),4000);return()=>clearTimeout(id);},[notice]);
 
   function updateAppearance(next: Appearance) {
-    setAppearance(next);startSolo(next);
+    if(statusRef.current!=="solo")return;
+    setAppearance(next);local.current?.setAppearance("you",next);if(local.current)report(local.current.snapshot("you"));
     try{localStorage.setItem(STORAGE_KEY,JSON.stringify(next));}catch{setNotice("瀏覽器無法儲存設定，這次仍可繼續試玩。");}
   }
   async function connect(target: string | null) {
@@ -118,21 +119,15 @@ export function GameClient({ invitation, onlineEnabled, endpoint, needsCode }: {
       <Link href="/" className={styles.back}><ArrowLeft size={15}/>回主站</Link>
     </header>
     <div className={styles.intro}>
-      <div><p className={styles.eyebrow}>一隻熊，一間房，一起過日子。</p><h1>歡迎來到<span>熊熊小日子</span></h1><p>捏一個喜歡的自己，出門走走。朋友來了，就一起去冒險。</p></div>
+      <div><p className={styles.eyebrow}>一個自己，一間小屋，一起過日子。</p><h1>歡迎來到<span>小日子</span></h1><p>捏一個喜歡的自己，出門走走。朋友來了，就一起去冒險。</p></div>
       <div className={styles.session}><span className={status==="online"?styles.dotOnline:styles.dotSolo}/>{({solo:"單人試玩",connecting:"正在連線",online:"朋友已可加入",reconnecting:"重新連線中",disconnected:"連線已結束"})[status]}<small>{status==="online"?`${snapshot?.online??1} / 4 人` : "外觀儲存在此瀏覽器"}</small></div>
     </div>
     <div className={styles.workspace}>
       <aside className={styles.sidebar}>
         <details className={styles.dress} open>
           <summary>今天的你 <span>角色設定</span></summary>
-          <div className={styles.portrait}><span className={styles.portraitTag}>{BODY_LABELS[appearance.body]}</span><canvas ref={preview} width={96} height={128} role="img" aria-label={`${BODY_LABELS[appearance.body]}角色外觀預覽`}/><div className={styles.portraitGround}/><p>大大的身形，剛剛好的自己。</p></div>
-          <fieldset disabled={status!=="solo"} className={styles.options}>
-            <legend className="sr-only">角色外觀</legend>
-            <div className={styles.bodyTypes}>{BODY_TYPES.map(body=><button key={body} type="button" aria-pressed={appearance.body===body} onClick={()=>updateAppearance({...appearance,body})}>{BODY_LABELS[body]}</button>)}</div>
-            <div className={styles.swatchRow}><span>膚色</span><div>{SKINS.map((color,skin)=><button key={color} type="button" style={{backgroundColor:color}} aria-label={`膚色 ${skin+1}`} aria-pressed={appearance.skin===skin} onClick={()=>updateAppearance({...appearance,skin})}/>)}</div></div>
-            <div className={styles.swatchRow}><span>短褲</span><div>{SHORTS.map((color,shorts)=><button key={color} type="button" style={{backgroundColor:color}} aria-label={`短褲配色 ${shorts+1}`} aria-pressed={appearance.shorts===shorts} onClick={()=>updateAppearance({...appearance,shorts})}/>)}</div></div>
-            <label className={styles.check}><input type="checkbox" checked={appearance.beard} onChange={e=>updateAppearance({...appearance,beard:e.target.checked})}/>留一把鬍子</label>
-          </fieldset>
+          <div className={styles.portrait}><span className={styles.portraitTag}>{BODY_LABELS[appearance.body]}</span><CharacterPreview appearance={appearance}/><div className={styles.portraitGround}/><p>喜歡的樣子，自己決定。</p></div>
+          <div className={styles.options}><Wardrobe appearance={appearance} onChange={updateAppearance} disabled={status!=="solo"}/><p className={styles.small}>身形・髮鬍・分區體毛・服飾配件</p></div>
           {status!=="solo"&&<p className={styles.small}>返回單人試玩後，可以重新搭配角色。</p>}
         </details>
         <section className={styles.invite} aria-label="多人邀請">

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState, type CSSProperties } from "react";
 
 const SHRUGS = ["🤷🏻‍♀️", "🤷‍♂️"] as const;
@@ -97,7 +98,9 @@ function MemeGlyph({
 export function MemeDrift() {
   const [sprites, setSprites] = useState<DriftSprite[]>([]);
   const [fireworks, setFireworks] = useState<FireworkSprite[]>([]);
-  const [enabled, setEnabled] = useState(false);
+  const [motionEnabled, setEnabled] = useState(false);
+  const pathname = usePathname();
+  const enabled = motionEnabled && !pathname.startsWith("/tools/play");
 
   useEffect(() => {
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");

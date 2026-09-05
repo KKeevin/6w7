@@ -1,4 +1,4 @@
-import { SKINS, SHORTS, type Appearance, type Place } from "@/shared/game/protocol";
+import { type Place } from "@/shared/game/protocol";
 
 type Ctx = CanvasRenderingContext2D;
 function box(c: Ctx, color: string, x: number, y: number, w: number, h: number) { c.fillStyle = color; c.fillRect(x, y, w, h); }
@@ -10,76 +10,7 @@ function shade(hex: string, factor: number) {
   return `rgb(${Math.round((n >> 16) * factor)},${Math.round(((n >> 8) & 255) * factor)},${Math.round((n & 255) * factor)})`;
 }
 
-/** Original layered pixel art; body silhouettes are drawn independently of clothing. */
-export function drawBear(c: Ctx, a: Appearance, frame = 0, facing = 0) {
-  c.clearRect(0, 0, 96, 128);
-  const skin = SKINS[a.skin], shadow = shade(skin, .77), light = shade(skin, 1.06);
-  const ink = "#353331", hair = "#303432", pants = SHORTS[a.shorts];
-  const dimensions = { brawny: [29, 27, 14], muscle: [31, 21, 15], round: [27, 32, 12], wolf: [23, 19, 11] }[a.body];
-  const [shoulder, belly, arm] = dimensions;
-  const stride = frame === 1 ? 3 : frame === 2 ? -3 : 0;
-  // Feet, calves and shorts.
-  for (const side of [-1, 1]) {
-    const x = 48 + side * 13 - 8, offset = side * stride;
-    box(c, ink, x - 2, 99 + offset, 20, 25);
-    box(c, shadow, x, 99 + offset, 16, 18);
-    box(c, skin, x + 3, 99 + offset, 11, 15);
-    box(c, "#343f3e", x - 3, 116 + offset, 23, 8);
-    box(c, "#61746d", x, 117 + offset, 14, 2);
-  }
-  poly(c, ink, [[48-belly,81],[48+belly,81],[48+belly-2,104],[51,104],[48,97],[45,104],[50-belly,104]]);
-  box(c, pants, 50-belly, 84, belly*2-4, 17);
-  box(c, shade(pants, .7), 48, 87, 3, 15);
-  box(c, "#e9d7ae", 48-belly+4, 84, belly*2-8, 3);
-  // Heavy shoulders and arms, preserving the different body proportions.
-  for (const side of [-1, 1]) {
-    const x = side < 0 ? 48-shoulder-arm+4 : 48+shoulder-4;
-    const offset = side * -stride;
-    poly(c, ink, [[x+4,39+offset],[x+arm-3,39+offset],[x+arm+2,49+offset],[x+arm,77+offset],[x+arm-3,87+offset],[x+2,87+offset],[x-2,77+offset],[x,48+offset]]);
-    box(c, shadow, x+2, 47+offset, arm-2, 34);
-    box(c, skin, x+3, 44+offset, arm-3, 21);
-    box(c, light, x+4, 47+offset, 4, 10);
-    box(c, skin, x+2, 69+offset, arm-4, 13);
-  }
-  // Torso outline with stepped pixel edges, broad chest and rounded abdomen.
-  poly(c, ink, [[36,34],[60,34],[48+shoulder,39],[50+shoulder,52],[48+belly,65],[49+belly,80],[43+belly,89],[53-belly,89],[47-belly,80],[48-belly,65],[46-shoulder,52],[48-shoulder,39]]);
-  poly(c, shadow, [[36,37],[60,37],[46+shoulder,42],[47+shoulder,55],[46+belly,68],[46+belly,80],[42+belly,86],[54-belly,86],[50-belly,80],[50-belly,68],[49-shoulder,55],[50-shoulder,42]]);
-  poly(c, skin, [[34,38],[60,38],[45+shoulder,43],[45+shoulder,53],[43+belly,66],[44+belly,78],[40+belly,83],[55-belly,83],[52-belly,76],[52-belly,65],[51-shoulder,51],[52-shoulder,43]]);
-  if (facing !== 1) {
-    box(c, shadow, 48-shoulder+7, 55, shoulder-9, 3);
-    box(c, shadow, 51, 55, shoulder-9, 3);
-    box(c, light, 48-belly+9, 65, belly*2-18, 8);
-    box(c, shadow, 47, 77, 3, 3);
-    box(c, "#a56a53", 48-shoulder+9, 53, 3, 2);
-    box(c, "#a56a53", 48+shoulder-12, 53, 3, 2);
-    for (let i=0;i<27;i++) {
-      const x=36+(i*7)%25, y=42+Math.floor(i/7)*4;
-      box(c, shade(skin,.63), x, y, 1, 2);
-    }
-    for (let i=0;i<8;i++) box(c, shade(skin,.63), 43+(i*5)%12, 73+(i%3)*3, 1, 2);
-  } else {
-    box(c, shadow, 47, 44, 2, 20);
-    box(c, shadow, 33, 49, 7, 2); box(c, shadow, 56, 49, 7, 2);
-  }
-  // Neck, ears and face.
-  box(c, shadow, 39, 26, 18, 15);
-  box(c, ink, 31, 9, 34, 27);
-  box(c, skin, 29, 20, 38, 9);
-  box(c, skin, 33, 12, 30, 23);
-  box(c, shadow, 58, 17, 5, 18);
-  poly(c, hair, [[32,9],[36,9],[36,5],[42,7],[46,3],[50,6],[57,5],[61,9],[64,10],[64,20],[59,20],[57,15],[51,16],[46,13],[39,17],[34,20],[32,25]]);
-  if (facing === 1) { box(c, hair, 33, 14, 29, 19); box(c, shadow, 37, 32, 20, 3); }
-  else {
-    const shift = facing === 2 ? -3 : facing === 3 ? 3 : 0;
-    box(c, hair, 36+shift, 20, 8, 2); box(c, hair, 51+shift, 20, 8, 2);
-    box(c, "#fff4db", 37+shift, 23, 6, 3); box(c, "#fff4db", 52+shift, 23, 6, 3);
-    box(c, ink, 40+shift, 23, 3, 3); box(c, ink, 52+shift, 23, 3, 3);
-    box(c, shadow, 46+shift, 24, 5, 6);
-    if (a.beard) poly(c, hair, [[33,27],[38,30],[42,28],[54,28],[58,30],[63,27],[61,37],[55,42],[41,42],[35,37]]);
-    else box(c, shadow, 40, 32, 17, 5);
-    box(c, "#f8e6c9", 43+shift, 32, 11, 3);
-  }
-}
+export { drawCharacter as drawBear } from "./character-art";
 
 function label(c: Ctx, text: string, x: number, y: number, size = 18, color = "#35463d") {
   c.fillStyle = color; c.font = `700 ${size}px system-ui, sans-serif`; c.textAlign = "center"; c.fillText(text, x, y);

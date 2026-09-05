@@ -1,15 +1,7 @@
 import { z } from "zod";
 
-export const BODY_TYPES = ["brawny", "muscle", "round", "wolf"] as const;
-export const BODY_LABELS = { brawny: "胖壯熊", muscle: "壯熊", round: "胖熊", wolf: "狼系" } as const;
-export const SKINS = ["#e9b78f", "#cb8c62", "#9a6248", "#f2ceb0"] as const;
-export const SHORTS = ["#256f65", "#34445c", "#b65d48", "#777347"] as const;
-export const appearanceSchema = z.object({
-  body: z.enum(BODY_TYPES), skin: z.int().min(0).max(3),
-  shorts: z.int().min(0).max(3), beard: z.boolean(),
-}).strict();
-export type Appearance = z.infer<typeof appearanceSchema>;
-export const DEFAULT_APPEARANCE: Appearance = { body: "brawny", skin: 0, shorts: 0, beard: true };
+import { appearanceSchema, type Appearance } from "./appearance";
+export * from "./appearance";
 export const roomIdSchema = z.string().regex(/^[a-zA-Z0-9_-]{9,24}$/);
 export const ticketRequestSchema = z.object({
   roomId: roomIdSchema.optional(), appearance: appearanceSchema,

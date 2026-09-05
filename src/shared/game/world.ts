@@ -1,4 +1,4 @@
-import { actionSchema, canStand, DEFAULT_APPEARANCE, WORLD, type Appearance, type GameAction, type Player, type Snapshot, type Monster } from "./protocol";
+import { appearanceSchema, actionSchema, canStand, DEFAULT_APPEARANCE, WORLD, type Appearance, type GameAction, type Player, type Snapshot, type Monster } from "./protocol";
 
 /** Shared deterministic rules. In multiplayer ONLY the server runs this simulation. */
 export class GameWorld {
@@ -23,6 +23,13 @@ export class GameWorld {
     this.players.set(id, player);
     if (id === this.ownerId) this.ownerMemory = player;
     return player;
+  }
+  setAppearance(id: string, raw: unknown): boolean {
+    const parsed = appearanceSchema.safeParse(raw);
+    const player = this.players.get(id);
+    if (!player || !parsed.success) return false;
+    player.appearance = parsed.data;
+    return true;
   }
   disconnect(id: string) {
     const p = this.players.get(id);

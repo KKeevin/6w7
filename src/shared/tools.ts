@@ -16,7 +16,7 @@ export type ToolDefinition = {
 export const TOOLS: ToolDefinition[] = [
   {
     toolId: "play",
-    name: "熊熊小日子",
+    name: "小日子",
     nameEn: "Play",
     description: "角色小屋與多人冒險封測。",
     href: "/tools/play",

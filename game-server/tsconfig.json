@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "CommonJS", "moduleResolution": "node",
+    "outDir": "../build/game", "rootDir": "..", "strict": true,
+    "esModuleInterop": true, "skipLibCheck": true, "types": ["node"],
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["./**/*.ts", "../src/shared/game/**/*.ts"]
+}
